@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { ChevronDown, PlayCircle, PauseCircle } from 'lucide-react';
-import { selectSurahs, setCurrentSurah, selectCurrentSurah, selectBookCurrentSurahId } from '../store/slices/quranSlice';
+import { selectSurahs, setCurrentSurah, selectCurrentSurah, selectBookCurrentSurahId, setBookCurrentSurahId } from '../store/slices/quranSlice';
 import { selectAuthors, selectSelectedAuthor, setSelectedAuthor, setLoading } from '../store/slices/translationsSlice';
 import { selectSearchLanguage } from '../store/slices/searchSlice';
 import { useTranslations } from '../translations';
@@ -20,7 +20,7 @@ export function Sidebar() {
   const currentSurah = useSelector(selectCurrentSurah);
   const authors = useSelector(selectAuthors);
   const selectedAuthor = useSelector(selectSelectedAuthor);
-  const { surahId, authorId } = useParams();
+  const { surahId, verseId, authorId } = useParams();
 
   const selectedSurah = readingType === 'book' 
     ? surahs.find((surah) => surah.id === currentSurahId)
@@ -35,7 +35,8 @@ export function Sidebar() {
   useEffect(() => {
     setCurrentTime(0); 
     setDuration(0); 
-  }, [language]);
+    setProgress(0);
+  }, [language, selectedSurah]);
 
   useEffect(() => {
     const audioElement = audioRef.current;
@@ -43,34 +44,52 @@ export function Sidebar() {
     if (!audioElement) return;  
   
     const updateProgress = () => {
-      const progressPercent = (audioElement.currentTime / audioElement.duration) * 100;
-      setProgress(progressPercent);
-      setCurrentTime(audioElement.currentTime);
-      setDuration(audioElement.duration);
+      if (audioElement.duration && !isNaN(audioElement.duration)) {
+        const progressPercent = (audioElement.currentTime / audioElement.duration) * 100;
+        setProgress(progressPercent);
+        setCurrentTime(audioElement.currentTime);
+        setDuration(audioElement.duration);
+      }
     };
   
     const handleEnded = () => {
       setIsPlaying(false);
       setProgress(0);
+      setCurrentTime(0);
     };
   
 
     const handleLoadedMetadata = () => {
-      setDuration(audioElement.duration);
+      if (audioElement.duration && !isNaN(audioElement.duration) && audioElement.duration > 0) {
+        setDuration(audioElement.duration);
+      }
     };
+
+    const handleCanPlay = () => {
+      if (audioElement.duration && !isNaN(audioElement.duration) && audioElement.duration > 0) {
+        setDuration(audioElement.duration);
+      }
+    };
+
+    // Check if duration is already available
+    if (audioElement.duration && !isNaN(audioElement.duration) && audioElement.duration > 0) {
+      setDuration(audioElement.duration);
+    }
   
     audioElement.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audioElement.addEventListener('canplay', handleCanPlay);
     audioElement.addEventListener('timeupdate', updateProgress);
     audioElement.addEventListener('ended', handleEnded);
   
     return () => {
       if (audioElement) {
         audioElement.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audioElement.removeEventListener('canplay', handleCanPlay);
         audioElement.removeEventListener('timeupdate', updateProgress);
         audioElement.removeEventListener('ended', handleEnded);
       }
     };
-  }, []);
+  }, [selectedSurah, language]);
 
   useEffect(() => {
     if (readingType === 'card') {
@@ -108,10 +127,30 @@ export function Sidebar() {
     dispatch(setSelectedAuthor(author || null));
     
     if (readingType === 'card' && currentSurah) {
+      // Mevcut verseId'yi koru, yoksa 1 kullan
+      const currentVerseId = verseId || '1';
       const url = author 
-        ? `/surah/${currentSurah}/verse/1/${author.id}`
-        : `/surah/${currentSurah}`;
+        ? `/surah/${currentSurah}/verse/${currentVerseId}/${author.id}`
+        : `/surah/${currentSurah}/verse/${currentVerseId}`;
       navigate(url, { replace: true });
+    } else if (readingType === 'book' && surahId) {
+      // Book modunda: mevcut verseId'yi koru
+      if (verseId) {
+        // VerseId varsa, onu koruyarak authorId ekle veya güncelle
+        const url = author 
+          ? `/surah/${surahId}/verse/${verseId}/${author.id}`
+          : `/surah/${surahId}/verse/${verseId}`;
+        navigate(url, { replace: true });
+      } else {
+        // VerseId yoksa, sadece authorId ekle (eğer author seçildiyse)
+        // Book modunda authorId genellikle URL'de olmaz, bu yüzden hiçbir şey yapmayabiliriz
+        // Ama eğer author seçildiyse ve verseId yoksa, verseId eklememiz gerekebilir
+        // Şimdilik sadece authorId varsa URL'yi güncelle
+        if (author) {
+          // İlk ayete git
+          navigate(`/surah/${surahId}/verse/1/${author.id}`, { replace: true });
+        }
+      }
     }
   };
 

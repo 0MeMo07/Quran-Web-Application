@@ -17,6 +17,11 @@ export const router = createBrowserRouter([
     errorElement: <ErrorPage />
   },
   {
+    path: '/surah/:surahId/page/:pageNumber',
+    element: <App />,
+    errorElement: <ErrorPage />
+  },
+  {
     path: '/surah/:surahId/verse/:verseId/:authorId?',
     element: <App />,
     errorElement: <ErrorPage />

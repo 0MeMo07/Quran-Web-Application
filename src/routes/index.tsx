@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { SurahPage } from './SurahPage';
 import { VersePage } from './VersePage';
 import { NotesPage } from './NotesPage';
+import { RootPage } from './RootPage';
 import App from '../App';
 import { ErrorPage } from '../components/ErrorPage';
 
@@ -22,13 +22,23 @@ export const router = createBrowserRouter([
     errorElement: <ErrorPage />
   },
   {
-    path: '/surah/:surahId/verse/:verseId/:authorId?',
-    element: <App />,
+    path: '/surah/:surahId/verse/:verseId',
+    element: <VersePage />,
+    errorElement: <ErrorPage />
+  },
+  {
+    path: '/surah/:surahId/verse/:verseId/:authorId',
+    element: <VersePage />,
     errorElement: <ErrorPage />
   },
   {
     path: '/notes',
     element: <NotesPage />,
+    errorElement: <ErrorPage />
+  },
+  {
+    path: '/root/:latin',
+    element: <RootPage />,
     errorElement: <ErrorPage />
   },
   {

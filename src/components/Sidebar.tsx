@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { ChevronDown, PlayCircle, PauseCircle } from 'lucide-react';
+import { ChevronDown, PlayCircle, PauseCircle, Search, ArrowRight, Loader2, X } from 'lucide-react';
 import { selectSurahs, setCurrentSurah, selectCurrentSurah, selectBookCurrentSurahId, setBookCurrentSurahId } from '../store/slices/quranSlice';
 import { selectAuthors, selectSelectedAuthor, setSelectedAuthor, setLoading } from '../store/slices/translationsSlice';
 import { selectSearchLanguage } from '../store/slices/searchSlice';
@@ -8,6 +8,8 @@ import { useTranslations } from '../translations';
 import { selectReadingType } from '../store/slices/uiSlice';
 import { ReadingTypeSelector } from "./ReadingTypeSelector";
 import { useParams, useNavigate } from 'react-router-dom';
+import { fetchRootByLatin } from '../api/quranApi';
+import type { RootDetail } from '../api/types';
 
 export function Sidebar() {
   const dispatch = useDispatch();
@@ -30,6 +32,10 @@ export function Sidebar() {
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [rootInput, setRootInput] = useState('');
+  const [rootPreview, setRootPreview] = useState<RootDetail | null>(null);
+  const [rootLoading, setRootLoading] = useState(false);
+  const rootDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   
   useEffect(() => {
@@ -264,6 +270,95 @@ export function Sidebar() {
           )}
 
           <ReadingTypeSelector />
+
+          {/* Root Search */}
+          <div>
+            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+              {t.root.searchRoot}
+            </label>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const val = rootInput.trim();
+                if (val) navigate(`/root/${encodeURIComponent(val)}`);
+              }}
+              className="relative"
+            >
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
+              <input
+                type="text"
+                value={rootInput}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setRootInput(val);
+                  setRootPreview(null);
+                  if (rootDebounceRef.current) clearTimeout(rootDebounceRef.current);
+                  if (val.trim().length >= 2) {
+                    setRootLoading(true);
+                    rootDebounceRef.current = setTimeout(() => {
+                      fetchRootByLatin(val.trim())
+                        .then(setRootPreview)
+                        .catch(() => setRootPreview(null))
+                        .finally(() => setRootLoading(false));
+                    }, 500);
+                  } else {
+                    setRootLoading(false);
+                  }
+                }}
+                placeholder={t.root.searchRootPlaceholder}
+                className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none text-sm transition-all"
+              />
+              {rootInput && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                  {rootLoading ? (
+                    <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { setRootInput(''); setRootPreview(null); }}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              )}            </form>
+
+            {/* Live preview card */}
+            {rootPreview && !rootLoading && (
+              <button
+                onClick={() => navigate(`/root/${encodeURIComponent(rootPreview.latin)}`)}
+                className="mt-2 w-full text-left p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors group"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-2xl font-bold text-gray-800 dark:text-gray-100 leading-none" dir="rtl" lang="ar">
+                    {rootPreview.arabic}
+                  </span>
+                  <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 group-hover:gap-2 transition-all font-mono">
+                    {rootPreview.latin}
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">
+                  {language === 'en' ? rootPreview.mean_en : rootPreview.mean}
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {rootPreview.diffs.slice(0, 4).map((d) => (
+                    <span
+                      key={d.id}
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs"
+                    >
+                      <span dir="rtl" lang="ar" className="font-arabic text-gray-800 dark:text-gray-200">{d.diff}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">{d.count}×</span>
+                    </span>
+                  ))}
+                  {rootPreview.diffs.length > 4 && (
+                    <span className="text-xs text-gray-400 dark:text-gray-500 self-center">+{rootPreview.diffs.length - 4}</span>
+                  )}
+                </div>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Loader2, Menu, X } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { Helmet } from 'react-helmet';
-import { Outlet, useLocation, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { AppDispatch } from './store/store';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { VerseCard } from './components/VerseCard';
 import { BookLayout } from './components/BookLayout';
+import { DetailLayout } from './components/DetailLayout';
 import {
   fetchVerses,
   selectVerses,
@@ -29,7 +30,7 @@ import {
   setLoading,
 } from './store/slices/translationsSlice';
 import { useTranslations } from './translations';
-import { selectReadingType, setReadingType } from './store/slices/uiSlice';
+import { selectReadingType } from './store/slices/uiSlice';
 import { SearchDialog } from './components/SearchDialog';
 
 function App() {
@@ -47,8 +48,7 @@ function App() {
   const loading = useSelector(selectLoading);
   const selectedAuthor = useSelector(selectSelectedAuthor);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { surahId, verseId, readingType: urlReadingType, authorId } = useParams();
-  const location = useLocation();
+  const { surahId, authorId } = useParams();
   const surahs = useSelector(selectSurahs);
   const authors = useSelector(selectAuthors);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -135,8 +135,6 @@ function App() {
         )}
         <Header
           onMenuClick={toggleSidebar}
-          isPopoverVisible={isPopoverVisible}
-          setIsPopoverVisible={setIsPopoverVisible}
           onSearchOpen={() => setIsSearchOpen(true)}
         />
 
@@ -190,6 +188,8 @@ function App() {
               ) : (
                 <BookLayout verses={allVerses} />
               )
+            ) : readingType === 'detail' ? (
+              <DetailLayout verses={verses} />
             ) : (
               <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
                 {verses.map((verse) => (

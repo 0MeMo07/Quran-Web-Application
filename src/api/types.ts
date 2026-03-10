@@ -127,3 +127,109 @@ export interface RandomSearchResponse {
     query: string;
   };
 }
+
+export interface RootDiff {
+  id: number;
+  diff: string;
+  count: number;
+}
+
+export interface RootDetail {
+  id: number;
+  latin: string;
+  arabic: string;
+  transcription: string;
+  transcription_en: string;
+  mean: string;
+  mean_en: string;
+  diffs: RootDiff[];
+  rootchar_id: number;
+}
+
+export interface RootVerseItem {
+  id: number;
+  rootdiff_id: number;
+  root: {
+    id: number;
+    latin: string;
+    arabic: string;
+  };
+  surah: {
+    id: number;
+    name: string;
+    slug: string;
+    verse_count: number;
+    page_number: number;
+    name_original: string;
+    audio: {
+      mp3: string;
+      duration: number;
+    };
+  };
+  verse: {
+    id: number;
+    page: number;
+    surah_id: number;
+    verse_number: number;
+    verse: string;
+    transcription: string;
+    juz_number: number;
+    translation: {
+      id: number;
+      author: {
+        id: number;
+        name: string;
+        description: string;
+        language: string;
+      };
+      text: string;
+      footnotes: Footnote[] | null;
+    };
+  };
+  sort_number: number;
+  arabic: string;
+  transcription: string;
+  turkish: string;
+  prop_1: string;
+  prop_2: string;
+  prop_3: string;
+  prop_4: string;
+  prop_5: string;
+  prop_6: string;
+  prop_7: string;
+  prop_8: string;
+}
+
+export interface VersePart {
+  id: number;
+  sort_number: number;
+  transcription_tr: string;
+  transcription_en: string;
+  arabic: string;
+  translation_tr: string;
+  translation_en: string;
+  root: {
+    id: number;
+    latin: string;
+    arabic: string;
+  } | null;
+}
+
+export interface RootVersesPagination {
+  links: {
+    first: string;
+    prev: string;
+    next: string | null;
+    last: string;
+  };
+  meta: {
+    current_page: number;
+    from: number;
+    last_page: number;
+    path: string;
+    per_page: number;
+    to: number;
+    total: number;
+  };
+  data: RootVerseItem[];
+}

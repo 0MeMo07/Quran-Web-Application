@@ -1,4 +1,4 @@
-import { Author, Surah, Verse, SearchResponse, RandomSearchResponse } from './types';
+import { Author, Surah, Verse, SearchResponse, RandomSearchResponse, RootDetail, RootVersesPagination, VersePart } from './types';
 
 const BASE_URL = 'https://api.acikkuran.com';
 
@@ -45,4 +45,21 @@ export async function fetchVerseById(surahId: number, verseNumber: number, autho
     : `${BASE_URL}/surah/${surahId}/verse/${verseNumber}`;
   const data = await fetchData<{ data: Verse }>(url);
   return data.data;
+}
+
+export async function fetchVerseParts(surahId: number, verseNumber: number): Promise<VersePart[]> {
+  const data = await fetchData<{ data: VersePart[] }>(`${BASE_URL}/surah/${surahId}/verse/${verseNumber}/verseparts`);
+  return data.data;
+}
+
+export async function fetchRootByLatin(latin: string): Promise<RootDetail> {
+  const data = await fetchData<{ data: RootDetail }>(`${BASE_URL}/root/latin/${encodeURIComponent(latin)}`);
+  return data.data;
+}
+
+export async function fetchRootVerses(latin: string, page: number = 1, authorId?: number): Promise<RootVersesPagination> {
+  const params = new URLSearchParams({ page: String(page) });
+  if (authorId) params.set('author', String(authorId));
+  const url = `${BASE_URL}/root/latin/${encodeURIComponent(latin)}/verses?${params.toString()}`;
+  return fetchData<RootVersesPagination>(url);
 }

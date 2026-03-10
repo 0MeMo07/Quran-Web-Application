@@ -11,7 +11,9 @@ const translations = {
         noResults: 'No results found for',
         minChars: 'Enter at least 2 characters to search or click the shuffle icon for a random verse',
         random: 'Get random verse',
-        searching: 'Searching...'
+        searching: 'Searching...',
+        searchTip: 'You can search for verse text or surah names',
+        tryDifferent: 'Try a different search term'
       },
       header: {
         toggleMenu: 'Toggle menu',
@@ -97,7 +99,61 @@ const translations = {
         startAddingNotes: 'Start Adding Notes',
         startReading: 'Start Reading',
         totalNotes: 'Note',
-        searchInNotes: 'Search in Notes...'
+        searchInNotes: 'Search in Notes...',
+        goToBook: 'Book View',
+        goToDetail: 'Detailed Analysis'
+      },
+      root: {
+        title: 'Root Word',
+        transcription: 'Transcription',
+        meaning: 'Meaning',
+        forms: 'Forms',
+        verses: 'Verses',
+        occurrences: 'occurrences',
+        page: 'Page',
+        of: 'of',
+        previous: 'Previous',
+        next: 'Next',
+        surah: 'Surah',
+        verse: 'Verse',
+        loading: 'Loading root...',
+        notFound: 'Root not found',
+        backToHome: 'Back to Home',
+        grammaticalInfo: 'Grammatical Info',
+        searchRoot: 'Search Root',
+        searchRootPlaceholder: 'e.g. Hmd, klm...',
+        searchRootBtn: 'Go',
+        totalOccurrences: 'Total Occurrences',
+        allForms: 'All Forms',
+        uniqueSurahs: 'Surahs',
+        noVersesFound: 'No verses found for this filter',
+        wordInContext: 'Root word in context',
+        clearFilter: 'Clear filter',
+        showingForm: 'Filtering by form',
+        copyVerse: 'Copy verse'
+      },
+      detail: {
+        title: 'Detailed Analysis',
+        wordAnalysis: 'Word-by-Word Analysis',
+        showAnalysis: 'Show Analysis',
+        hideAnalysis: 'Hide Analysis',
+        root: 'Root',
+        noRoot: 'No root',
+        transcription: 'Transcription',
+        meaning: 'Meaning',
+        viewRoot: 'View Root',
+        loadingParts: 'Loading words...',
+        noPartsAvailable: 'Word analysis not available for this verse.'
+      },
+      versePage: {
+        translations: 'Translations',
+        compareTranslations: 'Add another translation',
+        addTranslation: 'Add',
+        removeTranslation: 'Remove',
+        selectAuthor: 'Select translator...',
+        prevVerse: 'Previous Verse',
+        nextVerse: 'Next Verse',
+        backToSurah: 'Back to Surah'
       }
     }
   },
@@ -110,7 +166,9 @@ const translations = {
         noResults: 'Sonuç bulunamadı:',
         minChars: 'Arama yapmak için en az 2 karakter girin veya rastgele bir ayet için karıştır simgesine tıklayın',
         random: 'Rastgele ayet getir',
-        searching: 'Aranıyor...'
+        searching: 'Aranıyor...',
+        searchTip: 'Ayet metni veya sure adlarında arama yapabilirsiniz',
+        tryDifferent: 'Farklı bir arama terimi deneyin'
       },
       header: {
         toggleMenu: 'Menüyü aç/kapat',
@@ -196,7 +254,61 @@ const translations = {
         startAddingNotes: 'Okumaya başlayın ve ayetlere not ekleyin',
         startReading: 'Okumaya Başla',
         totalNotes: 'Not',
-        searchInNotes: 'Notlarda ara...'
+        searchInNotes: 'Notlarda ara...',
+        goToBook: 'Kitap Görünümü',
+        goToDetail: 'Detaylı İnceleme'
+      },
+      root: {
+        title: 'Kök Kelime',
+        transcription: 'Transkripsiyon',
+        meaning: 'Anlam',
+        forms: 'Formlar',
+        verses: 'Ayetler',
+        occurrences: 'kez',
+        page: 'Sayfa',
+        of: '/',
+        previous: 'Önceki',
+        next: 'Sonraki',
+        surah: 'Sure',
+        verse: 'Ayet',
+        loading: 'Kök yükleniyor...',
+        notFound: 'Kök bulunamadı',
+        backToHome: 'Ana Sayfaya Dön',
+        grammaticalInfo: 'Dilbilgisi Bilgisi',
+        searchRoot: 'Kök Ara',
+        searchRootPlaceholder: 'ör. Hmd, klm...',
+        searchRootBtn: 'Git',
+        totalOccurrences: 'Toplam Kullanım',
+        allForms: 'Tüm Formlar',
+        uniqueSurahs: 'Sure',
+        noVersesFound: 'Bu filtre için ayet bulunamadı',
+        wordInContext: 'Bağlamdaki kök kelime',
+        clearFilter: 'Filtreyi temizle',
+        showingForm: 'Forma göre filtre',
+        copyVerse: 'Ayeti kopyala'
+      },
+      detail: {
+        title: 'Detaylı Analiz',
+        wordAnalysis: 'Kelime Kelime Analiz',
+        showAnalysis: 'Analizi Göster',
+        hideAnalysis: 'Analizi Gizle',
+        root: 'Kök',
+        noRoot: 'Kök yok',
+        transcription: 'Transkripsiyon',
+        meaning: 'Anlam',
+        viewRoot: 'Köke Git',
+        loadingParts: 'Kelimeler yükleniyor...',
+        noPartsAvailable: 'Bu ayet için kelime analizi mevcut değil.'
+      },
+      versePage: {
+        translations: 'Çeviriler',
+        compareTranslations: 'Başka çeviri ekle',
+        addTranslation: 'Ekle',
+        removeTranslation: 'Kaldır',
+        selectAuthor: 'Çevirmen seç...',
+        prevVerse: 'Önceki Ayet',
+        nextVerse: 'Sonraki Ayet',
+        backToSurah: 'Sureye Dön'
       }
     }
   }
@@ -205,7 +317,7 @@ const translations = {
 export type TranslationKey = keyof typeof translations.en.app;
 
 export function useTranslations() {
-  const language = useSelector(selectSearchLanguage);
+  const language = useSelector(selectSearchLanguage) as 'en' | 'tr';
   return translations[language].app;
 }
 

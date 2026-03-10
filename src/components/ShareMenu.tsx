@@ -1,4 +1,3 @@
-import React from 'react';
 import { Copy, Share, X } from 'lucide-react';
 import { useTranslations } from '../translations';
 import { useSelector } from 'react-redux';

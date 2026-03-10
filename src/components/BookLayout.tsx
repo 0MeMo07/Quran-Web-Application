@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Search, ChevronUp, ChevronDown, Settings, Loader2 } from 'lucide-react';
 import { useSelector,useDispatch } from 'react-redux';
 import { selectSurahs } from '../store/slices/quranSlice';
@@ -6,8 +6,8 @@ import { Verse } from '../api/types';
 import { useTranslations } from '../translations';
 import { selectBookCurrentSurahId, setBookCurrentSurahId  } from '../store/slices/quranSlice';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { selectSelectedAuthor, selectTranslationsLoading } from '../store/slices/translationsSlice';
-import { selectViewType, setViewType, ViewType } from '../store/slices/uiSlice';
+import { selectTranslationsLoading } from '../store/slices/translationsSlice';
+import { selectViewType, setViewType, Note } from '../store/slices/uiSlice';
 import { NoteSection } from './notes/BookNoteSection';
 
 interface BookLayoutProps {
@@ -38,12 +38,7 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isLoading = useSelector(selectTranslationsLoading);
-  const selectedAuthor = useSelector(selectSelectedAuthor);
   const viewType = useSelector(selectViewType);
-  const [notes, setNotes] = useState<Note[]>(() => {
-    const savedNotes = localStorage.getItem('quran-notes');
-    return savedNotes ? JSON.parse(savedNotes) : [];
-  });
 
   const totalPages = Math.max(...verses.map((verse) => verse.page));
   const currentPageVerses = verses.filter((verse) => verse.page === currentPage);
@@ -101,15 +96,13 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
       );
 
       if (targetVerse) {
-        // URL'ye navigate et
-        navigate(`/surah/${targetSurah.id}/verse/${targetVerse.verse_number}`, { replace: true });
+        // Update URL to reflect surah/page without navigating to VersePage
+        navigate(`/surah/${targetSurah.id}/page/${targetVerse.page}`, { replace: true });
         
         setCurrentPage(targetVerse.page);
         setInputPage(targetVerse.page.toString());
         dispatch(setBookCurrentSurahId(targetSurah.id));
         
-        // Sayfa değiştiğinde scroll işlemi useEffect tarafından yapılacak
-        // Ama ekstra güvence için burada da yapalım
         setTimeout(() => {
           const verseElement = document.querySelector(
             `[data-verse-id="${targetVerse.verse_number}"][data-surah-id="${targetSurah.id}"]`
@@ -265,15 +258,30 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
       }
     } else if (surahId && !verseId) {
       // URL'de pageNumber yoksa ama surahId varsa, ilk ayetin sayfasına git ve URL'yi güncelle
-      const firstVerseOfSurah = verses.find(v => v.surah_id === Number(surahId));
+      const stateVerse = (location.state as any)?.targetVerseId;
+      const targetVerseNumber = stateVerse ? Number(stateVerse) : null;
+      const firstVerseOfSurah = targetVerseNumber
+        ? verses.find(v => v.surah_id === Number(surahId) && v.verse_number === targetVerseNumber)
+        : verses.find(v => v.surah_id === Number(surahId));
       if (firstVerseOfSurah) {
         const pageToSet = firstVerseOfSurah.page;
         setCurrentPage(pageToSet);
         setInputPage(pageToSet.toString());
         dispatch(setBookCurrentSurahId(Number(surahId)));
-        // URL'yi page formatına güncelle
         navigate(`/surah/${surahId}/page/${pageToSet}`, { replace: true });
         window.scrollTo(0, 0);
+        if (targetVerseNumber) {
+          setTimeout(() => {
+            const el = document.querySelector(
+              `[data-verse-id="${targetVerseNumber}"][data-surah-id="${Number(surahId)}"]`
+            );
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.classList.add('bg-blue-50', 'dark:bg-blue-900/20');
+              setTimeout(() => el.classList.remove('bg-blue-50', 'dark:bg-blue-900/20'), 2000);
+            }
+          }, 500);
+        }
       }
     }
   }, [surahId, verseId, urlPageNumber, verses, dispatch, totalPages]);
@@ -328,18 +336,6 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
     }
   }, [currentPage, surahId, verseId, verses]);
 
-
-  const handleSaveNote = (note: Note) => {
-    const updatedNotes = [...notes.filter(n => n.verseId !== note.verseId), note];
-    setNotes(updatedNotes);
-    localStorage.setItem('quran-notes', JSON.stringify(updatedNotes));
-  };
-
-  const handleDeleteNote = (verseId: number) => {
-    const updatedNotes = notes.filter(n => n.verseId !== verseId);
-    setNotes(updatedNotes);
-    localStorage.setItem('quran-notes', JSON.stringify(updatedNotes));
-  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-2 sm:p-4">
@@ -708,7 +704,7 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
                     </div>
                   )}
 
-                  {viewType !== 'kuran' && verse.translation?.footnotes?.length > 0 && (
+                  {viewType !== 'kuran' && (verse.translation?.footnotes?.length ?? 0) > 0 && (
                     <div className={`
                       ${viewType === 'meal' ? 'mt-2' : 'mt-3'}
                     `}>
@@ -724,7 +720,7 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
 
                       {showFootnotes[verse.id] && (
                         <div className="mt-2 pl-4 border-l-2 border-emerald-200 dark:border-emerald-800 space-y-2">
-                      {verse.translation.footnotes.map((footnote) => (
+                      {verse.translation?.footnotes?.map((footnote) => (
                           <p 
                             key={footnote.id} 
                             className="text-gray-600 dark:text-gray-400 italic"

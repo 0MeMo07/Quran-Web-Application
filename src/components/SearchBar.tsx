@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { useTranslations } from '../translations';
 import { useSelector, useDispatch } from 'react-redux';

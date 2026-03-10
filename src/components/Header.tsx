@@ -9,12 +9,10 @@ import { setLoading } from "../store/slices/translationsSlice";
 
 interface HeaderProps {
   onMenuClick: () => void;
-  isPopoverVisible: boolean;
-  setIsPopoverVisible: React.Dispatch<React.SetStateAction<boolean>>;
   onSearchOpen: () => void;
 }
 
-export function Header({ onMenuClick, isPopoverVisible, setIsPopoverVisible, onSearchOpen }: HeaderProps) {
+export function Header({ onMenuClick, onSearchOpen }: HeaderProps) {
   const dispatch = useDispatch();
   const t = useTranslations();
   const isDarkMode = useSelector(selectIsDarkMode);
@@ -27,7 +25,7 @@ export function Header({ onMenuClick, isPopoverVisible, setIsPopoverVisible, onS
     dispatch(setLoading(true));
     const filteredAuthors = authors.filter(author => author.language === lang);
     if (filteredAuthors.length > 0) {
-      const selectedAuthor = lang === 'tr' ? filteredAuthors[null] : filteredAuthors[0];
+      const selectedAuthor = filteredAuthors[0];
       dispatch(setSelectedAuthor(selectedAuthor));
     }
   };

@@ -1,6 +1,15 @@
-import React from 'react';
 import Select from 'react-select';
-import type { Language, Edition } from '../types';
+
+interface Edition {
+  englishName: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+interface Language {
+  name: string;
+  editions: Edition[];
+}
 
 interface LanguageSelectorProps {
   languages: Language[];

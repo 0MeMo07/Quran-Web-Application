@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Share2, BookOpen, ChevronDown, ChevronUp, MessageSquare, X, Save } from 'lucide-react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Share2, BookOpen, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
 import type { Verse } from '../api/types';
 import { ShareMenu } from './ShareMenu';
 import { useTranslations } from '../translations';
@@ -26,7 +26,6 @@ export function VerseCard({ verse }: VerseCardProps) {
   const currentSurah = useSelector(selectCurrentSurah);
   const surahs = useSelector(selectSurahs);
   const { surahId, verseId } = useParams();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   const selectedAuthor = useSelector(selectSelectedAuthor);
   const [isEditing, setIsEditing] = useState(false);
@@ -140,7 +139,7 @@ export function VerseCard({ verse }: VerseCardProps) {
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
               title={existingNote ? t.notes.editNote : t.notes.addNote}
-              disabled={existingNote}
+              disabled={!!existingNote}
             >
               <MessageSquare className="w-4 h-4" />
             </button>

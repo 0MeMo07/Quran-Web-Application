@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate, useRouteError } from 'react-router-dom';
 import { useTranslations } from '../translations';
 import { Home } from 'lucide-react';

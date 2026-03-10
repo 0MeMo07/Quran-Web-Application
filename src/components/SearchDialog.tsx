@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, X, Loader2, Book, Shuffle, Volume2, Pause } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import DOMPurify from 'dompurify';
@@ -102,10 +102,6 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
 
   const handleAudioPlay = (audioUrl: string, id: number) => {
     playAudio(audioUrl, id);
-  };
-
-  const createMarkup = (html: string) => {
-    return { __html: DOMPurify.sanitize(html) };
   };
 
   if (!isOpen) return null;

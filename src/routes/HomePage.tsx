@@ -1,4 +1,3 @@
-import React from 'react';
 import { useSelector } from 'react-redux';
 import { selectReadingType } from '../store/slices/uiSlice';
 import { selectAllVerses } from '../store/slices/quranSlice';

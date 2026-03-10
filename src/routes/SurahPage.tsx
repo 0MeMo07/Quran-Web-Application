@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { BookLayout } from '../components/BookLayout';
 import { selectAllVerses, setBookCurrentSurahId } from '../store/slices/quranSlice';
@@ -9,7 +9,6 @@ export function SurahPage() {
   const { surahId } = useParams();
   const dispatch = useDispatch<AppDispatch>();
   const allVerses = useSelector(selectAllVerses);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (surahId) {

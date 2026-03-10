@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Scheherazade+New:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
 
 @layer base {
   body {
@@ -6,7 +6,8 @@
   }
   
   .font-arabic {
-    font-family: 'Amiri', serif;
+    font-family: 'Scheherazade New', 'Noto Naskh Arabic', serif;
+    line-height: 2.2;
   }
 }
 

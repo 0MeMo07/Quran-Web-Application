@@ -9,7 +9,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        arabic: ['Amiri', 'serif'],
+        arabic: ['Scheherazade New', 'Noto Naskh Arabic', 'serif'],
         hafs: ['KFGQPC Uthmanic Script HAFS', 'serif'],
       },
       animation: {

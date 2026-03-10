@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { searchQuran, getRandomVerse } from '../../api/quranApi';
 import type { RootState } from '../store';
 import type { SearchHit } from '../../api/types';

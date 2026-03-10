@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { 
-  ChevronLeft, Book, Search, Calendar, ArrowUpRight, X, 
-  Moon, Sun, Grid3X3, List, SortAsc, SortDesc, Filter
+  ChevronLeft, Book, Search, Calendar, BookOpen, Microscope,
+  Moon, Sun, Grid3X3, List, SortAsc, SortDesc, Filter, X
 } from 'lucide-react';
 import { useTranslations } from '../../translations';
-import { selectNotes, selectTheme, toggleTheme } from '../../store/slices/uiSlice';
+import { selectNotes, selectTheme, toggleTheme, setReadingType } from '../../store/slices/uiSlice';
 import type { Note } from '../../store/slices/uiSlice';
 
 type ViewMode = 'list' | 'grid';
@@ -94,7 +94,7 @@ export const NotesLayout = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder={t.search.searchInNotes}
+                  placeholder={t.notes.searchInNotes}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-12 py-3 bg-gray-100 dark:bg-gray-700 border-0 rounded-xl focus:ring-2 focus:ring-emerald-500 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all"
@@ -192,27 +192,36 @@ export const NotesLayout = () => {
                 </div>
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
                   {notes.map((note) => (
-                    <div key={note.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                      <Link
-                        to={`/surah/${note.surahId}/verse/${note.verseId}`}
-                        className="block p-6"
-                      >
-                        <div className="flex items-start justify-between group/note">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                              {t.verse.verse} {note.verseId}
-                              <ArrowUpRight className="w-4 h-4 opacity-0 group-hover/note:opacity-100 transition-opacity" />
-                            </p>
-                            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap line-clamp-3">
-                              {note.content}
-                            </p>
-                            <p className="mt-2 text-xs text-gray-500 flex items-center gap-1.5">
-                              <Calendar className="w-4 h-4" />
-                              {new Date(note.createdAt).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </Link>
+                    <div key={note.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-1">
+                        {t.verse.verse} {note.verseId}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap line-clamp-3 mb-3">
+                        {note.content}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1.5 mb-4">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {new Date(note.createdAt).toLocaleString()}
+                      </p>
+                      {/* Navigation buttons */}
+                      <div className="flex items-center gap-2">
+                        <Link
+                          to={`/surah/${note.surahId}`}
+                          state={{ targetVerseId: note.verseId }}
+                          onClick={() => dispatch(setReadingType('book') as any)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" />
+                          {t.notes.goToBook}
+                        </Link>
+                        <Link
+                          to={`/surah/${note.surahId}/verse/${note.verseId}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-teal-900/30 hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
+                        >
+                          <Microscope className="w-3.5 h-3.5" />
+                          {t.notes.goToDetail}
+                        </Link>
+                      </div>
                     </div>
                   ))}
                 </div>

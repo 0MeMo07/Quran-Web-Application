@@ -41,7 +41,6 @@ export const NoteSection: React.FC<NoteSectionProps> = ({
   const dispatch = useDispatch();
   const notes = useSelector(selectNotes);
   const surahs = useSelector(selectSurahs);
-  const [isEditing, setIsEditing] = useState(false);
   const [noteContent, setNoteContent] = useState('');
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showNotes, setShowNotes] = useState(false);

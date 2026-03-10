@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { MessageSquare, Pencil, Trash2, Save, X } from 'lucide-react';
+import { useState } from 'react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addNote, deleteNote, selectNotes } from '../../store/slices/uiSlice';
+import { deleteNote, selectNotes } from '../../store/slices/uiSlice';
 
 interface CardNoteSectionProps {
   verseId: number;
@@ -26,8 +26,6 @@ interface CardNoteSectionProps {
 export const CardNoteSection: React.FC<CardNoteSectionProps> = ({ verseId, surahId, onDeleteClick, onEditClick, t }) => {
   const dispatch = useDispatch();
   const notes = useSelector(selectNotes);
-  const [isEditing, setIsEditing] = useState(false);
-  const [noteContent, setNoteContent] = useState('');
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   
   // Notu hem sure hem de ayet ID'sine göre bul
@@ -35,25 +33,8 @@ export const CardNoteSection: React.FC<CardNoteSectionProps> = ({ verseId, surah
     note => note.surahId === surahId && note.verseId === verseId
   );
 
-  const handleSave = () => {
-    if (noteContent.trim()) {
-      const newNote = {
-        id: Date.now().toString(),
-        verseId,
-        surahId,
-        content: noteContent.trim(),
-        createdAt: new Date().toISOString(),
-      };
-      dispatch(addNote(newNote));
-      setIsEditing(false);
-      setNoteContent('');
-    }
-  };
-
   const handleDelete = () => {
     dispatch(deleteNote({ surahId, verseId }));
-    setIsEditing(false);
-    setNoteContent('');
     setShowDeleteConfirmation(false);
   };
 

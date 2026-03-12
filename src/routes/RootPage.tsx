@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, memo } from 'react';
+import { useEffect, useState, useCallback, memo, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ChevronLeft, ChevronRight, BookOpen, Search,
@@ -61,21 +61,21 @@ function RootSearchInput({ currentLatin }: { currentLatin: string }) {
   };
 
   return (
-    <form onSubmit={go} className="flex items-center gap-2">
-      <div className="relative">
+    <form onSubmit={go} className="flex items-center gap-2 w-full sm:w-auto">
+      <div className="relative flex-1 sm:flex-none">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
         <input
           type="text"
           value={val}
           onChange={(e) => setVal(e.target.value)}
           placeholder={t.root.searchRootPlaceholder}
-          className="pl-8 pr-3 py-1.5 text-sm w-44 bg-gray-100 dark:bg-gray-700 rounded-lg border border-transparent focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+          className="pl-8 pr-3 py-1.5 text-sm w-full sm:w-44 bg-gray-100 dark:bg-gray-700 rounded-lg border border-transparent focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 transition-all"
         />
       </div>
       <button
         type="submit"
         disabled={!val.trim()}
-        className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-40 transition-colors"
+        className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-40 transition-colors shrink-0"
       >
         {t.root.searchRootBtn}
       </button>
@@ -87,14 +87,126 @@ function RootSearchInput({ currentLatin }: { currentLatin: string }) {
 interface VerseCardProps {
   item: RootVerseItem;
   t: ReturnType<typeof useTranslations>;
+  language: 'en' | 'tr';
 }
 
-const VerseCard = memo(function VerseCard({ item, t }: VerseCardProps) {
+const GRAMMAR_TERM_MAP: Record<string, { tr: string; en: string }> = {
+  isim: { tr: 'İsim', en: 'Noun' },
+  fiil: { tr: 'Fiil', en: 'Verb' },
+  harf: { tr: 'Harf', en: 'Particle' },
+  sifat: { tr: 'Sıfat', en: 'Adjective' },
+  zamir: { tr: 'Zamir', en: 'Pronoun' },
+  edat: { tr: 'Edat', en: 'Preposition' },
+  mecrur: { tr: 'Mecrur', en: 'Genitive' },
+  merfu: { tr: 'Merfu', en: 'Nominative' },
+  mansub: { tr: 'Mansub', en: 'Accusative' },
+  marife: { tr: 'Marife', en: 'Definite' },
+  nekre: { tr: 'Nekre', en: 'Indefinite' },
+  eril: { tr: 'Eril', en: 'Masculine' },
+  disil: { tr: 'Dişil', en: 'Feminine' },
+  tekil: { tr: 'Tekil', en: 'Singular' },
+  cemi: { tr: 'Çoğul', en: 'Plural' },
+  muzari: { tr: 'Muzari', en: 'Present' },
+  mazi: { tr: 'Mazi', en: 'Past' },
+  emir: { tr: 'Emir', en: 'Imperative' },
+};
+
+const GRAMMAR_EN_TOKEN_MAP: Record<string, string> = {
+  isim: 'noun',
+  fiil: 'verb',
+  harf: 'particle',
+  sifat: 'adjective',
+  zamir: 'pronoun',
+  edat: 'preposition',
+  mecrur: 'genitive',
+  merfu: 'nominative',
+  mansub: 'accusative',
+  marife: 'definite',
+  nekre: 'indefinite',
+  belirsiz: 'indefinite',
+  eril: 'masculine',
+  disil: 'feminine',
+  tekil: 'singular',
+  cemi: 'plural',
+  cogul: 'plural',
+  muzari: 'present',
+  mazi: 'past',
+  emir: 'imperative',
+  zaman: 'time',
+  zarf: 'adverb',
+  zarfi: 'adverb',
+  hal: 'state',
+  fail: 'subject',
+  meful: 'object',
+};
+
+function toTitleCase(value: string) {
+  return value.replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function normalizeGrammarKey(value: string) {
+  return value
+    .trim()
+    .toLocaleLowerCase('tr-TR')
+    .replace(/\s+/g, ' ')
+    .replace(/[âàá]/g, 'a')
+    .replace(/[îìí]/g, 'i')
+    .replace(/[ûùú]/g, 'u')
+    .replace(/ı/g, 'i')
+    .replace(/ş/g, 's')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .replace(/[’']/g, '');
+}
+
+function toReadableLabel(value: string, language: 'en' | 'tr') {
+  const key = normalizeGrammarKey(value);
+  const mapped = GRAMMAR_TERM_MAP[key];
+
+  if (mapped) {
+    return language === 'en' ? mapped.en : mapped.tr;
+  }
+
+  const cleaned = value.trim().replace(/\s+/g, ' ');
+  if (!cleaned) {
+    return '';
+  }
+
+  if (language === 'en') {
+    const translated = key
+      .split(/(\s+|\/|,|\+|-)/)
+      .map((part) => {
+        const token = part.trim();
+        if (!token) {
+          return part;
+        }
+        return GRAMMAR_EN_TOKEN_MAP[token] ?? token;
+      })
+      .join('')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return toTitleCase(translated);
+  }
+
+  if (language === 'tr') {
+    return cleaned.charAt(0).toLocaleUpperCase('tr-TR') + cleaned.slice(1);
+  }
+
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+
+const VerseCard = memo(function VerseCard({ item, t, language }: VerseCardProps) {
   const { copy, copied } = useCopy();
-  const props = [
+  const props = Array.from(new Set([
     item.prop_1, item.prop_2, item.prop_3, item.prop_4,
     item.prop_5, item.prop_6, item.prop_7, item.prop_8,
-  ].filter(Boolean);
+  ]
+    .filter(Boolean)
+    .map((prop) => toReadableLabel(prop, language))
+    .filter(Boolean)));
 
   const handleCopy = () => {
     const text = [
@@ -234,7 +346,7 @@ export function RootPage() {
   const navigate = useNavigate();
   const t = useTranslations();
   const selectedAuthor = useSelector(selectSelectedAuthor);
-  const language = useSelector(selectSearchLanguage);
+  const language = useSelector(selectSearchLanguage) as 'en' | 'tr';
 
   const [root, setRoot] = useState<RootDetail | null>(null);
   const [versesData, setVersesData] = useState<RootVersesPagination | null>(null);
@@ -285,6 +397,28 @@ export function RootPage() {
   const displayedVerses: RootVerseItem[] = activeDiff
     ? (versesData?.data.filter((v) => v.rootdiff_id === activeDiff.id) ?? [])
     : (versesData?.data ?? []);
+  const formSampleByDiffId = useMemo(() => {
+    const samples = new Map<number, RootVerseItem>();
+    if (!versesData) return samples;
+    for (const item of versesData.data) {
+      if (!samples.has(item.rootdiff_id)) {
+        samples.set(item.rootdiff_id, item);
+      }
+    }
+    return samples;
+  }, [versesData]);
+
+  const getFormGloss = useCallback((diffId: number) => {
+    const sample = formSampleByDiffId.get(diffId);
+    if (!sample) return null;
+
+    if (language === 'tr') {
+      return sample.turkish || sample.transcription || null;
+    }
+
+    // API, form-level English gloss doesn't exist; use transliteration as concise fallback.
+    return sample.transcription || null;
+  }, [formSampleByDiffId, language]);
 
   /* ── Full-page loading */
   if (loadingRoot) {
@@ -325,14 +459,13 @@ export function RootPage() {
 
   /* ── Meaning — language-aware */
   const primaryMeaning = language === 'tr' ? root.mean : root.mean_en;
-  const secondaryMeaning = language === 'tr' ? root.mean_en : root.mean;
   const primaryTranscription = language === 'tr' ? root.transcription : root.transcription_en;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-gray-800">
       {/* ── Sticky nav */}
       <nav className="sticky top-0 z-20 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-800/50">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+        <div className="max-w-4xl mx-auto px-4 py-2 sm:py-0 sm:h-14 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => navigate(-1)}
@@ -349,12 +482,12 @@ export function RootPage() {
         </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-5 sm:py-8 space-y-5 sm:space-y-6">
         {/* ╔══════════════════════════════ Hero card ══════════════╗ */}
-        <div className="relative overflow-hidden rounded-3xl shadow-xl bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 dark:from-emerald-800 dark:via-emerald-700 dark:to-teal-700 text-white p-8">
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl shadow-xl bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 dark:from-emerald-800 dark:via-emerald-700 dark:to-teal-700 text-white p-5 sm:p-8">
           {/* Decorative large background Arabic text */}
           <div
-            className="absolute -top-4 -right-6 text-[18rem] sm:text-[22rem] leading-none font-arabic text-white/10 select-none pointer-events-none"
+            className="absolute -top-4 -right-6 text-[10rem] sm:text-[22rem] leading-none font-arabic text-white/10 select-none pointer-events-none"
             aria-hidden="true"
             dir="rtl"
           >
@@ -364,17 +497,17 @@ export function RootPage() {
           <div className="relative z-10">
             {/* Badges row */}
             <div className="flex items-center gap-2 mb-5 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-sm font-medium">
+              <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-xs sm:text-sm font-medium">
                 {t.root.title}
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-sm font-mono tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-xs sm:text-sm font-mono tracking-wider">
                 {root.latin}
               </span>
             </div>
 
             {/* Arabic root — large */}
             <p
-              className="text-7xl sm:text-8xl font-arabic font-bold leading-tight mb-2 drop-shadow-lg"
+              className="text-5xl sm:text-8xl font-arabic font-bold leading-tight mb-2 drop-shadow-lg"
               dir="rtl"
               lang="ar"
             >
@@ -383,36 +516,33 @@ export function RootPage() {
 
             {/* Transcription */}
             {primaryTranscription && (
-              <p className="text-white/75 text-lg italic mb-6">
+              <p className="text-white/75 text-base sm:text-lg italic mb-5 sm:mb-6">
                 {primaryTranscription}
               </p>
             )}
 
             {/* Meaning box */}
-            {(primaryMeaning || secondaryMeaning) && (
-              <div className="bg-white/15 backdrop-blur-sm rounded-2xl px-5 py-4 mb-6 space-y-1">
+            {primaryMeaning && (
+              <div className="bg-white/15 backdrop-blur-sm rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 mb-5 sm:mb-6">
                 {primaryMeaning && (
                   <p className="text-white font-medium leading-relaxed">{primaryMeaning}</p>
-                )}
-                {secondaryMeaning && secondaryMeaning !== primaryMeaning && (
-                  <p className="text-white/70 text-sm leading-relaxed">{secondaryMeaning}</p>
                 )}
               </div>
             )}
 
             {/* Stats ribbon */}
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2.5 sm:gap-3">
               <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2.5">
-                <span className="text-2xl font-bold tabular-nums">{totalOccurrences}</span>
+                <span className="text-xl sm:text-2xl font-bold tabular-nums">{totalOccurrences}</span>
                 <span className="text-white/80 text-sm leading-tight">{t.root.totalOccurrences}</span>
               </div>
               <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2.5">
-                <span className="text-2xl font-bold tabular-nums">{root.diffs.length}</span>
+                <span className="text-xl sm:text-2xl font-bold tabular-nums">{root.diffs.length}</span>
                 <span className="text-white/80 text-sm leading-tight">{t.root.forms}</span>
               </div>
               {versesData && (
                 <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2.5">
-                  <span className="text-2xl font-bold tabular-nums">
+                  <span className="text-xl sm:text-2xl font-bold tabular-nums">
                     {new Set(versesData.data.map((v) => v.surah.id)).size}+
                   </span>
                   <span className="text-white/80 text-sm leading-tight">{t.root.uniqueSurahs}</span>
@@ -423,8 +553,8 @@ export function RootPage() {
         </div>
 
         {/* ╔══════════════════════════ Word Forms / Diffs ══════════╗ */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/60 p-5">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/60 p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4 gap-2">
             <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
               <span className="w-1.5 h-5 rounded-full bg-emerald-500 inline-block" />
               {t.root.forms}
@@ -440,11 +570,11 @@ export function RootPage() {
             )}
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
             {/* "All" chip */}
             <button
               onClick={() => setActiveDiff(null)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${
+              className={`inline-flex items-center justify-between gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-all ${
                 !activeDiff
                   ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                   : 'bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-emerald-400 dark:hover:border-emerald-500'
@@ -463,34 +593,44 @@ export function RootPage() {
             </button>
 
             {/* Per-diff chips */}
-            {root.diffs.map((diff) => (
+            {root.diffs.map((diff) => {
+              const formGloss = getFormGloss(diff.id);
+              return (
               <button
                 key={diff.id}
                 onClick={() => setActiveDiff(activeDiff?.id === diff.id ? null : diff)}
-                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm border transition-all ${
+                className={`inline-flex flex-col items-start gap-1 px-3 py-2 rounded-xl text-sm border transition-all text-left ${
                   activeDiff?.id === diff.id
                     ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                     : 'bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-emerald-400 dark:hover:border-emerald-500'
                 }`}
               >
-                <span
-                  className="text-xl font-arabic font-semibold leading-none"
-                  dir="rtl"
-                  lang="ar"
-                >
-                  {diff.diff}
+                <span className="w-full inline-flex items-center justify-between gap-2">
+                  <span
+                    className="text-2xl font-arabic font-semibold leading-none"
+                    dir="rtl"
+                    lang="ar"
+                  >
+                    {diff.diff}
+                  </span>
+                  <span
+                    className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+                      activeDiff?.id === diff.id
+                        ? 'bg-white/20 text-white'
+                        : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                    }`}
+                  >
+                    {diff.count}
+                  </span>
                 </span>
-                <span
-                  className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
-                    activeDiff?.id === diff.id
-                      ? 'bg-white/20 text-white'
-                      : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
-                  }`}
-                >
-                  {diff.count}
-                </span>
+                {formGloss && (
+                  <span className={`text-xs leading-snug line-clamp-2 ${activeDiff?.id === diff.id ? 'text-white/85' : 'text-gray-500 dark:text-gray-400'}`}>
+                    {formGloss}
+                  </span>
+                )}
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -553,7 +693,7 @@ export function RootPage() {
           ) : (
             <div className="space-y-4">
               {displayedVerses.map((item) => (
-                <VerseCard key={item.id} item={item} t={t} />
+                <VerseCard key={item.id} item={item} t={t} language={language} />
               ))}
             </div>
           )}

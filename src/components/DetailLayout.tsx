@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp, BookOpen, Loader2, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -86,9 +86,10 @@ function WordTooltip({ part, language, anchorRef }: WordTooltipProps) {
 interface WordChipProps {
   part: VersePart;
   language: string;
+  index: number;
 }
 
-function WordChip({ part, language }: WordChipProps) {
+function WordChip({ part, language, index }: WordChipProps) {
   const [hovered, setHovered] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
   const t = useTranslations();
@@ -106,22 +107,26 @@ function WordChip({ part, language }: WordChipProps) {
       {hovered && <WordTooltip part={part} language={language} anchorRef={anchorRef} />}
 
       <div
-        className={`px-3 py-2 rounded-xl border transition-all duration-150 text-center min-w-[72px] max-w-[120px] ${
+        className={`relative w-full px-3 py-2.5 rounded-xl border transition-all duration-150 text-center min-h-[102px] ${
           hovered
-            ? 'bg-emerald-50 dark:bg-emerald-900/40 border-emerald-300 dark:border-emerald-600 shadow-md'
+            ? 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/40 dark:to-teal-900/30 border-emerald-300 dark:border-emerald-600 shadow-md -translate-y-0.5'
             : 'bg-gray-50 dark:bg-gray-700/60 border-gray-200 dark:border-gray-600'
         }`}
       >
+        <span className="absolute top-1.5 left-1.5 text-[10px] leading-none px-1.5 py-0.5 rounded-md bg-white/80 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 font-semibold tabular-nums">
+          {index}
+        </span>
+
         {/* Arabic */}
         <p
-          className="text-xl font-arabic text-gray-900 dark:text-white leading-relaxed"
+          className="text-2xl font-arabic text-gray-900 dark:text-white leading-relaxed"
           dir="rtl"
           lang="ar"
         >
           {part.arabic}
         </p>
         {/* Meaning */}
-        <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 w-full truncate leading-tight">
+        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 w-full truncate leading-tight font-medium">
           {meaning}
         </p>
         {/* Root badge */}
@@ -164,6 +169,16 @@ function DetailVerseCard({ verse }: DetailVerseCardProps) {
   const [showFootnotes, setShowFootnotes] = useState(false);
   const analysisRequestIdRef = useRef(0);
   const lastVerseIdRef = useRef(verse.id);
+  const sortedParts = useMemo(() => (parts ? [...parts].sort((a, b) => a.sort_number - b.sort_number) : []), [parts]);
+  const rootCount = useMemo(() => {
+    return new Set(sortedParts.map((part) => part.root?.latin).filter(Boolean)).size;
+  }, [sortedParts]);
+
+  const labels = {
+    words: t.detail.wordCount,
+    roots: t.detail.rootCount,
+    tapHint: t.detail.tapHint,
+  };
 
   const loadVerseParts = useCallback(async (surahId: number, verseNumber: number) => {
     const requestId = ++analysisRequestIdRef.current;
@@ -318,9 +333,25 @@ function DetailVerseCard({ verse }: DetailVerseCardProps) {
         {/* ── Word-by-word analysis ── */}
         {expanded && (
           <div className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
-            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">
-              {t.detail.wordAnalysis}
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                {t.detail.wordAnalysis}
+              </p>
+              {!loadingParts && !partsError && sortedParts.length > 0 && (
+                <div className="flex items-center gap-1.5 text-[11px]">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-semibold">
+                    {sortedParts.length} {labels.words}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-sky-100/70 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 font-semibold">
+                    {rootCount} {labels.roots}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {!loadingParts && !partsError && sortedParts.length > 0 && (
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-3">{labels.tapHint}</p>
+            )}
 
             {loadingParts ? (
               <div className="flex justify-center py-6">
@@ -330,11 +361,11 @@ function DetailVerseCard({ verse }: DetailVerseCardProps) {
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
                 {t.detail.noPartsAvailable}
               </p>
-            ) : parts && parts.length > 0 ? (
+            ) : sortedParts.length > 0 ? (
               /* RTL word grid */
-              <div className="flex flex-wrap gap-2 justify-end" dir="rtl">
-                {[...parts].sort((a, b) => a.sort_number - b.sort_number).map((part) => (
-                  <WordChip key={part.id} part={part} language={language} />
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5" dir="rtl">
+                {sortedParts.map((part, index) => (
+                  <WordChip key={part.id} part={part} language={language} index={index + 1} />
                 ))}
               </div>
             ) : (

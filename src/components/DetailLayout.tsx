@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp, BookOpen, Loader2, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -162,17 +162,60 @@ function DetailVerseCard({ verse }: DetailVerseCardProps) {
   const [loadingParts, setLoadingParts] = useState(false);
   const [partsError, setPartsError] = useState(false);
   const [showFootnotes, setShowFootnotes] = useState(false);
+  const analysisRequestIdRef = useRef(0);
+  const lastVerseIdRef = useRef(verse.id);
+
+  const loadVerseParts = useCallback(async (surahId: number, verseNumber: number) => {
+    const requestId = ++analysisRequestIdRef.current;
+    setLoadingParts(true);
+    setPartsError(false);
+
+    try {
+      const nextParts = await fetchVerseParts(surahId, verseNumber);
+      if (requestId === analysisRequestIdRef.current) {
+        setParts(nextParts);
+      }
+    } catch {
+      if (requestId === analysisRequestIdRef.current) {
+        setParts(null);
+        setPartsError(true);
+      }
+    } finally {
+      if (requestId === analysisRequestIdRef.current) {
+        setLoadingParts(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (lastVerseIdRef.current === verse.id) {
+      return;
+    }
+
+    lastVerseIdRef.current = verse.id;
+
+    // Invalidate old in-flight requests and clear stale analysis when verse changes.
+    analysisRequestIdRef.current += 1;
+    setParts(null);
+    setPartsError(false);
+    setLoadingParts(false);
+    setShowFootnotes(false);
+
+    if (expanded) {
+      loadVerseParts(verse.surah_id, verse.verse_number);
+    }
+  }, [verse.id, verse.surah_id, verse.verse_number, expanded, loadVerseParts]);
 
   const handleToggle = () => {
-    if (!expanded && parts === null) {
-      setLoadingParts(true);
-      setPartsError(false);
-      fetchVerseParts(verse.surah_id, verse.verse_number)
-        .then(setParts)
-        .catch(() => setPartsError(true))
-        .finally(() => setLoadingParts(false));
+    if (!expanded) {
+      if (parts === null && !loadingParts) {
+        loadVerseParts(verse.surah_id, verse.verse_number);
+      }
+      setExpanded(true);
+      return;
     }
-    setExpanded((v) => !v);
+
+    setExpanded(false);
   };
 
   return (

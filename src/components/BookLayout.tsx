@@ -14,6 +14,7 @@ import { BookLayoutCollapsedHeader } from './book/BookLayoutCollapsedHeader';
 import { BookLayoutSurahSection } from './book/BookLayoutSurahSection';
 import { BookLayoutLoadingOverlay } from './book/BookLayoutLoadingOverlay';
 import { useBookLayoutPagination } from '../hooks/useBookLayoutPagination';
+import { useBookLayoutRoutingSync } from '../hooks/useBookLayoutRoutingSync';
 
 interface BookLayoutProps {
   verses: Verse[];
@@ -38,7 +39,6 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   const [fontSize, setFontSize] = useState(16);
   const [lineHeight, setLineHeight] = useState(1.5);
   const [showSettings, setShowSettings] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const { surahId, verseId, pageNumber: urlPageNumber } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -90,86 +90,26 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const targetSurah = surahs.find(s => s.name === searchSurah);
-    
-    if (targetSurah) {
-      const targetVerse = verses.find(v => 
-        v.surah_id === targetSurah.id && 
-        v.verse_number === Number(searchVerse)
-      );
-
-      if (targetVerse) {
-        // Update URL to reflect surah/page without navigating to VersePage
-        navigate(`/surah/${targetSurah.id}/page/${targetVerse.page}`, { replace: true });
-        
-        setCurrentPage(targetVerse.page);
-        setInputPage(targetVerse.page.toString());
-        dispatch(setBookCurrentSurahId(targetSurah.id));
-        
-        setTimeout(() => {
-          const verseElement = document.querySelector(
-            `[data-verse-id="${targetVerse.verse_number}"][data-surah-id="${targetSurah.id}"]`
-          );
-          if (verseElement) {
-            verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            verseElement.classList.add('bg-blue-50', 'dark:bg-blue-900/20');
-            setTimeout(() => {
-              verseElement.classList.remove('bg-blue-50', 'dark:bg-blue-900/20');
-            }, 2000);
-          }
-        }, 500);
-      }
-    }
-    setShowSurahDropdown(false);
-    setShowVerseDropdown(false);
-  };
-
-  const updateCurrentSurah = () => {
-    const verseElements = document.querySelectorAll('[data-surah-id]');
-    const headerHeight = 200;
-    
-    let currentSurah = null;
-    for (const element of verseElements) {
-      const rect = element.getBoundingClientRect();
-      const surahId = Number(element.getAttribute('data-surah-id'));
-      
-      if (rect.top <= headerHeight) {
-        currentSurah = surahId;
-      }
-    }
-    
-    if (currentSurah !== null && currentSurah !== currentSurahId) {
-      dispatch(setBookCurrentSurahId(currentSurah));
-      
-      //otomatik surah seçip inputa yazdırma
-      // const currentSurahName = surahs.find(s => s.id === currentSurah)?.name || '';
-      // setSearchSurah(currentSurahName);
-    }
-  };
-
-
-  useEffect(() => {
-    window.addEventListener('scroll', updateCurrentSurah);
-    updateCurrentSurah();
-
-    return () => {
-      window.removeEventListener('scroll', updateCurrentSurah);
-    };
-  }, [currentPage]);
-
-  useEffect(() => {
-    if (currentPageVerses.length > 0) {
-      const firstSurahId = currentPageVerses[0].surah_id;
-      dispatch(setBookCurrentSurahId(firstSurahId));
-      
-      // Eğer URL'de surahId yoksa ve verseId yoksa, URL'yi güncelle
-      if (!surahId && !verseId && currentPage > 0) {
-        navigate(`/surah/${firstSurahId}/page/${currentPage}`, { replace: true });
-      }
-    }
-  }, [currentPage, dispatch, surahId, verseId, navigate, currentPageVerses]);
+  const { handleSearch } = useBookLayoutRoutingSync({
+    verses,
+    surahs,
+    searchSurah,
+    searchVerse,
+    setShowSurahDropdown,
+    setShowVerseDropdown,
+    surahId,
+    verseId,
+    urlPageNumber,
+    currentPage,
+    totalPages,
+    currentSurahId,
+    currentPageVerses,
+    locationState: location.state,
+    navigate,
+    setCurrentPage,
+    setInputPage,
+    setCurrentSurahIdInStore: (id) => dispatch(setBookCurrentSurahId(id)),
+  });
 
   const {
     handleNextPage,
@@ -194,121 +134,6 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
     const surah = surahs.find(s => s.id === currentSurahId);
     return surah?.name || t.sidebar.selectSurah;
   };
-
-  useEffect(() => {
-    if (surahId && verseId) {
-      const targetVerse = verses.find(
-        v => v.surah_id === Number(surahId) && v.verse_number === Number(verseId)
-      );
-      
-      if (targetVerse) {
-        setCurrentPage(targetVerse.page);
-        setInputPage(targetVerse.page.toString());
-        dispatch(setBookCurrentSurahId(Number(surahId)));
-        
-        // Sayfa render olduktan sonra scroll yap
-        setTimeout(() => {
-          const verseElement = document.querySelector(
-            `[data-verse-id="${targetVerse.verse_number}"][data-surah-id="${Number(surahId)}"]`
-          );
-          if (verseElement) {
-            verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            verseElement.classList.add('bg-blue-50', 'dark:bg-blue-900/20');
-            setTimeout(() => {
-              verseElement.classList.remove('bg-blue-50', 'dark:bg-blue-900/20');
-            }, 2000);
-          }
-        }, 300);
-      }
-    } else if (surahId && urlPageNumber) {
-      // URL'de pageNumber varsa, o sayfaya git
-      const pageNum = Number(urlPageNumber);
-      if (!isNaN(pageNum) && pageNum >= 0 && pageNum <= totalPages) {
-        setCurrentPage(pageNum);
-        setInputPage(pageNum.toString());
-        dispatch(setBookCurrentSurahId(Number(surahId)));
-        window.scrollTo(0, 0);
-      }
-    } else if (surahId && !verseId) {
-      // URL'de pageNumber yoksa ama surahId varsa, ilk ayetin sayfasına git ve URL'yi güncelle
-      const stateVerse = (location.state as any)?.targetVerseId;
-      const targetVerseNumber = stateVerse ? Number(stateVerse) : null;
-      const firstVerseOfSurah = targetVerseNumber
-        ? verses.find(v => v.surah_id === Number(surahId) && v.verse_number === targetVerseNumber)
-        : verses.find(v => v.surah_id === Number(surahId));
-      if (firstVerseOfSurah) {
-        const pageToSet = firstVerseOfSurah.page;
-        setCurrentPage(pageToSet);
-        setInputPage(pageToSet.toString());
-        dispatch(setBookCurrentSurahId(Number(surahId)));
-        navigate(`/surah/${surahId}/page/${pageToSet}`, { replace: true });
-        window.scrollTo(0, 0);
-        if (targetVerseNumber) {
-          setTimeout(() => {
-            const el = document.querySelector(
-              `[data-verse-id="${targetVerseNumber}"][data-surah-id="${Number(surahId)}"]`
-            );
-            if (el) {
-              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              el.classList.add('bg-blue-50', 'dark:bg-blue-900/20');
-              setTimeout(() => el.classList.remove('bg-blue-50', 'dark:bg-blue-900/20'), 2000);
-            }
-          }, 500);
-        }
-      }
-    }
-  }, [surahId, verseId, urlPageNumber, verses, dispatch, totalPages]);
-
-  // İlk yükleme tamamlandıktan sonra flag'i false yap
-  useEffect(() => {
-    if (verses.length > 0 && surahId) {
-      setIsInitialLoad(false);
-    }
-  }, [verses.length, surahId]);
-
-  // Sayfa değiştiğinde URL'yi güncelle (verseId yoksa ve sayfa değiştirme fonksiyonları dışında)
-  // NOT: handleNextPage, handlePreviousPage, handlePageChange zaten URL'yi güncelliyor
-  // Bu useEffect sadece başka bir şekilde sayfa değiştiğinde çalışmalı
-  useEffect(() => {
-    // İlk yükleme sırasında çalışmasın
-    if (isInitialLoad) return;
-    
-    // surahId yoksa currentSurahId kullan
-    const targetSurahId = surahId || currentSurahId;
-    if (targetSurahId && !verseId && currentPage > 0) {
-      // URL'deki pageNumber ile currentPage farklıysa güncelle
-      const urlPage = urlPageNumber ? Number(urlPageNumber) : null;
-      if (urlPage !== currentPage) {
-        navigate(`/surah/${targetSurahId}/page/${currentPage}`, { replace: true });
-      }
-    }
-  }, [currentPage, surahId, currentSurahId, verseId, urlPageNumber, navigate, isInitialLoad]);
-
-  // Sayfa değiştiğinde ve verseId varsa, ayete scroll et
-  useEffect(() => {
-    if (surahId && verseId && currentPage > 0) {
-      const targetVerse = verses.find(
-        v => v.surah_id === Number(surahId) && v.verse_number === Number(verseId) && v.page === currentPage
-      );
-      
-      if (targetVerse) {
-        // Sayfa render olduktan sonra scroll yap
-        setTimeout(() => {
-          const verseElement = document.querySelector(
-            `[data-verse-id="${targetVerse.verse_number}"][data-surah-id="${Number(surahId)}"]`
-          );
-          if (verseElement) {
-            verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            verseElement.classList.add('bg-blue-50', 'dark:bg-blue-900/20');
-            setTimeout(() => {
-              verseElement.classList.remove('bg-blue-50', 'dark:bg-blue-900/20');
-            }, 2000);
-          }
-        }, 300);
-      }
-    }
-  }, [currentPage, surahId, verseId, verses]);
-
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-2 sm:p-4">

@@ -139,6 +139,17 @@ export function useBookLayoutRoutingSync({
   }, [currentPage, currentPageVerses, navigate, setCurrentSurahIdInStore, surahId, verseId]);
 
   useEffect(() => {
+    if (!surahId || !urlPageNumber) {
+      return;
+    }
+
+    const pageNum = Number(urlPageNumber);
+    if (!Number.isNaN(pageNum) && pageNum >= 0 && pageNum <= totalPages) {
+      setInputPage((prevPage) => (prevPage === urlPageNumber ? prevPage : urlPageNumber));
+    }
+  }, [surahId, urlPageNumber, totalPages, setInputPage]);
+
+  useEffect(() => {
     if (surahId && verseId) {
       const targetVerse = verses.find(
         (v) => v.surah_id === Number(surahId) && v.verse_number === Number(verseId)
@@ -154,11 +165,6 @@ export function useBookLayoutRoutingSync({
     }
 
     if (surahId && urlPageNumber) {
-      const pageNum = Number(urlPageNumber);
-      if (!Number.isNaN(pageNum) && pageNum >= 0 && pageNum <= totalPages) {
-        setInputPage(pageNum.toString());
-        setCurrentSurahIdInStore(Number(surahId));
-      }
       return;
     }
 

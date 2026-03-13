@@ -98,6 +98,8 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
     handleNextPage,
     handlePreviousPage,
     handlePageChange,
+    handlePageBlur,
+    handlePageKeyDown,
   } = useBookLayoutPagination({
     currentPage,
     totalPages,
@@ -165,6 +167,8 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
           onPrevPage={handlePreviousPage}
           onNextPage={handleNextPage}
           onPageInputChange={handlePageChange}
+          onPageInputBlur={handlePageBlur}
+          onPageInputKeyDown={handlePageKeyDown}
         />
 
         <BookLayoutCollapsedHeader

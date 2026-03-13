@@ -32,6 +32,8 @@ interface BookLayoutExpandedHeaderProps {
   onPrevPage: () => void;
   onNextPage: () => void;
   onPageInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onPageInputBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onPageInputKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 export function BookLayoutExpandedHeader({
@@ -60,6 +62,8 @@ export function BookLayoutExpandedHeader({
   onPrevPage,
   onNextPage,
   onPageInputChange,
+  onPageInputBlur,
+  onPageInputKeyDown,
 }: BookLayoutExpandedHeaderProps) {
   return (
     <div
@@ -154,6 +158,8 @@ export function BookLayoutExpandedHeader({
             type="text"
             value={inputPage}
             onChange={onPageInputChange}
+            onBlur={onPageInputBlur}
+            onKeyDown={onPageInputKeyDown}
             inputSize="sm"
             className="w-12 sm:w-16 text-center px-1 sm:px-2 py-1 text-sm sm:text-base "
           />

@@ -30,7 +30,7 @@ export function useBookLayoutPagination({
       setInputPage(nextPage.toString());
       window.scrollTo(0, 0);
 
-      const targetSurahId = surahId || currentSurahId;
+      const targetSurahId = currentSurahId ?? (surahId ? Number(surahId) : null);
       if (targetSurahId) {
         navigate(`/surah/${targetSurahId}/page/${nextPage}`, { replace: true });
       }
@@ -50,18 +50,53 @@ export function useBookLayoutPagination({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       setInputPage(value);
+    },
+    [setInputPage]
+  );
 
-      const pageNumber = Number(value);
+  const commitPageInput = useCallback(
+    (rawValue: string) => {
+      const trimmedValue = rawValue.trim();
+      if (!trimmedValue) {
+        setInputPage(currentPage.toString());
+        return;
+      }
+
+      const pageNumber = Number(trimmedValue);
       if (!Number.isNaN(pageNumber) && pageNumber >= 0 && pageNumber <= totalPages) {
         navigateToPage(pageNumber);
+        return;
       }
+
+      setInputPage(currentPage.toString());
     },
-    [navigateToPage, setInputPage, totalPages]
+    [currentPage, navigateToPage, setInputPage, totalPages]
+  );
+
+  const handlePageBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      commitPageInput(e.target.value);
+    },
+    [commitPageInput]
+  );
+
+  const handlePageKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== 'Enter') {
+        return;
+      }
+
+      e.preventDefault();
+      commitPageInput(e.currentTarget.value);
+    },
+    [commitPageInput]
   );
 
   return {
     handleNextPage,
     handlePreviousPage,
     handlePageChange,
+    handlePageBlur,
+    handlePageKeyDown,
   };
 }

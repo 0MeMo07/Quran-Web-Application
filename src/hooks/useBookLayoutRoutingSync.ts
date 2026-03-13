@@ -12,8 +12,7 @@ interface UseBookLayoutRoutingSyncParams {
   surahs: SurahOption[];
   searchSurah: string;
   searchVerse: string;
-  setShowSurahDropdown: Dispatch<SetStateAction<boolean>>;
-  setShowVerseDropdown: Dispatch<SetStateAction<boolean>>;
+  closeDropdowns: () => void;
   surahId?: string;
   verseId?: string;
   urlPageNumber?: string;
@@ -52,8 +51,7 @@ export function useBookLayoutRoutingSync({
   surahs,
   searchSurah,
   searchVerse,
-  setShowSurahDropdown,
-  setShowVerseDropdown,
+  closeDropdowns,
   surahId,
   verseId,
   urlPageNumber,
@@ -88,8 +86,7 @@ export function useBookLayoutRoutingSync({
         }
       }
 
-      setShowSurahDropdown(false);
-      setShowVerseDropdown(false);
+      closeDropdowns();
     },
     [
       navigate,
@@ -98,8 +95,7 @@ export function useBookLayoutRoutingSync({
       setCurrentPage,
       setCurrentSurahIdInStore,
       setInputPage,
-      setShowSurahDropdown,
-      setShowVerseDropdown,
+      closeDropdowns,
       surahs,
       verses,
     ]

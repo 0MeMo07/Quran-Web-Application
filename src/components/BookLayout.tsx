@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSelector,useDispatch } from 'react-redux';
 import { selectSurahs } from '../store/slices/quranSlice';
 import { Verse } from '../api/types';
@@ -11,10 +11,10 @@ import { BookLayoutTopActions } from './book/BookLayoutTopActions';
 import { BookLayoutSettingsPanel } from './book/BookLayoutSettingsPanel';
 import { BookLayoutExpandedHeader } from './book/BookLayoutExpandedHeader';
 import { BookLayoutCollapsedHeader } from './book/BookLayoutCollapsedHeader';
-import { BookLayoutSurahSection } from './book/BookLayoutSurahSection';
-import { BookLayoutLoadingOverlay } from './book/BookLayoutLoadingOverlay';
+import { BookLayoutContent } from './book/BookLayoutContent';
 import { useBookLayoutPagination } from '../hooks/useBookLayoutPagination';
 import { useBookLayoutRoutingSync } from '../hooks/useBookLayoutRoutingSync';
+import { useBookLayoutSearch } from '../hooks/useBookLayoutSearch';
 
 interface BookLayoutProps {
   verses: Verse[];
@@ -26,15 +26,8 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   const t = useTranslations();
   const surahs = useSelector(selectSurahs);
   const [currentPage, setCurrentPage] = useState(0);
-  //const [currentSurahId, setCurrentSurahId] = useState<number | null>(null);
   const [showFootnotes, setShowFootnotes] = useState<{ [key: number]: boolean }>({});
   const [inputPage, setInputPage] = useState('0');
-  const [searchSurah, setSearchSurah] = useState('');
-  const [searchVerse, setSearchVerse] = useState('');
-  const [showSurahDropdown, setShowSurahDropdown] = useState(false);
-  const [showVerseDropdown, setShowVerseDropdown] = useState(false);
-  const [filteredSurahs, setFilteredSurahs] = useState(surahs);
-  const [availableVerses, setAvailableVerses] = useState<number[]>([]);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [fontSize, setFontSize] = useState(16);
   const [lineHeight, setLineHeight] = useState(1.5);
@@ -55,48 +48,28 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
     return acc;
   }, {} as { [key: number]: Verse[] });
 
-  useEffect(() => {
-    const selectedSurah = surahs.find(s => s.name === searchSurah);
-    if (selectedSurah) {
-      const surahVerses = verses.filter(v => v.surah_id === selectedSurah.id);
-      const verseNumbers = [...new Set(surahVerses.map(v => v.verse_number))];
-      setAvailableVerses(verseNumbers.sort((a, b) => a - b));
-    }
-  }, [searchSurah, verses]);
-
-  useEffect(() => {
-    if (searchSurah) {
-      const filtered = surahs.filter(s => 
-        s.name.toLowerCase().includes(searchSurah.toLowerCase())
-      );
-      setFilteredSurahs(filtered);
-    } else {
-      setFilteredSurahs(surahs);
-    }
-  }, [searchSurah, surahs]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.surah-dropdown') && !target.closest('.surah-input')) {
-        setShowSurahDropdown(false);
-      }
-      if (!target.closest('.verse-dropdown') && !target.closest('.verse-input')) {
-        setShowVerseDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const {
+    searchSurah,
+    searchVerse,
+    showSurahDropdown,
+    showVerseDropdown,
+    filteredSurahs,
+    availableVerses,
+    handleSearchSurahChange,
+    handleSearchVerseChange,
+    handleSurahInputFocus,
+    handleVerseInputFocus,
+    handleSurahSelect,
+    handleVerseSelect,
+    closeDropdowns,
+  } = useBookLayoutSearch({ surahs, verses });
 
   const { handleSearch } = useBookLayoutRoutingSync({
     verses,
     surahs,
     searchSurah,
     searchVerse,
-    setShowSurahDropdown,
-    setShowVerseDropdown,
+    closeDropdowns,
     surahId,
     verseId,
     urlPageNumber,
@@ -173,21 +146,12 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
           availableVerses={availableVerses}
           inputPage={inputPage}
           onSearchSubmit={handleSearch}
-          onSearchSurahChange={(value) => {
-            setSearchSurah(value);
-            setShowSurahDropdown(true);
-          }}
-          onSearchVerseChange={setSearchVerse}
-          onSurahInputFocus={() => setShowSurahDropdown(true)}
-          onVerseInputFocus={() => setShowVerseDropdown(true)}
-          onSurahSelect={(surahName) => {
-            setSearchSurah(surahName);
-            setShowSurahDropdown(false);
-          }}
-          onVerseSelect={(verseNumber) => {
-            setSearchVerse(verseNumber.toString());
-            setShowVerseDropdown(false);
-          }}
+          onSearchSurahChange={handleSearchSurahChange}
+          onSearchVerseChange={handleSearchVerseChange}
+          onSurahInputFocus={handleSurahInputFocus}
+          onVerseInputFocus={handleVerseInputFocus}
+          onSurahSelect={handleSurahSelect}
+          onVerseSelect={handleVerseSelect}
           onPrevPage={handlePreviousPage}
           onNextPage={handleNextPage}
           onPageInputChange={handlePageChange}
@@ -203,24 +167,18 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
           onNextPage={handleNextPage}
         />
 
-        <div className="p-3 sm:p-6 space-y-6 relative min-h-[400px]">
-          <BookLayoutLoadingOverlay isLoading={isLoading} loadingText={t.loading} />
-
-          {Object.entries(versesBySurah).map(([surahId, surahVerses]) => (
-            <BookLayoutSurahSection
-              key={surahId}
-              surahId={surahId}
-              surahVerses={surahVerses}
-              surahs={surahs}
-              viewType={viewType}
-              fontSize={fontSize}
-              lineHeight={lineHeight}
-              showFootnotes={showFootnotes}
-              onToggleFootnote={toggleFootnote}
-              t={t}
-            />
-          ))}
-        </div>
+        <BookLayoutContent
+          isLoading={isLoading}
+          loadingText={t.loading}
+          versesBySurah={versesBySurah}
+          surahs={surahs}
+          viewType={viewType}
+          fontSize={fontSize}
+          lineHeight={lineHeight}
+          showFootnotes={showFootnotes}
+          onToggleFootnote={toggleFootnote}
+          t={t}
+        />
       </div>
     </div>
   );

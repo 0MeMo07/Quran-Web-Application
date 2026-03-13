@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useEffect, type Dispatch, type SetStateAction } from 'react';
 import { type NavigateFunction } from 'react-router-dom';
 import { type Verse } from '../api/types';
 
@@ -65,8 +65,6 @@ export function useBookLayoutRoutingSync({
   setInputPage,
   setCurrentSurahIdInStore,
 }: UseBookLayoutRoutingSyncParams) {
-  const isInitialLoadRef = useRef(true);
-
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
@@ -201,26 +199,6 @@ export function useBookLayoutRoutingSync({
     navigate,
     locationState,
   ]);
-
-  useEffect(() => {
-    if (verses.length > 0 && surahId) {
-      isInitialLoadRef.current = false;
-    }
-  }, [surahId, verses.length]);
-
-  useEffect(() => {
-    if (isInitialLoadRef.current) {
-      return;
-    }
-
-    const targetSurahId = surahId || currentSurahId;
-    if (targetSurahId && !verseId && currentPage > 0) {
-      const urlPage = urlPageNumber ? Number(urlPageNumber) : null;
-      if (urlPage !== currentPage) {
-        navigate(`/surah/${targetSurahId}/page/${currentPage}`, { replace: true });
-      }
-    }
-  }, [currentPage, currentSurahId, navigate, surahId, verseId, urlPageNumber]);
 
   useEffect(() => {
     if (surahId && verseId && currentPage > 0) {

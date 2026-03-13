@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import { useSelector,useDispatch } from 'react-redux';
 import { selectSurahs } from '../store/slices/quranSlice';
 import { Verse } from '../api/types';
@@ -8,11 +7,13 @@ import { selectBookCurrentSurahId, setBookCurrentSurahId  } from '../store/slice
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { selectTranslationsLoading } from '../store/slices/translationsSlice';
 import { selectViewType, setViewType } from '../store/slices/uiSlice';
-import { NoteSection } from './notes/BookNoteSection';
 import { BookLayoutTopActions } from './book/BookLayoutTopActions';
 import { BookLayoutSettingsPanel } from './book/BookLayoutSettingsPanel';
 import { BookLayoutExpandedHeader } from './book/BookLayoutExpandedHeader';
 import { BookLayoutCollapsedHeader } from './book/BookLayoutCollapsedHeader';
+import { BookLayoutSurahSection } from './book/BookLayoutSurahSection';
+import { BookLayoutLoadingOverlay } from './book/BookLayoutLoadingOverlay';
+import { useBookLayoutPagination } from '../hooks/useBookLayoutPagination';
 
 interface BookLayoutProps {
   verses: Verse[];
@@ -170,51 +171,19 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
     }
   }, [currentPage, dispatch, surahId, verseId, navigate, currentPageVerses]);
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      const newPage = currentPage + 1;
-      setCurrentPage(newPage);
-      setInputPage(newPage.toString());
-      window.scrollTo(0, 0);
-      // Sayfa değiştiğinde URL'yi page formatına güncelle
-      // surahId yoksa currentSurahId kullan
-      const targetSurahId = surahId || currentSurahId;
-      if (targetSurahId) {
-        navigate(`/surah/${targetSurahId}/page/${newPage}`, { replace: true });
-      }
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (currentPage > 0) {
-      const newPage = currentPage - 1;
-      setCurrentPage(newPage);
-      setInputPage(newPage.toString());
-      window.scrollTo(0, 0);
-      // Sayfa değiştiğinde URL'yi page formatına güncelle
-      // surahId yoksa currentSurahId kullan
-      const targetSurahId = surahId || currentSurahId;
-      if (targetSurahId) {
-        navigate(`/surah/${targetSurahId}/page/${newPage}`, { replace: true });
-      }
-    }
-  };
-
-  const handlePageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputPage(value);
-    const pageNumber = Number(value);
-    if (!isNaN(pageNumber) && pageNumber >= 0 && pageNumber <= totalPages) {
-      setCurrentPage(pageNumber);
-      window.scrollTo(0, 0);
-      // Sayfa değiştiğinde URL'yi page formatına güncelle
-      // surahId yoksa currentSurahId kullan
-      const targetSurahId = surahId || currentSurahId;
-      if (targetSurahId) {
-        navigate(`/surah/${targetSurahId}/page/${pageNumber}`, { replace: true });
-      }
-    }
-  };
+  const {
+    handleNextPage,
+    handlePreviousPage,
+    handlePageChange,
+  } = useBookLayoutPagination({
+    currentPage,
+    totalPages,
+    surahId,
+    currentSurahId,
+    navigate,
+    setCurrentPage,
+    setInputPage,
+  });
 
   const toggleFootnote = (verseId: number) => {
     setShowFootnotes((prev) => ({ ...prev, [verseId]: !prev[verseId] }));
@@ -410,144 +379,21 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
         />
 
         <div className="p-3 sm:p-6 space-y-6 relative min-h-[400px]">
-          {isLoading ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm z-10">
-              <div className="text-center">
-                <Loader2 className="w-10 h-10 animate-spin text-emerald-600 dark:text-emerald-400 mx-auto" />
-                <p className="mt-4 text-gray-600 dark:text-gray-300">{t.loading}</p>
-              </div>
-            </div>
-          ) : null}
+          <BookLayoutLoadingOverlay isLoading={isLoading} loadingText={t.loading} />
 
           {Object.entries(versesBySurah).map(([surahId, surahVerses]) => (
-            <div key={surahId} data-surah-id={surahId}>
-              <div className="flex items-center justify-center mb-6 relative">
-                <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
-                <h2 className="relative px-6 py-2 bg-white dark:bg-gray-800 text-lg sm:text-xl font-semibold">
-                  <span className="bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
-                {surahs.find(s => s.id === Number(surahId))?.name}
-                  </span>
-              </h2>
-              </div>
-              
-
-              <div
-                className={`
-                  ${viewType === 'kuran' 
-                    ? 'rtl text-right px-8 py-6 leading-[3] max-w-4xl mx-auto whitespace-normal'
-                    : 'space-y-4'
-                  }
-                `}
-                dir={viewType === 'kuran' ? 'rtl' : 'ltr'}
-              >
-              {surahVerses.map((verse) => (
-                <div 
-                  key={verse.id}
-                  data-verse-id={verse.verse_number}
-                  data-surah-id={verse.surah_id}
-                  className="relative group"
-                >
-                  {/* Kuran metni */}
-                  {(viewType === 'kuran' || viewType === 'kuran+meal') && (
-                    <div className={viewType === 'kuran' ? 'inline break-words' : 'mb-4'}>
-                      <span
-                        className={`
-                          font-scheherazade text-gray-800 dark:text-gray-200 select-text tracking-wide
-                          ${viewType === 'kuran' 
-                            ? 'text-4xl mx-1 inline break-words'
-                            : 'text-3xl block text-right'
-                          }
-                        `}
-                        style={{ 
-                          wordSpacing: '0.1em',
-                          fontSize: viewType === 'kuran' 
-                            ? `${fontSize * 2}px`
-                            : `${fontSize * 2}px`
-                        }}
-                      >
-                        {verse.verse}
-                        {viewType === 'kuran' && (
-                          <span 
-                            className="inline-block mx-1 text-gray-500 dark:text-gray-400 align-middle"
-                            style={{
-                              fontSize: `${fontSize}px`
-                            }}
-                          >
-                            ﴿{verse.verse_number}﴾
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Meal */}
-                  {(viewType === 'meal' || viewType === 'meal+kuran' || viewType === 'kuran+meal') && (
-                    <div className={`
-                      ${viewType !== 'meal' ? 'border-t dark:border-gray-700 pt-4' : ''}
-                    `}>
-                  <p className="text-gray-800 dark:text-gray-200">
-                      <span 
-                        className="text-gray-700 dark:text-gray-300"
-                            style={{ fontSize: `${fontSize}px`, lineHeight }}
-                      >
-                      {verse.translation?.text}{' '}
-                    </span>
-                      <span 
-                        className="text-gray-600 dark:text-gray-400 font-bold"
-                            style={{ fontSize: `${fontSize * 0.9}px`, lineHeight }}
-                      >
-                      ﴾{verse.verse_number}﴿
-                    </span>
-                  </p>
-                    </div>
-                  )}
-
-                  {viewType !== 'kuran' && (verse.translation?.footnotes?.length ?? 0) > 0 && (
-                    <div className={`
-                      ${viewType === 'meal' ? 'mt-2' : 'mt-3'}
-                    `}>
-                  <button
-                    onClick={() => toggleFootnote(verse.id)}
-                        className="text-emerald-600 dark:text-emerald-400 hover:underline text-sm flex items-center gap-2"
-                  >
-                        <span style={{ fontSize: `${fontSize * 0.75}px` }}>
-                      {showFootnotes[verse.id] ? t.verse.hideFootnotes : t.verse.showFootnotes}
-                        </span>
-                        {showFootnotes[verse.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                  </button>
-
-                      {showFootnotes[verse.id] && (
-                        <div className="mt-2 pl-4 border-l-2 border-emerald-200 dark:border-emerald-800 space-y-2">
-                      {verse.translation?.footnotes?.map((footnote) => (
-                          <p 
-                            key={footnote.id} 
-                            className="text-gray-600 dark:text-gray-400 italic"
-                                style={{ fontSize: `${fontSize * 0.8}px`, lineHeight }}
-                          >
-                                <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                                  [{footnote.number}]
-                                </span>{' '}
-                                {footnote.text}
-                        </p>
-                      ))}
-                        </div>
-                      )}
-                  </div>
-                )}
-
-                <NoteSection
-                  verseId={verse.verse_number}
-                  surahId={verse.surah_id}
-                  t={t}
-                  fontSize={fontSize}
-                  lineHeight={lineHeight}
-                  verseText={verse.translation?.text}
-                  verseNumber={verse.verse_number}
-                />
-              </div>
-            ))}
-              </div>
-            </div>
+            <BookLayoutSurahSection
+              key={surahId}
+              surahId={surahId}
+              surahVerses={surahVerses}
+              surahs={surahs}
+              viewType={viewType}
+              fontSize={fontSize}
+              lineHeight={lineHeight}
+              showFootnotes={showFootnotes}
+              onToggleFootnote={toggleFootnote}
+              t={t}
+            />
           ))}
         </div>
       </div>

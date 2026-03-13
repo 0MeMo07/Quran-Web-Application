@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Search, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import { useSelector,useDispatch } from 'react-redux';
 import { selectSurahs } from '../store/slices/quranSlice';
 import { Verse } from '../api/types';
@@ -11,6 +11,8 @@ import { selectViewType, setViewType } from '../store/slices/uiSlice';
 import { NoteSection } from './notes/BookNoteSection';
 import { BookLayoutTopActions } from './book/BookLayoutTopActions';
 import { BookLayoutSettingsPanel } from './book/BookLayoutSettingsPanel';
+import { BookLayoutExpandedHeader } from './book/BookLayoutExpandedHeader';
+import { BookLayoutCollapsedHeader } from './book/BookLayoutCollapsedHeader';
 
 interface BookLayoutProps {
   verses: Verse[];
@@ -360,147 +362,52 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
           setLineHeight={setLineHeight}
         />
 
-        <div 
-          className={`sticky top-16 bg-white dark:bg-gray-800 z-10 border-b border-gray-200 dark:border-gray-700 transition-all duration-500 ease-in-out ${
-            isHeaderVisible 
-              ? 'max-h-[500px] opacity-100' 
-              : 'max-h-0 opacity-0 overflow-hidden border-none'
-          }`}
-        >
-          <div className="p-2 sm:p-4">
-            <div className="text-center mb-2 sm:mb-4">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
-              {getCurrentSurahName()}
-            </h1>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-              {t.verse.page} {currentPage} {t.verse.of} {totalPages}
-            </p>
-          </div>
+        <BookLayoutExpandedHeader
+          isHeaderVisible={isHeaderVisible}
+          currentSurahName={getCurrentSurahName()}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageLabel={t.verse.page}
+          ofLabel={t.verse.of}
+          selectSurahLabel={t.sidebar.selectSurah}
+          verseLabel={t.verse.verse}
+          searchSurah={searchSurah}
+          searchVerse={searchVerse}
+          showSurahDropdown={showSurahDropdown}
+          showVerseDropdown={showVerseDropdown}
+          filteredSurahs={filteredSurahs}
+          availableVerses={availableVerses}
+          inputPage={inputPage}
+          onSearchSubmit={handleSearch}
+          onSearchSurahChange={(value) => {
+            setSearchSurah(value);
+            setShowSurahDropdown(true);
+          }}
+          onSearchVerseChange={setSearchVerse}
+          onSurahInputFocus={() => setShowSurahDropdown(true)}
+          onVerseInputFocus={() => setShowVerseDropdown(true)}
+          onSurahSelect={(surahName) => {
+            setSearchSurah(surahName);
+            setShowSurahDropdown(false);
+          }}
+          onVerseSelect={(verseNumber) => {
+            setSearchVerse(verseNumber.toString());
+            setShowVerseDropdown(false);
+          }}
+          onPrevPage={handlePreviousPage}
+          onNextPage={handleNextPage}
+          onPageInputChange={handlePageChange}
+        />
 
-            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-4">
-              <div className="flex gap-2 w-full sm:w-auto">
-                <div className="relative surah-dropdown flex-1 sm:flex-initial">
-              <input
-                type="text"
-                value={searchSurah}
-                onChange={(e) => {
-                  setSearchSurah(e.target.value);
-                  setShowSurahDropdown(true);
-                }}
-                onFocus={() => setShowSurahDropdown(true)}
-                placeholder={t.sidebar.selectSurah}
-                    className="w-full surah-input px-2 sm:px-3 py-1 text-sm sm:text-base border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-              />
-              {showSurahDropdown && (
-                <div className="absolute top-full left-0 w-full mt-1 max-h-60 overflow-y-auto bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-50">
-                  {filteredSurahs.map((surah) => (
-                    <button
-                      key={surah.id}
-                      type="button"
-                      onClick={() => {
-                        setSearchSurah(surah.name);
-                        setShowSurahDropdown(false);
-                      }}
-                      className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
-                    >
-                      {surah.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-                <div className="relative verse-dropdown w-24 sm:w-20">
-              <input
-                type="text"
-                value={searchVerse}
-                onChange={(e) => setSearchVerse(e.target.value)}
-                onFocus={() => setShowVerseDropdown(true)}
-                placeholder={t.verse.verse}
-                    className="w-full verse-input px-2 sm:px-3 py-1 text-sm sm:text-base border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-              />
-              {showVerseDropdown && availableVerses.length > 0 && (
-                <div className="absolute top-full left-0 w-32 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-50">
-                  {availableVerses.map((verseNum) => (
-                    <button
-                      key={verseNum}
-                      type="button"
-                      onClick={() => {
-                        setSearchVerse(verseNum.toString());
-                        setShowVerseDropdown(false);
-                      }}
-                      className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
-                    >
-                      {verseNum}
-                    </button>
-                  ))}
-                </div>
-              )}
-                </div>
-            </div>
-
-            <button
-              type="submit"
-                className="w-full sm:w-auto p-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
-            >
-                <Search className="w-4 h-4 sm:w-5 sm:h-5 mx-auto text-gray-700 dark:text-gray-300" />
-            </button>
-          </form>
-
-            <div className="flex justify-center items-center gap-2 sm:gap-4">
-            <button
-              onClick={handlePreviousPage}
-              disabled={currentPage === 0}
-                className="px-3 sm:px-4 py-1 sm:py-2 bg-gray-100 dark:bg-gray-700 rounded disabled:opacity-50"
-            >
-                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" />
-            </button>
-
-            <input
-              type="text"
-              value={inputPage}
-              onChange={handlePageChange}
-                className="w-12 sm:w-16 text-center px-1 sm:px-2 py-1 text-sm sm:text-base border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-            />
-
-            <button
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-                className="px-3 sm:px-4 py-1 sm:py-2 bg-gray-100 dark:bg-gray-700 rounded disabled:opacity-50"
-              >
-                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div 
-          className={`sticky top-16 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm z-10 transition-all duration-500 ${
-            isHeaderVisible ? 'max-h-0 opacity-0 overflow-hidden' : 'max-h-16 opacity-100 border-b border-gray-200 dark:border-gray-700'
-          }`}
-        >
-          <div className="flex items-center justify-between px-4 py-2">
-            <h2 className="text-sm font-medium text-gray-600 dark:text-gray-300">
-              {getCurrentSurahName()} - {t.verse.page} {currentPage}
-            </h2>
-            <div className="flex gap-2">
-              <button
-                onClick={handlePreviousPage}
-                disabled={currentPage === 0}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
-              >
-                <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              </button>
-              <button
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
-              >
-                <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-            </button>
-            </div>
-          </div>
-        </div>
+        <BookLayoutCollapsedHeader
+          isHeaderVisible={isHeaderVisible}
+          currentSurahName={getCurrentSurahName()}
+          pageLabel={t.verse.page}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPrevPage={handlePreviousPage}
+          onNextPage={handleNextPage}
+        />
 
         <div className="p-3 sm:p-6 space-y-6 relative min-h-[400px]">
           {isLoading ? (

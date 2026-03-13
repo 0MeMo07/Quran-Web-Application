@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useSelector,useDispatch } from 'react-redux';
 import { selectSurahs } from '../store/slices/quranSlice';
 import { Verse } from '../api/types';
@@ -26,7 +26,7 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   const currentSurahId = useSelector(selectBookCurrentSurahId);
   const t = useTranslations();
   const surahs = useSelector(selectSurahs);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [stateCurrentPage, setCurrentPage] = useState(0);
   const [showFootnotes, setShowFootnotes] = useState<{ [key: number]: boolean }>({});
   const [inputPage, setInputPage] = useState('0');
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
@@ -34,20 +34,29 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   const [lineHeight, setLineHeight] = useState(1.5);
   const [showSettings, setShowSettings] = useState(false);
   const { surahId, verseId, pageNumber: urlPageNumber } = useParams();
+  // Derive currentPage directly from URL to avoid stale-state renders during navigation
+  const urlPageNum = urlPageNumber ? Number(urlPageNumber) : NaN;
+  const currentPage = !Number.isNaN(urlPageNum) && urlPageNum >= 0 ? urlPageNum : stateCurrentPage;
   const navigate = useNavigate();
   const location = useLocation();
   const isLoading = useSelector(selectTranslationsLoading);
   const viewType = useSelector(selectViewType);
 
   const totalPages = Math.max(...verses.map((verse) => verse.page));
-  const currentPageVerses = verses.filter((verse) => verse.page === currentPage);
-  const versesBySurah = currentPageVerses.reduce((acc, verse) => {
-    if (!acc[verse.surah_id]) {
-      acc[verse.surah_id] = [];
-    }
-    acc[verse.surah_id].push(verse);
-    return acc;
-  }, {} as { [key: number]: Verse[] });
+  const currentPageVerses = useMemo(
+    () => verses.filter((verse) => verse.page === currentPage),
+    [verses, currentPage]
+  );
+  const versesBySurah = useMemo(
+    () => currentPageVerses.reduce((acc, verse) => {
+      if (!acc[verse.surah_id]) {
+        acc[verse.surah_id] = [];
+      }
+      acc[verse.surah_id].push(verse);
+      return acc;
+    }, {} as { [key: number]: Verse[] }),
+    [currentPageVerses]
+  );
 
   const {
     searchSurah,

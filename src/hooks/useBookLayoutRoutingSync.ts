@@ -156,10 +156,8 @@ export function useBookLayoutRoutingSync({
     if (surahId && urlPageNumber) {
       const pageNum = Number(urlPageNumber);
       if (!Number.isNaN(pageNum) && pageNum >= 0 && pageNum <= totalPages) {
-        setCurrentPage(pageNum);
         setInputPage(pageNum.toString());
         setCurrentSurahIdInStore(Number(surahId));
-        window.scrollTo(0, 0);
       }
       return;
     }
@@ -176,7 +174,6 @@ export function useBookLayoutRoutingSync({
 
       if (firstVerseOfSurah) {
         const pageToSet = firstVerseOfSurah.page;
-        setCurrentPage(pageToSet);
         setInputPage(pageToSet.toString());
         setCurrentSurahIdInStore(Number(surahId));
         navigate(`/surah/${surahId}/page/${pageToSet}`, { replace: true });

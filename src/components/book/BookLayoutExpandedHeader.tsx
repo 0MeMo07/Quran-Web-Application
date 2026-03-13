@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Button, Input } from '../ui';
 
 interface SurahOption {
   id: number;
@@ -81,13 +82,14 @@ export function BookLayoutExpandedHeader({
         <form onSubmit={onSearchSubmit} className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-4">
           <div className="flex gap-2 w-full sm:w-auto">
             <div className="relative surah-dropdown flex-1 sm:flex-initial">
-              <input
+              <Input
                 type="text"
                 value={searchSurah}
                 onChange={(e) => onSearchSurahChange(e.target.value)}
                 onFocus={onSurahInputFocus}
                 placeholder={selectSurahLabel}
-                className="w-full surah-input px-2 sm:px-3 py-1 text-sm sm:text-base border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                inputSize="sm"
+                className="surah-input px-2 sm:px-3 py-1 text-sm sm:text-base rounded"
               />
               {showSurahDropdown && (
                 <div className="absolute top-full left-0 w-full mt-1 max-h-60 overflow-y-auto bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-50">
@@ -106,13 +108,14 @@ export function BookLayoutExpandedHeader({
             </div>
 
             <div className="relative verse-dropdown w-24 sm:w-20">
-              <input
+              <Input
                 type="text"
                 value={searchVerse}
                 onChange={(e) => onSearchVerseChange(e.target.value)}
                 onFocus={onVerseInputFocus}
                 placeholder={verseLabel}
-                className="w-full verse-input px-2 sm:px-3 py-1 text-sm sm:text-base border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                inputSize="sm"
+                className="verse-input px-2 sm:px-3 py-1 text-sm sm:text-base rounded"
               />
               {showVerseDropdown && availableVerses.length > 0 && (
                 <div className="absolute top-full left-0 w-32 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-50">
@@ -131,37 +134,39 @@ export function BookLayoutExpandedHeader({
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="w-full sm:w-auto p-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
-          >
+          <Button type="submit" variant="soft" size="icon" className="w-full sm:w-auto">
             <Search className="w-4 h-4 sm:w-5 sm:h-5 mx-auto text-gray-700 dark:text-gray-300" />
-          </button>
+          </Button>
         </form>
 
         <div className="flex justify-center items-center gap-2 sm:gap-4">
-          <button
+          <Button
             onClick={onPrevPage}
             disabled={currentPage === 0}
-            className="px-3 sm:px-4 py-1 sm:py-2 bg-gray-100 dark:bg-gray-700 rounded disabled:opacity-50"
+            variant="soft"
+            size="sm"
+            className="px-3 sm:px-4 py-1 sm:py-2 "
           >
             <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" />
-          </button>
+          </Button>
 
-          <input
+          <Input
             type="text"
             value={inputPage}
             onChange={onPageInputChange}
-            className="w-12 sm:w-16 text-center px-1 sm:px-2 py-1 text-sm sm:text-base border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+            inputSize="sm"
+            className="w-12 sm:w-16 text-center px-1 sm:px-2 py-1 text-sm sm:text-base "
           />
 
-          <button
+          <Button
             onClick={onNextPage}
             disabled={currentPage === totalPages}
-            className="px-3 sm:px-4 py-1 sm:py-2 bg-gray-100 dark:bg-gray-700 rounded disabled:opacity-50"
+            variant="soft"
+            size="sm"
+            className="px-3 sm:px-4 py-1 sm:py-2"
           >
             <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" />
-          </button>
+          </Button>
         </div>
       </div>
     </div>

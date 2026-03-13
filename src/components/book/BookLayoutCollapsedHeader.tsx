@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { IconButton } from '../ui';
 
 interface BookLayoutCollapsedHeaderProps {
   isHeaderVisible: boolean;
@@ -32,20 +33,20 @@ export function BookLayoutCollapsedHeader({
           {currentSurahName} - {pageLabel} {currentPage}
         </h2>
         <div className="flex gap-2">
-          <button
+          <IconButton
             onClick={onPrevPage}
             disabled={currentPage === 0}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
-          >
-            <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-          </button>
-          <button
+            variant="ghost"
+            className="!p-1 !rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            icon={<ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-300" />}
+          />
+          <IconButton
             onClick={onNextPage}
             disabled={currentPage === totalPages}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
-          >
-            <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-          </button>
+            variant="ghost"
+            className="!p-1 !rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            icon={<ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />}
+          />
         </div>
       </div>
     </div>

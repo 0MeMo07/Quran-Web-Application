@@ -1,5 +1,6 @@
 import { type Dispatch, type SetStateAction } from 'react';
 import { type ViewType } from '../../store/slices/uiSlice';
+import { Button, Input } from '../ui';
 
 interface BookLayoutSettingsPanelProps {
   showSettings: boolean;
@@ -41,14 +42,16 @@ export function BookLayoutSettingsPanel({
               { type: 'kuran+meal', icon: '📖', label: t.settings.viewType.quranAndMeal },
               { type: 'kuran', icon: '🕌', label: t.settings.viewType.quranOnly },
             ] as const).map(({ type, icon, label }) => (
-              <button
+              <Button
                 key={type}
                 onClick={() => onSetViewType(type)}
+                variant={viewType === type ? 'solid' : 'soft'}
+                size="md"
                 className={`
                   flex items-center gap-3 p-3 rounded-xl transition-all duration-200
                   ${viewType === type
-                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 transform scale-[1.02]'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-[1.01]'
+                    ? 'shadow-lg shadow-emerald-500/20 transform scale-[1.02]'
+                    : 'hover:scale-[1.01]'
                   }
                 `}
               >
@@ -57,7 +60,7 @@ export function BookLayoutSettingsPanel({
                 {viewType === type && (
                   <div className="w-2 h-2 rounded-full bg-white shadow-lg animate-pulse" />
                 )}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -74,7 +77,7 @@ export function BookLayoutSettingsPanel({
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-500">{t.settings?.smaller}</span>
-              <input
+              <Input
                 type="range"
                 min="12"
                 max={viewType === 'kuran' ? '32' : '24'}
@@ -105,7 +108,7 @@ export function BookLayoutSettingsPanel({
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-500">{t.settings?.lineHeightTight}</span>
-              <input
+              <Input
                 type="range"
                 min="1"
                 max="2"

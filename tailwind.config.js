@@ -1,8 +1,11 @@
 /** @type {import('tailwindcss').Config} */
+import heroTheme from './src/hero.ts';
+
 export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
   darkMode: 'class',
   theme: {
@@ -40,8 +43,24 @@ export default {
       },
       animation: {
         'spin-slow': 'spin 3s linear infinite',
+        'gradient-pan': 'gradient-pan 3s linear infinite',
+        'border-beam': 'border-beam calc(var(--duration,12)*1s) linear infinite',
+        'shimmer': 'shimmer 2s linear infinite',
+      },
+      keyframes: {
+        'gradient-pan': {
+          '0%': { backgroundPosition: '0% 50%' },
+          '100%': { backgroundPosition: '200% 50%' },
+        },
+        'border-beam': {
+          '100%': { offsetDistance: '100%' },
+        },
+        'shimmer': {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
       },
     },
   },
-  plugins: [],
-}
+  plugins: [heroTheme],
+};

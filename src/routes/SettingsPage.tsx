@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Moon, Sun, Palette, ArrowLeft } from 'lucide-react';
+import { Moon, Sun, Palette, ArrowLeft, Check } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleTheme, selectIsDarkMode, selectVisualTheme, setVisualTheme } from '../store/slices/uiSlice';
 import { useTranslations } from '../translations';
+import { GlassCard } from '../components/ui';
+import { ShimmerButton } from '../components/ui';
 
 export function SettingsPage() {
   const dispatch = useDispatch();
@@ -11,8 +13,9 @@ export function SettingsPage() {
   const visualTheme = useSelector(selectVisualTheme);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-gray-800">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
+        {/* Header */}
         <div className="mb-8">
           <Link
             to="/"
@@ -27,49 +30,63 @@ export function SettingsPage() {
         </div>
 
         <div className="space-y-4">
-          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+          {/* Dark mode toggle */}
+          <GlassCard className="p-5">
             <div className="flex items-center gap-2 mb-4">
               <Sun className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">{t.header.toggleTheme}</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                {t.header.toggleTheme}
+              </h2>
             </div>
-            <button
+            <ShimmerButton
               onClick={() => dispatch(toggleTheme())}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+              className="w-full sm:w-auto rounded-xl"
             >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              <span>{isDarkMode ? t.header.lightMode : t.header.darkMode}</span>
-            </button>
-          </section>
+              {isDarkMode ? (
+                <><Sun className="w-4 h-4" />{t.header.lightMode}</>
+              ) : (
+                <><Moon className="w-4 h-4" />{t.header.darkMode}</>
+              )}
+            </ShimmerButton>
+          </GlassCard>
 
-          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+          {/* Visual theme */}
+          <GlassCard className="p-5">
             <div className="flex items-center gap-2 mb-4">
               <Palette className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">{t.header.themeStyle}</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                {t.header.themeStyle}
+              </h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                onClick={() => dispatch(setVisualTheme('default'))}
-                className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                  visualTheme === 'default'
-                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                {t.header.currentTheme}
-              </button>
-              <button
-                onClick={() => dispatch(setVisualTheme('simple'))}
-                className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                  visualTheme === 'simple'
-                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                {t.header.simpleTheme}
-              </button>
+              {([
+                { key: 'default', label: t.header.currentTheme },
+                { key: 'simple', label: t.header.simpleTheme },
+              ] as const).map(({ key, label }) => {
+                const isActive = visualTheme === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => dispatch(setVisualTheme(key))}
+                    className={[
+                      'relative px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200',
+                      isActive
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 shadow-sm shadow-emerald-500/10'
+                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800/60 dark:text-gray-200 dark:hover:bg-gray-700/60',
+                    ].join(' ')}
+                  >
+                    {isActive && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Check className="w-4 h-4 text-emerald-500" />
+                      </span>
+                    )}
+                    {label}
+                  </button>
+                );
+              })}
             </div>
-          </section>
+          </GlassCard>
         </div>
       </div>
     </div>

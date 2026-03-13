@@ -83,9 +83,9 @@ export function BookLayoutExpandedHeader({
           </p>
         </div>
 
-        <form onSubmit={onSearchSubmit} className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-4">
-          <div className="flex gap-2 w-full sm:w-auto">
-            <div className="relative surah-dropdown flex-1 sm:flex-initial">
+        <form onSubmit={onSearchSubmit} className="flex justify-center mb-4">
+          <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 sm:rounded-xl sm:border sm:border-gray-200/70 sm:dark:border-gray-700/70 sm:bg-gray-100/40 sm:dark:bg-gray-800/40 sm:p-1">
+            <div className="relative surah-dropdown flex-1 sm:w-56">
               <Input
                 type="text"
                 value={searchSurah}
@@ -93,7 +93,7 @@ export function BookLayoutExpandedHeader({
                 onFocus={onSurahInputFocus}
                 placeholder={selectSurahLabel}
                 inputSize="sm"
-                className="surah-input px-2 sm:px-3 py-1 text-sm sm:text-base rounded"
+                className="surah-input"
               />
               {showSurahDropdown && (
                 <div className="absolute top-full left-0 w-full mt-1 max-h-60 overflow-y-auto bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-50">
@@ -111,7 +111,7 @@ export function BookLayoutExpandedHeader({
               )}
             </div>
 
-            <div className="relative verse-dropdown w-24 sm:w-20">
+            <div className="relative verse-dropdown w-full sm:w-24 sm:ml-1">
               <Input
                 type="text"
                 value={searchVerse}
@@ -119,7 +119,7 @@ export function BookLayoutExpandedHeader({
                 onFocus={onVerseInputFocus}
                 placeholder={verseLabel}
                 inputSize="sm"
-                className="verse-input px-2 sm:px-3 py-1 text-sm sm:text-base rounded"
+                className="verse-input"
               />
               {showVerseDropdown && availableVerses.length > 0 && (
                 <div className="absolute top-full left-0 w-32 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-50">
@@ -136,11 +136,10 @@ export function BookLayoutExpandedHeader({
                 </div>
               )}
             </div>
+            <Button type="submit" variant="soft" size="icon" className="w-full sm:w-9 sm:h-9 sm:min-w-9 sm:ml-1">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 mx-auto text-gray-700 dark:text-gray-300" />
+            </Button>
           </div>
-
-          <Button type="submit" variant="soft" size="icon" className="w-full sm:w-auto">
-            <Search className="w-4 h-4 sm:w-5 sm:h-5 mx-auto text-gray-700 dark:text-gray-300" />
-          </Button>
         </form>
 
         <div className="flex justify-center items-center gap-2 sm:gap-4">
@@ -154,15 +153,17 @@ export function BookLayoutExpandedHeader({
             <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" />
           </Button>
 
-          <Input
-            type="text"
-            value={inputPage}
-            onChange={onPageInputChange}
-            onBlur={onPageInputBlur}
-            onKeyDown={onPageInputKeyDown}
-            inputSize="sm"
-            className="w-12 sm:w-16 text-center px-1 sm:px-2 py-1 text-sm sm:text-base "
-          />
+          <div className="w-12 sm:w-16">
+            <Input
+              type="text"
+              value={inputPage}
+              onChange={onPageInputChange}
+              onBlur={onPageInputBlur}
+              onKeyDown={onPageInputKeyDown}
+              inputSize="sm"
+              className="text-center px-1 sm:px-2 py-1 text-sm sm:text-base"
+            />
+          </div>
 
           <Button
             onClick={onNextPage}

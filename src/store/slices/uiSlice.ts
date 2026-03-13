@@ -3,6 +3,7 @@ import type { RootState } from '../store';
 
 export type ReadingType = 'card' | 'book' | 'detail';
 export type ViewType = 'meal' | 'meal+kuran' | 'kuran+meal' | 'kuran';
+export type VisualTheme = 'default' | 'simple';
 
 export interface Note {
   id: string;
@@ -15,6 +16,7 @@ export interface Note {
 
 interface UIState {
   isDarkMode: boolean;
+  visualTheme: VisualTheme;
   language: 'tr' | 'en';
   readingType: ReadingType;
   viewType: ViewType;
@@ -22,6 +24,7 @@ interface UIState {
 }
 
 const savedTheme = localStorage.getItem('isDarkMode');
+const savedVisualTheme = localStorage.getItem('visualTheme');
 const savedLanguage = localStorage.getItem('language');
 const savedReadingType = localStorage.getItem('readingType');
 const savedViewType = localStorage.getItem('viewType');
@@ -30,10 +33,25 @@ const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matche
 
 const initialState: UIState = {
   isDarkMode: savedTheme ? JSON.parse(savedTheme) : prefersDarkMode,
+  visualTheme: (savedVisualTheme as VisualTheme) || 'default',
   language: savedLanguage as 'tr' | 'en' || 'en',
   readingType: (savedReadingType as ReadingType) || 'book',
   viewType: (savedViewType as ViewType) || 'meal',
   notes: savedNotes ? JSON.parse(savedNotes) : [],
+};
+
+const applyThemeClasses = (isDarkMode: boolean, visualTheme: VisualTheme) => {
+  if (isDarkMode) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+
+  if (visualTheme === 'simple') {
+    document.documentElement.classList.add('simple-theme');
+  } else {
+    document.documentElement.classList.remove('simple-theme');
+  }
 };
 
 const uiSlice = createSlice({
@@ -43,12 +61,14 @@ const uiSlice = createSlice({
     toggleTheme: (state) => {
       state.isDarkMode = !state.isDarkMode;
       localStorage.setItem('isDarkMode', JSON.stringify(state.isDarkMode));
-      
-      if (state.isDarkMode) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+
+      applyThemeClasses(state.isDarkMode, state.visualTheme);
+    },
+    setVisualTheme: (state, action: PayloadAction<VisualTheme>) => {
+      state.visualTheme = action.payload;
+      localStorage.setItem('visualTheme', action.payload);
+
+      applyThemeClasses(state.isDarkMode, state.visualTheme);
     },
     setLanguage: (state, action: PayloadAction<'tr' | 'en'>) => {
       state.language = action.payload;
@@ -90,14 +110,11 @@ const uiSlice = createSlice({
   },
 });
 
-if (initialState.isDarkMode) {
-  document.documentElement.classList.add('dark');
-} else {
-  document.documentElement.classList.remove('dark');
-}
+applyThemeClasses(initialState.isDarkMode, initialState.visualTheme);
 
 export const { 
   toggleTheme, 
+  setVisualTheme,
   setLanguage, 
   toggleLanguage,
   setReadingType,
@@ -107,6 +124,7 @@ export const {
 } = uiSlice.actions;
 
 export const selectIsDarkMode = (state: RootState) => state.ui.isDarkMode;
+export const selectVisualTheme = (state: RootState) => state.ui.visualTheme;
 export const selectLanguage = (state: RootState) => state.ui.language;
 export const selectReadingType = (state: RootState) => state.ui.readingType;
 export const selectViewType = (state: RootState) => state.ui.viewType;

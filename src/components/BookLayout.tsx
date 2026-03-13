@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Search, ChevronUp, ChevronDown, Settings, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import { useSelector,useDispatch } from 'react-redux';
 import { selectSurahs } from '../store/slices/quranSlice';
 import { Verse } from '../api/types';
@@ -7,8 +7,10 @@ import { useTranslations } from '../translations';
 import { selectBookCurrentSurahId, setBookCurrentSurahId  } from '../store/slices/quranSlice';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { selectTranslationsLoading } from '../store/slices/translationsSlice';
-import { selectViewType, setViewType, Note } from '../store/slices/uiSlice';
+import { selectViewType, setViewType } from '../store/slices/uiSlice';
 import { NoteSection } from './notes/BookNoteSection';
+import { BookLayoutTopActions } from './book/BookLayoutTopActions';
+import { BookLayoutSettingsPanel } from './book/BookLayoutSettingsPanel';
 
 interface BookLayoutProps {
   verses: Verse[];
@@ -340,134 +342,23 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-2 sm:p-4">
       <div className="w-full max-w-4xl bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-        <div className="flex items-center justify-end gap-2 px-4 py-2">
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:shadow-lg transition-all duration-300 group"
-            title="Settings"
-          >
-            <Settings className={`w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform ${showSettings ? 'rotate-45' : ''}`} />
-          </button>
-          <button
-            onClick={() => setIsHeaderVisible(!isHeaderVisible)}
-            className="p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:shadow-lg transition-all duration-300 group"
-            title={isHeaderVisible ? 'Hide controls' : 'Show controls'}
-          >
-            {isHeaderVisible ? (
-              <ChevronUp className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:-translate-y-0.5 transition-transform" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:translate-y-0.5 transition-transform" />
-            )}
-          </button>
-        </div>
+        <BookLayoutTopActions
+          isHeaderVisible={isHeaderVisible}
+          showSettings={showSettings}
+          onToggleSettings={() => setShowSettings(!showSettings)}
+          onToggleHeaderVisible={() => setIsHeaderVisible(!isHeaderVisible)}
+        />
 
-        {/* Settings Panel */}
-        <div className={`fixed right-4 top-32 z-50 bg-white dark:bg-gray-800 rounded-lg shadow-xl transition-all duration-300 ${
-          showSettings ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8 pointer-events-none'
-        }`}>
-          <div className="p-4 space-y-6 w-72">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-              {t.settings?.title}
-            </h3>
-            
-            {/* Görünüm Seçenekleri */}
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t.settings.viewType.title}
-              </label>
-              <div className="flex flex-col gap-2">
-                {([
-                  { type: 'meal', icon: '📝', label: t.settings.viewType.mealOnly },
-                  { type: 'kuran+meal', icon: '📖', label: t.settings.viewType.quranAndMeal },
-                  { type: 'kuran', icon: '🕌', label: t.settings.viewType.quranOnly }
-                ] as const).map(({ type, icon, label }) => (
-                  <button
-                    key={type}
-                    onClick={() => dispatch(setViewType(type))}
-                    className={`
-                      flex items-center gap-3 p-3 rounded-xl transition-all duration-200
-                      ${viewType === type 
-                        ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 transform scale-[1.02]' 
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-[1.01]'
-                      }
-                    `}
-                  >
-                    <span className="text-xl bg-white/10 p-2 rounded-lg">{icon}</span>
-                    <span className="flex-1 text-left text-sm font-medium">{label}</span>
-                    {viewType === type && (
-                      <div className="w-2 h-2 rounded-full bg-white shadow-lg animate-pulse" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t.settings?.fontSize}
-                  </label>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {fontSize}px
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-500">{t.settings?.smaller}</span>
-                  <input
-                    type="range"
-                    min="12"
-                    max={viewType === 'kuran' ? "32" : "24"}
-                    value={fontSize}
-                    onChange={(e) => setFontSize(Number(e.target.value))}
-                    className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer
-                      [&::-webkit-slider-thumb]:appearance-none 
-                      [&::-webkit-slider-thumb]:w-3
-                      [&::-webkit-slider-thumb]:h-3
-                      [&::-webkit-slider-thumb]:bg-emerald-500
-                      [&::-webkit-slider-thumb]:rounded-full
-                      [&::-webkit-slider-thumb]:transition-all
-                      [&::-webkit-slider-thumb]:hover:w-4
-                      [&::-webkit-slider-thumb]:hover:h-4"
-                  />
-                  <span className="text-sm text-gray-500">{t.settings?.larger}</span>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t.settings?.lineHeight}
-                  </label>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {lineHeight.toFixed(1)}x
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-500">{t.settings?.lineHeightTight}</span>
-                  <input
-                    type="range"
-                    min="1"
-                    max="2"
-                    step="0.1"
-                    value={lineHeight}
-                    onChange={(e) => setLineHeight(Number(e.target.value))}
-                    className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer
-                      [&::-webkit-slider-thumb]:appearance-none 
-                      [&::-webkit-slider-thumb]:w-3
-                      [&::-webkit-slider-thumb]:h-3
-                      [&::-webkit-slider-thumb]:bg-emerald-500
-                      [&::-webkit-slider-thumb]:rounded-full
-                      [&::-webkit-slider-thumb]:transition-all
-                      [&::-webkit-slider-thumb]:hover:w-4
-                      [&::-webkit-slider-thumb]:hover:h-4"
-                  />
-                  <span className="text-sm text-gray-500">{t.settings?.lineHeightRelaxed}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <BookLayoutSettingsPanel
+          showSettings={showSettings}
+          t={t}
+          viewType={viewType}
+          onSetViewType={(nextViewType) => dispatch(setViewType(nextViewType))}
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+          lineHeight={lineHeight}
+          setLineHeight={setLineHeight}
+        />
 
         <div 
           className={`sticky top-16 bg-white dark:bg-gray-800 z-10 border-b border-gray-200 dark:border-gray-700 transition-all duration-500 ease-in-out ${
@@ -636,7 +527,7 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
               <div
                 className={`
                   ${viewType === 'kuran' 
-                    ? 'rtl text-right px-8 py-6 leading-[3] max-w-4xl mx-auto text-justify whitespace-normal'
+                    ? 'rtl text-right px-8 py-6 leading-[3] max-w-4xl mx-auto whitespace-normal'
                     : 'space-y-4'
                   }
                 `}

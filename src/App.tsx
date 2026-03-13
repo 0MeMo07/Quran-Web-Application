@@ -30,7 +30,7 @@ import {
   setLoading,
 } from './store/slices/translationsSlice';
 import { useTranslations } from './translations';
-import { selectReadingType } from './store/slices/uiSlice';
+import { selectReadingType, selectVisualTheme } from './store/slices/uiSlice';
 import { SearchDialog } from './components/SearchDialog';
 
 function App() {
@@ -44,6 +44,7 @@ function App() {
   const verses = useSelector(selectVerses);
   const allVerses = useSelector(selectAllVerses);
   const readingType = useSelector(selectReadingType);
+  const visualTheme = useSelector(selectVisualTheme);
   const currentSurah = useSelector(selectCurrentSurah);
   const loading = useSelector(selectLoading);
   const selectedAuthor = useSelector(selectSelectedAuthor);
@@ -102,7 +103,13 @@ function App() {
           <title>Loading... | Quran App</title>
           <meta name="description" content="Loading Quran content..." />
         </Helmet>
-        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-gray-800">
+        <div
+          className={`flex items-center justify-center min-h-screen ${
+            visualTheme === 'simple'
+              ? 'bg-gray-50 dark:bg-gray-900'
+              : 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-gray-800'
+          }`}
+        >
           <div className="text-center">
             <Loader2 className="w-10 h-10 animate-spin text-emerald-600 dark:text-emerald-400 mx-auto" />
             <p className="mt-4 text-gray-600 dark:text-gray-300">{t.loading}</p>
@@ -123,7 +130,13 @@ function App() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <html lang={language} />
       </Helmet>
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-gray-800 pt-16">
+      <div
+        className={`min-h-screen pt-16 ${
+          visualTheme === 'simple'
+            ? 'bg-gray-50 dark:bg-gray-900'
+            : 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-gray-800'
+        }`}
+      >
         {isPopoverVisible && (
           <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[50] flex items-center justify-center"

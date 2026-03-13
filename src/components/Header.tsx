@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { Book, Moon, Sun, Search, Menu, NotebookText, X, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Book, Search, Menu, NotebookText, X, ChevronDown, Settings2 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
-import { toggleTheme, selectIsDarkMode } from "../store/slices/uiSlice";
 import { setLanguage, selectSearchLanguage } from "../store/slices/searchSlice";
 import { useTranslations } from "../translations";
 import { setSelectedAuthor, selectAuthors } from "../store/slices/translationsSlice";
 import { setLoading } from "../store/slices/translationsSlice";
+import { Link } from "react-router-dom";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -15,7 +15,6 @@ interface HeaderProps {
 export function Header({ onMenuClick, onSearchOpen }: HeaderProps) {
   const dispatch = useDispatch();
   const t = useTranslations();
-  const isDarkMode = useSelector(selectIsDarkMode);
   const language = useSelector(selectSearchLanguage);
   const authors = useSelector(selectAuthors);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -150,17 +149,13 @@ export function Header({ onMenuClick, onSearchOpen }: HeaderProps) {
               )}
             </div>
 
-            <button
-              onClick={() => dispatch(toggleTheme())}
+            <Link
+              to="/settings"
               className="group p-2.5 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
-              aria-label={isDarkMode ? t.header.lightMode : t.header.darkMode}
+              aria-label={t.header.settings}
             >
-              {isDarkMode ? (
-                <Sun className="w-5 h-5 group-hover:text-emerald-500 transition-colors" />
-              ) : (
-                <Moon className="w-5 h-5 group-hover:text-emerald-500 transition-colors" />
-              )}
-            </button>
+                <Settings2 className="w-5 h-5 group-hover:text-emerald-500 transition-colors" />
+            </Link>
           </div>
 
           <button
@@ -219,25 +214,14 @@ export function Header({ onMenuClick, onSearchOpen }: HeaderProps) {
                 ))}
               </div>
 
-              <button
-                onClick={() => {
-                  dispatch(toggleTheme());
-                  setIsMobileMenuOpen(false);
-                }}
+              <Link
+                to="/settings"
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
-                {isDarkMode ? (
-                  <>
-                    <Sun className="w-5 h-5" />
-                    <span className="font-medium">{t.header.lightMode}</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-5 h-5" />
-                    <span className="font-medium">{t.header.darkMode}</span>
-                  </>
-                )}
-              </button>
+                <Settings2 className="w-5 h-5" />
+                <span className="font-medium">{t.header.settings}</span>
+              </Link>
             </div>
           </div>
         )}

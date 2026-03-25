@@ -133,12 +133,17 @@ export function Sidebar() {
     dispatch(setSelectedAuthor(author || null));
     
     if (readingType === 'card' && currentSurah) {
-      // Mevcut verseId'yi koru, yoksa 1 kullan
-      const currentVerseId = verseId || '1';
-      const url = author 
-        ? `/surah/${currentSurah}/verse/${currentVerseId}/${author.id}`
-        : `/surah/${currentSurah}/verse/${currentVerseId}`;
-      navigate(url, { replace: true });
+      if (verseId) {
+        const url = author 
+          ? `/surah/${currentSurah}/verse/${verseId}/${author.id}`
+          : `/surah/${currentSurah}/verse/${verseId}`;
+        navigate(url, { replace: true });
+      } else {
+        const url = author 
+          ? `/surah/${currentSurah}/${author.id}`
+          : `/surah/${currentSurah}`;
+        navigate(url, { replace: true });
+      }
     } else if (readingType === 'book' && surahId) {
       // Book modunda: mevcut verseId'yi koru
       if (verseId) {
@@ -149,12 +154,11 @@ export function Sidebar() {
         navigate(url, { replace: true });
       } else {
         // VerseId yoksa, sadece authorId ekle (eğer author seçildiyse)
-        // Book modunda authorId genellikle URL'de olmaz, bu yüzden hiçbir şey yapmayabiliriz
-        // Ama eğer author seçildiyse ve verseId yoksa, verseId eklememiz gerekebilir
-        // Şimdilik sadece authorId varsa URL'yi güncelle
+        // Artık /surah/:surahId/:authorId rotasını destekliyoruz, bu yüzden direkt oraya gidebiliriz
         if (author) {
-          // İlk ayete git
-          navigate(`/surah/${surahId}/verse/1/${author.id}`, { replace: true });
+          navigate(`/surah/${surahId}/${author.id}`, { replace: true });
+        } else {
+          navigate(`/surah/${surahId}`, { replace: true });
         }
       }
     }
@@ -190,39 +194,39 @@ export function Sidebar() {
 
   return (
     <div className="h-full relative">
-      <div className="h-full overflow-y-auto bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-r border-gray-200/50 dark:border-gray-800/50 pb-20">
-        <div className="p-6 space-y-6">
+      <div className="h-full overflow-y-auto glass border-r border-border/50 pb-20">
+        <div className="p-6 space-y-8">
           {readingType !== 'book' && (
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 {t.sidebar.selectSurah}
               </label>
               <div className="relative">
                 <select
                   value={currentSurah || ''}
                   onChange={(e) => handleSurahChange(Number(e.target.value))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none appearance-none transition-all duration-200"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface text-foreground shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-all duration-200"
                 >
                   {surahs.map((surah) => (
-                    <option key={surah.id} value={surah.id}>
-                      {surah.id}. {surah.name_en} ({surah.name})
+                    <option key={surah.id} value={surah.id} className="font-serif">
+                      {surah.id}. {surah.name_en} — {surah.name}
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               {t.sidebar.selectTranslator}
             </label>
             <div className="relative">
               <select
                 value={selectedAuthor?.id || ''}
                 onChange={(e) => handleAuthorChange(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none appearance-none transition-all duration-200"
+                className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface text-foreground shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-all duration-200"
               >
                 <option value="">{t.sidebar.defaultTranslation}</option>
                 {authors
@@ -233,27 +237,27 @@ export function Sidebar() {
                     </option>
                   ))}
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
             </div>
           </div>
 
           {selectedSurah && (
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-4">
+              <label className="block text-sm font-medium text-foreground mb-4">
                 {t.sidebar.surahAudio}
               </label>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between p-3 bg-secondary rounded-lg shadow-sm border border-border">
                   <div className="flex items-center space-x-3">
                     <div>
-                      <p className="text-gray-900 dark:text-white font-medium">
-                        {selectedSurah.name_en} ({selectedSurah.name})
+                      <p className="text-foreground font-serif font-bold text-lg">
+                        {selectedSurah.name_en} <span className="text-muted-foreground/40 font-normal ml-2">{selectedSurah.name}</span>
                       </p>
                     </div>
                     <div>
                       <button
                         onClick={handlePlayPause}
-                        className="p-1 rounded-full bg-emerald-500 text-white shadow-lg hover:bg-emerald-600 focus:outline-none transition-colors duration-300"
+                        className="p-1 rounded-full bg-primary text-primary-foreground shadow-lg hover:opacity-90 focus:outline-none transition-all duration-300"
                         title={isPlaying ? t.sidebar.pauseAudio : t.sidebar.playAudio}
                       >
                         {isPlaying ? (
@@ -273,7 +277,7 @@ export function Sidebar() {
 
           {/* Root Search */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               {t.root.searchRoot}
             </label>
             <form
@@ -284,7 +288,7 @@ export function Sidebar() {
               }}
               className="relative"
             >
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
                 value={rootInput}
@@ -306,17 +310,17 @@ export function Sidebar() {
                   }
                 }}
                 placeholder={t.root.searchRootPlaceholder}
-                className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none text-sm transition-all"
+                className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-border bg-surface text-foreground shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm transition-all"
               />
               {rootInput && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center">
                   {rootLoading ? (
-                    <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" />
+                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
                   ) : (
                     <button
                       type="button"
                       onClick={() => { setRootInput(''); setRootPreview(null); }}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -328,32 +332,32 @@ export function Sidebar() {
             {rootPreview && !rootLoading && (
               <button
                 onClick={() => navigate(`/root/${encodeURIComponent(rootPreview.latin)}`)}
-                className="mt-2 w-full text-left p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors group"
+                className="mt-2 w-full text-left p-3 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors group"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-2xl font-bold text-gray-800 dark:text-gray-100 leading-none" dir="rtl" lang="ar">
+                  <span className="text-2xl font-bold text-foreground leading-none" dir="rtl" lang="ar">
                     {rootPreview.arabic}
                   </span>
-                  <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 group-hover:gap-2 transition-all font-mono">
+                  <span className="flex items-center gap-1 text-xs font-semibold text-primary group-hover:gap-2 transition-all font-mono">
                     {rootPreview.latin}
                     <ArrowRight className="w-3.5 h-3.5" />
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">
+                <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
                   {language === 'en' ? rootPreview.mean_en : rootPreview.mean}
                 </p>
                 <div className="flex flex-wrap gap-1">
                   {rootPreview.diffs.slice(0, 4).map((d) => (
                     <span
                       key={d.id}
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface border border-border text-xs"
                     >
-                      <span dir="rtl" lang="ar" className="font-arabic text-gray-800 dark:text-gray-200">{d.diff}</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">{d.count}×</span>
+                      <span dir="rtl" lang="ar" className="font-arabic text-foreground">{d.diff}</span>
+                      <span className="text-primary font-medium">{d.count}×</span>
                     </span>
                   ))}
                   {rootPreview.diffs.length > 4 && (
-                    <span className="text-xs text-gray-400 dark:text-gray-500 self-center">+{rootPreview.diffs.length - 4}</span>
+                    <span className="text-xs text-muted-foreground self-center">+{rootPreview.diffs.length - 4}</span>
                   )}
                 </div>
               </button>
@@ -363,12 +367,12 @@ export function Sidebar() {
       </div>
 
       {selectedSurah && (
-        <div className="fixed bottom-0 left-0 w-72 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 shadow-2xl">
+        <div className="fixed bottom-0 left-0 w-72 bg-surface/95 backdrop-blur-xl border-t border-border shadow-2xl">
           <div className="p-4">
             <div className="flex items-center space-x-4">
               <button 
                 onClick={handlePlayPause} 
-                className="text-emerald-500 hover:text-emerald-600"
+                className="text-primary hover:opacity-80"
                 title={isPlaying ? t.sidebar.pauseAudio : t.sidebar.playAudio}
               >
                 {isPlaying ? (
@@ -385,19 +389,19 @@ export function Sidebar() {
                   max="100"
                   value={progress}
                   onChange={handleSeek}
-                  className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full 
+                  className="w-full h-1 bg-secondary rounded-full 
                   appearance-none cursor-pointer
                   [&::-webkit-slider-thumb]:appearance-none 
                   [&::-webkit-slider-thumb]:w-4 
                   [&::-webkit-slider-thumb]:h-4 
-                  [&::-webkit-slider-thumb]:bg-emerald-500 
+                  [&::-webkit-slider-thumb]:bg-primary 
                   [&::-webkit-slider-thumb]:rounded-full"
                 />
               </div>
 
-              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 space-x-2">
+              <div className="flex items-center text-xs font-numbers font-medium tracking-tighter text-muted-foreground/60 space-x-2">
                 <span>{formatTime(currentTime)}</span>
-                <span>/</span>
+                <span className="opacity-30">/</span>
                 <span>{formatTime(duration)}</span>
               </div>
 

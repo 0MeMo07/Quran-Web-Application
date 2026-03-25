@@ -49,22 +49,21 @@ export function SearchBar({ searchTerm, onSearchChange, searchResults }: SearchB
 
   return (
     <div className="relative max-w-2xl mx-auto mt-6">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
       <input
         type="text"
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={t.search.placeholder}
-        className="w-full pl-10 pr-10 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
-                 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none
-                 text-gray-900 dark:text-gray-100 transition-all duration-200
-                 placeholder-gray-400 dark:placeholder-gray-500"
+        className="w-full pl-10 pr-10 py-3 bg-surface border border-border 
+                 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none
+                 text-foreground transition-all duration-200
+                 placeholder-muted-foreground"
       />
       {searchTerm && (
         <button
           onClick={() => onSearchChange('')}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 
-                   dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
         >
           <X className="w-5 h-5" />
         </button>
@@ -72,7 +71,7 @@ export function SearchBar({ searchTerm, onSearchChange, searchResults }: SearchB
 
       {/* Arama Sonuçları */}
       {searchResults && searchResults.length > 0 && (
-        <div className="absolute z-50 w-full mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-2 bg-surface rounded-xl shadow-lg border border-border max-h-96 overflow-y-auto">
           {searchResults.map((result) => (
             <button
               key={result.id}
@@ -80,12 +79,12 @@ export function SearchBar({ searchTerm, onSearchChange, searchResults }: SearchB
                 console.log('Search result clicked:', result);
                 handleVerseClick(result.surah_id, result.verse_number);
               }}
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0"
+              className="w-full px-4 py-3 text-left hover:bg-secondary border-b border-border last:border-0"
             >
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-foreground">
                 Surah {result.surah_id}, Verse {result.verse_number}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+              <p className="text-sm text-muted-foreground line-clamp-2">
                 {result.text}
               </p>
             </button>

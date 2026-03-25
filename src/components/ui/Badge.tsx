@@ -39,12 +39,12 @@ export function Badge({
           size === 'sm' && 'px-2 py-0.5 text-xs',
           size === 'md' && 'px-2.5 py-0.5 text-sm',
           size === 'lg' && 'px-3 py-1 text-base',
-          color === 'primary' && variant === 'solid' && 'bg-emerald-500 text-white',
-          color === 'primary' && variant === 'flat' && 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-          color === 'default' && variant === 'solid' && 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
-          color === 'default' && variant === 'flat' && 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-          color === 'secondary' && variant === 'solid' && 'bg-teal-500 text-white',
-          color === 'secondary' && variant === 'flat' && 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
+          color === 'primary' && variant === 'solid' && 'bg-primary text-primary-foreground',
+          color === 'primary' && variant === 'flat' && 'bg-accent text-primary dark:bg-primary/20 dark:text-primary',
+          color === 'default' && variant === 'solid' && 'bg-secondary text-foreground dark:bg-surface dark:text-foreground',
+          color === 'default' && variant === 'flat' && 'bg-muted/30 text-muted-foreground dark:bg-surface/50 dark:text-muted-foreground',
+          color === 'secondary' && variant === 'solid' && 'bg-secondary text-foreground border border-border',
+          color === 'secondary' && variant === 'flat' && 'bg-secondary/50 text-foreground dark:bg-secondary/20',
           className
         )}
       >

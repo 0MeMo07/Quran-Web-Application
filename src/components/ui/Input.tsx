@@ -106,17 +106,17 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Inp
       classNames={{
         base: 'w-full',
         inputWrapper: cn(
-          'bg-gray-100/70 dark:bg-gray-700/70 border border-gray-200/70 dark:border-gray-600/70 shadow-none',
-          'group-data-[hover=true]:bg-gray-100 dark:group-data-[hover=true]:bg-gray-700',
-          'group-data-[focus=true]:border-emerald-500 group-data-[focus=true]:ring-2 group-data-[focus=true]:ring-emerald-500/20',
+          'bg-secondary/50 dark:bg-surface/50 border border-border shadow-none outline-none ring-0',
+          'group-data-[hover=true]:bg-secondary/70 dark:group-data-[hover=true]:bg-surface/80',
+          'group-data-[focus=true]:border-primary/50 group-data-[focus=true]:ring-0 group-data-[focus=true]:outline-none',
           wrapperSizeClasses[inputSize],
-          isInvalid && 'border-red-400 group-data-[focus=true]:border-red-500 group-data-[focus=true]:ring-red-400/20',
+          isInvalid && 'border-destructive group-data-[focus=true]:border-destructive group-data-[focus=true]:ring-0',
           className
         ),
-        input: cn('text-gray-800 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500', sizeClasses[inputSize]),
-        label: 'text-sm font-medium text-gray-700 dark:text-gray-300',
-        description: 'text-xs text-gray-500 dark:text-gray-400',
-        errorMessage: 'text-xs text-red-500 dark:text-red-400',
+        input: cn('text-foreground placeholder:text-muted-foreground outline-none ring-0 focus:ring-0 focus:outline-none', sizeClasses[inputSize]),
+        label: 'text-sm font-medium text-foreground',
+        description: 'text-xs text-muted-foreground',
+        errorMessage: 'text-xs text-destructive',
       }}
       {...(props as Record<string, unknown>)}
     />

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Spinner as HeroSpinner } from '@heroui/react';
 import { cn } from './cn';
 
@@ -23,7 +22,7 @@ export function Spinner({
       <div className={cn('flex flex-col items-center justify-center gap-3', className)}>
         <HeroSpinner size={size} color={color} />
         {label && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+          <p className="text-sm text-muted-foreground">{label}</p>
         )}
       </div>
     );

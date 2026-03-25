@@ -32,8 +32,8 @@ export function Card({
         base: cn(
           'rounded-2xl overflow-visible',
           glass
-            ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-800/50'
-            : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700',
+            ? 'bg-surface/80 dark:bg-surface/40 backdrop-blur-xl border border-border'
+            : 'bg-surface dark:bg-surface border border-border',
           hoverable && 'hover:shadow-xl transition-shadow duration-300',
           className
         ),

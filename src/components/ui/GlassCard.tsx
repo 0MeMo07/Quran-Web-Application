@@ -34,8 +34,8 @@ export function GlassCard({
   children,
   className,
   beam = false,
-  beamColorFrom = '#10b981',
-  beamColorTo = '#14b8a6',
+  beamColorFrom = 'var(--color-primary, #10b981)',
+  beamColorTo = 'var(--color-secondary, #14b8a6)',
   beamDuration = 10,
   blur = 'xl',
   tinted = false,
@@ -47,9 +47,9 @@ export function GlassCard({
         'relative overflow-hidden rounded-2xl',
         blurMap[blur],
         tinted
-          ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40'
-          : 'bg-white/80 dark:bg-gray-900/80 border border-gray-200/50 dark:border-gray-800/50',
-        'shadow-lg shadow-gray-200/50 dark:shadow-black/30',
+          ? 'bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30'
+          : 'bg-surface/80 dark:bg-surface/40 border border-border',
+        'shadow-lg shadow-black/5 dark:shadow-black/30',
         className
       )}
       {...props}

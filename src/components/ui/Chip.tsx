@@ -43,7 +43,7 @@ export function Chip({
       className={cn(
         'font-medium',
         color === 'primary' && variant === 'flat' &&
-          'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+          'bg-accent text-primary dark:bg-primary/20 dark:text-primary',
         className
       )}
     >

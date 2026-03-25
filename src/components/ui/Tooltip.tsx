@@ -7,7 +7,7 @@ export interface TooltipProps {
   content: React.ReactNode;
   placement?: 'top' | 'bottom' | 'left' | 'right' | 'top-start' | 'top-end' | 'bottom-start' | 'bottom-end';
   delay?: number;
-  color?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'default' | 'foreground' | 'invert';
+  color?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'default' | 'foreground';
   showArrow?: boolean;
   isDisabled?: boolean;
   className?: string;
@@ -34,7 +34,7 @@ export function Tooltip({
       classNames={{
         base: cn(
           'px-3 py-1.5 text-xs font-medium rounded-lg',
-          'shadow-lg border border-gray-200/50 dark:border-gray-700/50',
+          'shadow-lg border border-border',
           className
         ),
       }}

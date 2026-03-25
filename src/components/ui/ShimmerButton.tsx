@@ -20,7 +20,7 @@ export function ShimmerButton({
   shimmerSize = '0.1em',
   borderRadius = '0.625rem',
   shimmerDuration = '1.8s',
-  background = 'linear-gradient(135deg, #059669 0%, #0d9488 50%, #10b981 100%)',
+  background = 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 50%, var(--color-primary) 100%)',
   className,
   children,
   style,
@@ -43,10 +43,10 @@ export function ShimmerButton({
       className={cn(
         'group relative inline-flex items-center justify-center gap-2',
         'overflow-hidden px-5 py-2.5 text-sm font-semibold text-white',
-        'shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40',
+        'shadow-lg shadow-primary/25 hover:shadow-primary/40',
         'transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]',
         'disabled:pointer-events-none disabled:opacity-50',
-        'dark:shadow-emerald-400/20',
+        'dark:shadow-primary/20',
         className
       )}
       {...props}

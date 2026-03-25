@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button as HeroButton, Tooltip as HeroTooltip } from '@heroui/react';
+import { motion } from 'framer-motion';
 import { cn } from './cn';
 
 type IconButtonVariant = 'solid' | 'soft' | 'ghost';
@@ -14,11 +15,11 @@ export interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
 
 const variantClasses: Record<IconButtonVariant, string> = {
   solid:
-    'bg-emerald-500 text-white hover:bg-emerald-600 active:bg-emerald-700 shadow-sm shadow-emerald-500/20',
+    'bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 shadow-sm shadow-primary/20',
   soft:
-    'bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600',
+    'bg-secondary text-foreground hover:bg-secondary/80 active:bg-secondary/70',
   ghost:
-    'bg-transparent text-gray-600 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700/70',
+    'bg-transparent text-muted-foreground hover:bg-secondary/50 active:bg-secondary/70',
 };
 
 const sizeClasses = {
@@ -48,27 +49,33 @@ export function IconButton({
       : (value as string | undefined);
 
   const trigger = (
-    <HeroButton
-      type={type}
-      isIconOnly
-      isLoading={isLoading}
-      isDisabled={disabled || isLoading}
-      value={normalizedValue}
-      aria-label={tooltip}
-      title={tooltip}
-      variant={heroVariant}
-      size={size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'md'}
-      className={cn(
-        'transition-all duration-200',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50',
-        variantClasses[variant],
-        sizeClasses[size],
-        className
-      )}
-      {...(props as Record<string, unknown>)}
+    <motion.div
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      className="inline-block"
     >
-      {icon}
-    </HeroButton>
+      <HeroButton
+        type={type}
+        isIconOnly
+        isLoading={isLoading}
+        isDisabled={disabled || isLoading}
+        value={normalizedValue}
+        aria-label={tooltip}
+        title={tooltip}
+        variant={heroVariant}
+        size={size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'md'}
+        className={cn(
+          'transition-all duration-200',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
+          variantClasses[variant],
+          sizeClasses[size],
+          className
+        )}
+        {...(props as Record<string, unknown>)}
+      >
+        {icon}
+      </HeroButton>
+    </motion.div>
   );
 
   if (!tooltip) {
@@ -77,7 +84,7 @@ export function IconButton({
 
   return (
     <HeroTooltip content={tooltip} placement="top" delay={250}>
-      {trigger}
+      <div className="inline-block">{trigger}</div>
     </HeroTooltip>
   );
 }

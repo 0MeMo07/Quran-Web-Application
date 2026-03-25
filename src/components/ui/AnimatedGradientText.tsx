@@ -11,7 +11,7 @@ export interface AnimatedGradientTextProps {
 
 /**
  * Magic UI — AnimatedGradientText
- * Shimmering emerald-to-teal gradient text with subtle animation.
+ * Shimmering theme-aware gradient text with subtle animation.
  * Great for surah names and section headings.
  */
 export function AnimatedGradientText({
@@ -23,8 +23,7 @@ export function AnimatedGradientText({
   return (
     <Tag
       className={cn(
-        'inline-block bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-400',
-        'dark:from-emerald-400 dark:via-teal-300 dark:to-emerald-500',
+        'inline-block bg-gradient-to-r from-primary via-accent to-primary',
         'bg-[length:200%_auto] bg-clip-text text-transparent',
         'animate-[gradient-pan_3s_linear_infinite]',
         arabic && 'font-arabic',

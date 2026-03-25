@@ -32,12 +32,9 @@ export function BookLayoutSurahSection({
 }: BookLayoutSurahSectionProps) {
   return (
     <div data-surah-id={surahId}>
-      <div className="flex items-center justify-center mb-6 relative">
-        <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
-        <h2 className="relative px-6 py-2 bg-white dark:bg-gray-800 text-lg sm:text-xl font-semibold">
-          <span className="bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
-            {surahs.find((s) => s.id === Number(surahId))?.name}
-          </span>
+      <div className="flex flex-col items-center justify-center mb-10 mt-6 relative">
+        <h2 className="text-center font-serif text-3xl sm:text-5xl tracking-tight text-foreground">
+          {surahs.find((s) => s.id === Number(surahId))?.name}
         </h2>
       </div>
 

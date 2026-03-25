@@ -67,7 +67,7 @@ export function BookLayoutExpandedHeader({
 }: BookLayoutExpandedHeaderProps) {
   return (
     <div
-      className={`sticky top-16 bg-white dark:bg-gray-800 z-10 border-b border-gray-200 dark:border-gray-700 transition-all duration-500 ease-in-out ${
+      className={`sticky top-16 bg-surface/95 backdrop-blur-md z-10 border-b border-border transition-all duration-500 ease-in-out ${
         isHeaderVisible
           ? 'max-h-[500px] opacity-100'
           : 'max-h-0 opacity-0 overflow-hidden border-none'
@@ -75,16 +75,16 @@ export function BookLayoutExpandedHeader({
     >
       <div className="p-2 sm:p-4">
         <div className="text-center mb-2 sm:mb-4">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
             {currentSurahName}
           </h1>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {pageLabel} {currentPage} {ofLabel} {totalPages}
           </p>
         </div>
 
         <form onSubmit={onSearchSubmit} className="flex justify-center mb-4">
-          <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 sm:rounded-xl sm:border sm:border-gray-200/70 sm:dark:border-gray-700/70 sm:bg-gray-100/40 sm:dark:bg-gray-800/40 sm:p-1">
+          <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 sm:rounded-xl sm:bg-secondary/40 sm:p-1">
             <div className="relative surah-dropdown flex-1 sm:w-56">
               <Input
                 type="text"
@@ -96,13 +96,13 @@ export function BookLayoutExpandedHeader({
                 className="surah-input"
               />
               {showSurahDropdown && (
-                <div className="absolute top-full left-0 w-full mt-1 max-h-60 overflow-y-auto bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-50">
+                <div className="absolute top-full left-0 w-full mt-1 max-h-60 overflow-y-auto bg-surface border border-border rounded shadow-lg z-50">
                   {filteredSurahs.map((surah) => (
                     <button
                       key={surah.id}
                       type="button"
                       onClick={() => onSurahSelect(surah.name)}
-                      className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
+                      className="w-full px-3 py-2 text-left hover:bg-secondary text-foreground"
                     >
                       {surah.name}
                     </button>
@@ -122,13 +122,13 @@ export function BookLayoutExpandedHeader({
                 className="verse-input"
               />
               {showVerseDropdown && availableVerses.length > 0 && (
-                <div className="absolute top-full left-0 w-32 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-50">
+                <div className="absolute top-full left-0 w-32 mt-1 max-h-60 overflow-y-auto bg-surface border border-border rounded shadow-lg z-50">
                   {availableVerses.map((verseNum) => (
                     <button
                       key={verseNum}
                       type="button"
                       onClick={() => onVerseSelect(verseNum)}
-                      className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
+                      className="w-full px-3 py-2 text-left hover:bg-secondary text-foreground"
                     >
                       {verseNum}
                     </button>
@@ -137,7 +137,7 @@ export function BookLayoutExpandedHeader({
               )}
             </div>
             <Button type="submit" variant="soft" size="icon" className="w-full sm:w-9 sm:h-9 sm:min-w-9 sm:ml-1">
-              <Search className="w-4 h-4 sm:w-5 sm:h-5 mx-auto text-gray-700 dark:text-gray-300" />
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 mx-auto text-muted-foreground" />
             </Button>
           </div>
         </form>
@@ -150,7 +150,7 @@ export function BookLayoutExpandedHeader({
             size="sm"
             className="px-3 sm:px-4 py-1 sm:py-2 "
           >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" />
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
           </Button>
 
           <div className="w-12 sm:w-16">
@@ -172,7 +172,7 @@ export function BookLayoutExpandedHeader({
             size="sm"
             className="px-3 sm:px-4 py-1 sm:py-2"
           >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" />
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
           </Button>
         </div>
       </div>

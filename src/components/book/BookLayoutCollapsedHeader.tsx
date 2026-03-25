@@ -22,14 +22,14 @@ export function BookLayoutCollapsedHeader({
 }: BookLayoutCollapsedHeaderProps) {
   return (
     <div
-      className={`sticky top-16 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm z-10 transition-all duration-500 ${
+      className={`sticky top-16 bg-surface/95 backdrop-blur-md z-10 transition-all duration-500 ${
         isHeaderVisible
           ? 'max-h-0 opacity-0 overflow-hidden'
-          : 'max-h-16 opacity-100 border-b border-gray-200 dark:border-gray-700'
+          : 'max-h-16 opacity-100 border-b border-border'
       }`}
     >
       <div className="flex items-center justify-between px-4 py-2">
-        <h2 className="text-sm font-medium text-gray-600 dark:text-gray-300">
+        <h2 className="text-sm font-medium text-muted-foreground">
           {currentSurahName} - {pageLabel} {currentPage}
         </h2>
         <div className="flex gap-2">
@@ -37,15 +37,15 @@ export function BookLayoutCollapsedHeader({
             onClick={onPrevPage}
             disabled={currentPage === 0}
             variant="ghost"
-            className="!p-1 !rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-            icon={<ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-300" />}
+            className="!p-1 !rounded hover:bg-secondary"
+            icon={<ChevronLeft className="w-4 h-4 text-muted-foreground" />}
           />
           <IconButton
             onClick={onNextPage}
             disabled={currentPage === totalPages}
             variant="ghost"
-            className="!p-1 !rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-            icon={<ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />}
+            className="!p-1 !rounded hover:bg-secondary"
+            icon={<ChevronRight className="w-4 h-4 text-muted-foreground" />}
           />
         </div>
       </div>

@@ -34,7 +34,7 @@ export function BookLayoutContent({
   t,
 }: BookLayoutContentProps) {
   return (
-    <div className="p-3 sm:p-6 space-y-6 relative min-h-[400px]">
+    <div className="p-4 sm:p-6 space-y-8 relative min-h-[400px]">
       <BookLayoutLoadingOverlay isLoading={isLoading} loadingText={loadingText} />
 
       {Object.entries(versesBySurah).map(([surahId, surahVerses]) => (

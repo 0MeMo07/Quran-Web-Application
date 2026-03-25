@@ -50,32 +50,32 @@ function WordTooltip({ part, language, anchorRef }: WordTooltipProps) {
         width: '15rem',
       }}
     >
-      <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 rounded-2xl shadow-2xl p-4 border border-gray-200 dark:border-gray-700 text-sm">
+      <div className="bg-surface text-foreground rounded-2xl shadow-2xl p-4 border border-border text-sm">
         {/* Arabic word */}
-        <p className="text-2xl font-arabic text-right mb-1 text-emerald-600 dark:text-emerald-400 leading-relaxed" dir="rtl" lang="ar">
+        <p className="text-2xl font-arabic text-right mb-1 text-primary leading-relaxed" dir="rtl" lang="ar">
           {part.arabic}
         </p>
         {/* Transcription */}
         {transcription && (
-          <p className="text-gray-400 dark:text-gray-500 italic text-xs mb-2">{transcription}</p>
+          <p className="text-muted-foreground italic text-xs mb-2">{transcription}</p>
         )}
         {/* Meaning */}
-        <p className="text-gray-800 dark:text-gray-100 font-medium mb-2 leading-snug">{meaning}</p>
+        <p className="text-foreground font-medium mb-2 leading-snug">{meaning}</p>
         {/* Root */}
         {part.root ? (
-          <div className="border-t border-gray-100 dark:border-gray-700 pt-2 flex items-center justify-between gap-2">
-            <span className="text-gray-400 dark:text-gray-500 text-xs">{t.detail.root}:</span>
+          <div className="border-t border-border pt-2 flex items-center justify-between gap-2">
+            <span className="text-muted-foreground text-xs">{t.detail.root}:</span>
             <span className="flex items-center gap-1">
-              <span className="text-emerald-600 dark:text-emerald-400 font-arabic text-lg leading-normal" dir="rtl">{part.root.arabic}</span>
-              <span className="text-gray-400 dark:text-gray-500 text-xs font-mono">({part.root.latin})</span>
+              <span className="text-primary font-arabic text-lg leading-normal" dir="rtl">{part.root.arabic}</span>
+              <span className="text-muted-foreground text-xs font-mono">({part.root.latin})</span>
             </span>
           </div>
         ) : (
-          <p className="text-gray-400 dark:text-gray-500 text-xs border-t border-gray-100 dark:border-gray-700 pt-2">{t.detail.noRoot}</p>
+          <p className="text-muted-foreground text-xs border-t border-border pt-2">{t.detail.noRoot}</p>
         )}
       </div>
       {/* Arrow */}
-      <div className="w-3 h-3 bg-white dark:bg-gray-900 border-r border-b border-gray-200 dark:border-gray-700 rotate-45 mx-auto -mt-1.5" />
+      <div className="w-3 h-3 bg-surface border-r border-b border-border rotate-45 mx-auto -mt-1.5" />
     </div>,
     document.body,
   );
@@ -109,31 +109,31 @@ function WordChip({ part, language, index }: WordChipProps) {
       <div
         className={`relative w-full px-3 py-2.5 rounded-xl border transition-all duration-150 text-center min-h-[102px] ${
           hovered
-            ? 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/40 dark:to-teal-900/30 border-emerald-300 dark:border-emerald-600 shadow-md -translate-y-0.5'
-            : 'bg-gray-50 dark:bg-gray-700/60 border-gray-200 dark:border-gray-600'
+            ? 'bg-primary/10 border-primary shadow-md -translate-y-0.5'
+            : 'bg-secondary border-border'
         }`}
       >
-        <span className="absolute top-1.5 left-1.5 text-[10px] leading-none px-1.5 py-0.5 rounded-md bg-white/80 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 font-semibold tabular-nums">
+        <span className="absolute top-1.5 left-1.5 text-[10px] leading-none px-1.5 py-0.5 rounded-md bg-background text-muted-foreground font-semibold tabular-nums">
           {index}
         </span>
 
         {/* Arabic */}
         <p
-          className="text-2xl font-arabic text-gray-900 dark:text-white leading-relaxed"
+          className="text-2xl font-arabic text-foreground leading-relaxed"
           dir="rtl"
           lang="ar"
         >
           {part.arabic}
         </p>
         {/* Meaning */}
-        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 w-full truncate leading-tight font-medium">
+        <p className="text-xs text-muted-foreground mt-1 w-full truncate leading-tight font-medium">
           {meaning}
         </p>
         {/* Root badge */}
         {part.root ? (
           <Link
             to={`/root/${encodeURIComponent(part.root.latin)}`}
-            className="inline-flex items-center gap-0.5 mt-1 px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs font-medium hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-colors"
+            className="inline-flex items-center gap-0.5 mt-1 px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
             onClick={(e) => e.stopPropagation()}
             title={`${t.detail.viewRoot}: ${part.root.latin}`}
           >
@@ -141,7 +141,7 @@ function WordChip({ part, language, index }: WordChipProps) {
             <ExternalLink className="w-2.5 h-2.5 ml-0.5 shrink-0" />
           </Link>
         ) : (
-          <span className="inline-block mt-1 px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-xs">
+          <span className="inline-block mt-1 px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground text-xs">
             —
           </span>
         )}
@@ -236,14 +236,14 @@ function DetailVerseCard({ verse }: DetailVerseCardProps) {
   return (
     <div
       data-verse-id={verse.id}
-      className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
+      className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden"
     >
       {/* Header row */}
       {verse.verse_number === 1 && selectedSurah && (
-        <div className="px-6 pt-5 pb-2 border-b border-gray-100 dark:border-gray-700 bg-emerald-50/50 dark:bg-emerald-900/10">
+        <div className="px-6 pt-5 pb-2 border-b border-border bg-primary/5">
           <div className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+            <BookOpen className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold text-primary">
               {language === 'en' ? selectedSurah.name_en : selectedSurah.name}
             </span>
             <span className="text-xs text-gray-400">— {selectedSurah.verse_count} {t.verse.verse}</span>
@@ -255,10 +255,10 @@ function DetailVerseCard({ verse }: DetailVerseCardProps) {
         {/* Verse number badge */}
         <div className="flex items-start justify-between mb-4 gap-3">
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-sm">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-sm">
               <span className="text-white text-xs font-bold">{verse.verse_number}</span>
             </div>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-muted-foreground">
               {t.verse.juz} {verse.juz_number} · {t.verse.page} {verse.page}
             </span>
           </div>
@@ -267,8 +267,8 @@ function DetailVerseCard({ verse }: DetailVerseCardProps) {
             onClick={handleToggle}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               expanded
-                ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-300'
+                ? 'bg-primary/20 text-primary'
+                : 'bg-secondary text-foreground hover:bg-primary/10 hover:text-primary'
             }`}
           >
             {expanded ? (
@@ -287,7 +287,7 @@ function DetailVerseCard({ verse }: DetailVerseCardProps) {
 
         {/* Arabic verse */}
         <p
-          className="text-4xl font-arabic leading-loose text-right text-gray-900 dark:text-white mb-3"
+          className="text-4xl font-arabic leading-loose text-right text-foreground mb-3"
           dir="rtl"
           lang="ar"
         >
@@ -295,14 +295,14 @@ function DetailVerseCard({ verse }: DetailVerseCardProps) {
         </p>
 
         {/* Transcription */}
-        <p className="text-sm text-gray-500 dark:text-gray-400 italic mb-4">
+        <p className="text-sm text-muted-foreground italic mb-4">
           {language === 'en' ? verse.transcription_en : verse.transcription}
         </p>
 
         {/* Translation */}
         {verse.translation && (
-          <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
-            <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
+          <div className="pt-4 border-t border-border">
+            <p className="text-foreground leading-relaxed">
               {verse.translation.text}
             </p>
             {/* Footnotes */}
@@ -310,7 +310,7 @@ function DetailVerseCard({ verse }: DetailVerseCardProps) {
               <div className="mt-3">
                 <button
                   onClick={() => setShowFootnotes((v) => !v)}
-                  className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-primary hover:opacity-80 transition-colors"
                 >
                   {showFootnotes ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                   {showFootnotes ? t.verse.hideFootnotes : t.verse.showFootnotes}
@@ -318,8 +318,8 @@ function DetailVerseCard({ verse }: DetailVerseCardProps) {
                 {showFootnotes && (
                   <div className="mt-2 pl-3 border-l-2 border-emerald-200 dark:border-emerald-800 space-y-1.5">
                     {verse.translation.footnotes.map((fn) => (
-                      <p key={fn.id} className="text-xs text-gray-500 dark:text-gray-400">
-                        <span className="font-medium text-emerald-600 dark:text-emerald-400">[{fn.number}]</span>{' '}
+                      <p key={fn.id} className="text-xs text-muted-foreground">
+                        <span className="font-medium text-primary">[{fn.number}]</span>{' '}
                         {fn.text}
                       </p>
                     ))}
@@ -332,17 +332,17 @@ function DetailVerseCard({ verse }: DetailVerseCardProps) {
 
         {/* ── Word-by-word analysis ── */}
         {expanded && (
-          <div className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
+          <div className="mt-5 pt-5 border-t border-border">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 {t.detail.wordAnalysis}
               </p>
               {!loadingParts && !partsError && sortedParts.length > 0 && (
                 <div className="flex items-center gap-1.5 text-[11px]">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-semibold">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary font-semibold">
                     {sortedParts.length} {labels.words}
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-sky-100/70 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 font-semibold">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/10 text-blue-500 font-semibold">
                     {rootCount} {labels.roots}
                   </span>
                 </div>
@@ -355,7 +355,7 @@ function DetailVerseCard({ verse }: DetailVerseCardProps) {
 
             {loadingParts ? (
               <div className="flex justify-center py-6">
-                <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
             ) : partsError ? (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
@@ -430,11 +430,11 @@ export function DetailLayout({ verses }: DetailLayoutProps) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
       {/* ── Sticky nav bar ── */}
-      <div className="sticky top-16 z-10 -mx-4 px-4 py-2.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200/60 dark:border-gray-700/60 flex items-center justify-between">
+      <div className="sticky top-16 z-10 -mx-4 px-4 py-2.5 bg-surface/90 backdrop-blur-md border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
           <Link
             to={`/surah/${verse.surah_id}`}
-            className="flex items-center gap-1.5 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+            className="flex items-center gap-1.5 hover:text-primary transition-colors"
           >
             <BookOpen className="w-4 h-4 shrink-0" />
             <span>{surahName}</span>
@@ -462,14 +462,14 @@ export function DetailLayout({ verses }: DetailLayoutProps) {
                 value={inputVal}
                 onChange={(e) => setInputVal(e.target.value)}
                 onBlur={() => { setInputOpen(false); setInputVal(''); }}
-                className="w-16 text-center text-xs px-2 py-1 rounded-lg border border-emerald-400 dark:border-emerald-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none focus:ring-2 focus:ring-emerald-500/30 tabular-nums"
+                className="w-16 text-center text-xs px-2 py-1 rounded-lg border border-primary bg-surface text-foreground outline-none focus:ring-2 focus:ring-primary/30 tabular-nums"
               />
               <span className="text-xs text-gray-400 dark:text-gray-500">/ {total}</span>
             </form>
           ) : (
             <button
               onClick={() => { setInputOpen(true); setInputVal(String(verse.verse_number)); }}
-              className="text-xs text-gray-500 dark:text-gray-400 w-16 text-center tabular-nums px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+              className="text-xs text-muted-foreground w-16 text-center tabular-nums px-2 py-1 rounded-lg hover:bg-secondary hover:text-primary transition-colors"
               title={t.verse.verse}
             >
               {verse.verse_number} / {total}
@@ -494,7 +494,7 @@ export function DetailLayout({ verses }: DetailLayoutProps) {
         <button
           onClick={prev}
           disabled={idx === 0}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-surface border border-border text-foreground hover:bg-primary/5 hover:border-primary/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm"
         >
           <ChevronLeft className="w-4 h-4" />
           {t.versePage?.prevVerse}
@@ -502,7 +502,7 @@ export function DetailLayout({ verses }: DetailLayoutProps) {
 
         <Link
           to={`/surah/${verse.surah_id}/verse/${verse.verse_number}`}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
         >
           <ExternalLink className="w-3.5 h-3.5" />
           {t.versePage?.backToSurah}
@@ -511,7 +511,7 @@ export function DetailLayout({ verses }: DetailLayoutProps) {
         <button
           onClick={next}
           disabled={idx === total - 1}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300 dark:hover:border-emerald-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-surface border border-border text-foreground hover:bg-primary/5 hover:border-primary/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm"
         >
           {t.versePage?.nextVerse}
           <ChevronRight className="w-4 h-4" />

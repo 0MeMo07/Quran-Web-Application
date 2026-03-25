@@ -88,7 +88,7 @@ export const NoteSection: React.FC<NoteSectionProps> = ({
         {!existingNote && (
           <button
             onClick={() => setShowNotePopup(true)}
-            className="p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-lg"
+            className="p-2 rounded-lg bg-surface text-foreground hover:bg-secondary transition-colors shadow-lg"
           >
             <MessageSquare className="w-4 h-4" />
           </button>
@@ -99,7 +99,7 @@ export const NoteSection: React.FC<NoteSectionProps> = ({
         <div className="mt-2">
           <button
             onClick={() => setShowNotes(!showNotes)}
-            className="text-emerald-600 dark:text-emerald-400 hover:underline text-sm flex items-center gap-2"
+            className="text-primary hover:underline text-sm flex items-center gap-2"
             style={{ fontSize: `${fontSize * 0.75}px` }}
           >
             <span>Notes</span>
@@ -107,20 +107,20 @@ export const NoteSection: React.FC<NoteSectionProps> = ({
           </button>
 
           {showNotes && (
-            <div className="mt-1 pl-4 border-l-2 border-emerald-200 dark:border-emerald-800">
-              <div className="bg-gray-50 dark:bg-gray-700/20 rounded-lg p-3">
+            <div className="mt-1 pl-4 border-l-2 border-primary/20">
+              <div className="bg-secondary/20 rounded-lg p-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="mb-2">
                       <span 
-                        className="text-emerald-600 dark:text-emerald-400"
+                        className="text-primary"
                         style={{ fontSize: `${fontSize * 0.7}px` }}
                       >
                         {existingNote.surahName} {t.verse.verse} {verseNumber}
                       </span>
                     </div>
                     <p 
-                      className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap"
+                      className="text-foreground whitespace-pre-wrap"
                       style={{ 
                         fontSize: `${fontSize * 0.8}px`,
                         lineHeight: lineHeight 
@@ -129,7 +129,7 @@ export const NoteSection: React.FC<NoteSectionProps> = ({
                       {existingNote.content}
                     </p>
                     <p 
-                      className="text-gray-500 dark:text-gray-400 mt-1"
+                      className="text-muted-foreground mt-1"
                       style={{ fontSize: `${fontSize * 0.7}px` }}
                     >
                       {t.notes.savedAt}: {new Date(existingNote.createdAt).toLocaleString()}
@@ -138,13 +138,13 @@ export const NoteSection: React.FC<NoteSectionProps> = ({
                   <div className="flex gap-2">
                     <button
                       onClick={handleEdit}
-                      className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      className="p-1.5 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setShowDeleteConfirmation(true)}
-                      className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                      className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -158,25 +158,25 @@ export const NoteSection: React.FC<NoteSectionProps> = ({
 
       {showNotePopup && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden">
+          <div className="bg-surface rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-foreground">
                   {existingNote ? t.notes.editNote : t.notes.addNote}
                 </h3>
                 <button
                   onClick={() => setShowNotePopup(false)}
-                  className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
+                  className="p-1 rounded-lg hover:bg-secondary text-muted-foreground transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
               
               <div className="mb-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                <p className="text-sm text-muted-foreground mb-2">
                   {t.verse.verse} {verseNumber}
                 </p>
-                <p className="text-gray-900 dark:text-gray-100 text-sm border-l-2 border-emerald-500 pl-3 py-2">
+                <p className="text-foreground text-sm border-l-2 border-primary pl-3 py-2">
                   {verseText}
                 </p>
               </div>
@@ -186,7 +186,7 @@ export const NoteSection: React.FC<NoteSectionProps> = ({
                   value={noteContent}
                   onChange={(e) => setNoteContent(e.target.value)}
                   placeholder={t.notes.placeholder}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 resize-none min-h-[150px]"
+                  className="w-full px-3 py-2 bg-secondary/50 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-primary outline-none text-foreground placeholder-muted-foreground resize-none min-h-[150px]"
                   autoFocus
                 />
                 
@@ -196,14 +196,14 @@ export const NoteSection: React.FC<NoteSectionProps> = ({
                       setShowNotePopup(false);
                       setNoteContent('');
                     }}
-                    className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-colors flex items-center gap-2"
                   >
                     <X className="w-4 h-4" />
                     <span>{t.notes.cancel}</span>
                   </button>
                   <button
                     onClick={handleSave}
-                    className="px-4 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground shadow-lg hover:opacity-90 transition-all flex items-center gap-2"
                   >
                     <Save className="w-4 h-4" />
                     <span>{t.notes.save}</span>
@@ -216,24 +216,24 @@ export const NoteSection: React.FC<NoteSectionProps> = ({
       )}
 
       {showDeleteConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-sm w-full">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h3 className="text-lg font-semibold text-foreground mb-4">
               {t.notes.delete}?
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
+            <p className="text-muted-foreground mb-6">
               {t.notes.deleteConfirmation}
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirmation(false)}
-                className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="px-4 py-2 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
               >
                 {t.notes.cancel}
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+                className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground hover:opacity-90 transition-all shadow-lg"
               >
                 {t.notes.delete}
               </button>

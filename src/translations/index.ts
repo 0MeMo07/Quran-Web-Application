@@ -28,7 +28,14 @@ const translations = {
         notes: 'Notes',
         search: 'Search',
         selectLanguage: 'Select Language',
-        menu: 'Menu'
+        menu: 'Menu',
+        close: 'Close',
+        themes: {
+          flagshipLight: 'Flagship Light',
+          flagshipDark: 'Flagship Dark',
+          simpleLight: 'Simple Light',
+          simpleDark: 'Simple Dark'
+        }
       },
       sidebar: {
         selectSurah: 'Select Surah',
@@ -190,7 +197,14 @@ const translations = {
         notes: 'Notlar',
         search: 'Ara',
         selectLanguage: 'Dil Seçimi',
-        menu: 'Menü'
+        menu: 'Menü',
+        close: 'Kapat',
+        themes: {
+          flagshipLight: 'Flagship Aydınlık',
+          flagshipDark: 'Flagship Karanlık',
+          simpleLight: 'Sade Aydınlık',
+          simpleDark: 'Sade Karanlık'
+        }
       },
       sidebar: {
         selectSurah: 'Sure Seç',

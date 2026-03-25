@@ -52,34 +52,34 @@ export function ShareMenu({ isOpen, onClose, verseText, verseInfo, verseLink }: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative w-full max-w-sm mx-4 bg-white dark:bg-gray-800 rounded-2xl shadow-xl">
+      <div className="relative w-full max-w-sm mx-4 bg-surface rounded-2xl shadow-xl">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="absolute right-4 top-4 p-2 rounded-lg hover:bg-secondary"
         >
-          <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <X className="w-5 h-5 text-muted-foreground" />
         </button>
         
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <h3 className="text-lg font-semibold text-foreground mb-4">
             {t.share.title}
           </h3>
           
           <div className="space-y-2">
             <button
               onClick={handleCopy}
-              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-secondary transition-colors"
             >
-              <Copy className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              <span className="text-gray-700 dark:text-gray-200">{t.share.copy}</span>
+              <Copy className="w-5 h-5 text-muted-foreground" />
+              <span className="text-foreground">{t.share.copy}</span>
             </button>
             
             <button
               onClick={handleShare}
-              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-secondary transition-colors"
             >
-              <Share className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              <span className="text-gray-700 dark:text-gray-200">{t.share.share}</span>
+              <Share className="w-5 h-5 text-muted-foreground" />
+              <span className="text-foreground">{t.share.share}</span>
             </button>
           </div>
         </div>

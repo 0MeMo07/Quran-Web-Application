@@ -12,6 +12,7 @@ import { selectSelectedAuthor } from '../store/slices/translationsSlice';
 import { CardNoteSection } from './notes/CardNoteSection';
 import { NotePopup } from './notes/NotePopup';
 import { DeleteNotePopup } from './notes/DeleteNotePopup';
+import { motion } from 'framer-motion';
 
 interface VerseCardProps {
   verse: Verse;
@@ -50,9 +51,9 @@ export function VerseCard({ verse }: VerseCardProps) {
           const verseElement = document.querySelector(`[data-verse-id="${verse.id}"]`);
           if (verseElement) {
             verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            verseElement.classList.add('bg-blue-50', 'dark:bg-blue-900/20');
+            verseElement.classList.add('bg-primary/10');
             setTimeout(() => {
-              verseElement.classList.remove('bg-blue-50', 'dark:bg-blue-900/20');
+              verseElement.classList.remove('bg-primary/10');
             }, 2000);
           }
         }, 500);
@@ -95,37 +96,47 @@ export function VerseCard({ verse }: VerseCardProps) {
   return (
     <>
       {verse.verse_number === 1 && (
-        <section className="mb-6 relative">
-          <h1 className="text-center relative">
-            <span className="absolute left-0 top-1/2 w-1/4 h-px bg-gradient-to-r from-transparent to-gray-300 dark:to-gray-600"></span>
-            <span className="inline-flex flex-col items-center px-4">
-              <span className="font-arabic text-2xl text-gray-800 dark:text-gray-200">{selectedSurah?.name}</span>
-            </span>
-            <span className="absolute right-0 top-1/2 w-1/4 h-px bg-gradient-to-l from-transparent to-gray-300 dark:to-gray-600"></span>
-          </h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 text-center">
-            {t.verse.juz} {verse.juz_number} • {t.verse.page} {verse.page}
-          </p>
-        </section>
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-12 mt-16 relative"
+        >
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-16 h-px bg-primary/20 mb-8" />
+            <h1 className="text-center font-serif text-4xl sm:text-6xl tracking-tight text-foreground mb-4">
+              {selectedSurah?.name}
+            </h1>
+            <div className="flex items-center gap-3 text-sm font-numbers tracking-widest uppercase opacity-40">
+              <span>{t.verse.juz} {verse.juz_number}</span>
+              <span className="w-1 h-1 rounded-full bg-foreground" />
+              <span>{t.verse.page} {verse.page}</span>
+            </div>
+          </div>
+        </motion.section>
       )}
 
-      <div 
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-10%" }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         data-verse-id={verse.id}
-        className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-lg hover:shadow-xl dark:shadow-gray-900/50 p-6 transition-all duration-300 border border-gray-100/50 dark:border-gray-700/50"
+        className="glass rounded-[2rem] p-8 transition-all duration-500 hover:translate-y-[-4px] group/card mb-8"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20 p-3 rounded-xl">
-              <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 transition-colors group-hover/card:bg-primary/10">
+              <BookOpen className="w-6 h-6 text-primary" />
             </div>
             <div>
               <Link 
                 to={verseLink}
-                className="group text-lg font-medium text-gray-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                className="group/link text-xl font-serif font-semibold text-foreground hover:text-primary transition-colors block"
               >
-                {t.verse.verse} {verse.verse_number}
+                {t.verse.verse} <span className="font-numbers">{verse.verse_number}</span>
               </Link>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm font-numbers tracking-wider uppercase opacity-40 mt-1">
                 {t.verse.juz} {verse.juz_number} • {t.verse.page} {verse.page}
               </p>
             </div>
@@ -135,8 +146,8 @@ export function VerseCard({ verse }: VerseCardProps) {
               onClick={() => !existingNote && setShowNotePopup(true)}
               className={`p-2 rounded-lg transition-colors shadow-lg ${
                 existingNote 
-                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
-                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-secondary text-muted-foreground cursor-not-allowed' 
+                  : 'bg-surface text-foreground hover:bg-secondary'
               }`}
               title={existingNote ? t.notes.editNote : t.notes.addNote}
               disabled={!!existingNote}
@@ -145,7 +156,7 @@ export function VerseCard({ verse }: VerseCardProps) {
             </button>
             <button
               onClick={() => setShowShareMenu(true)}
-              className="p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-lg"
+              className="p-2 rounded-lg bg-surface text-foreground hover:bg-secondary transition-colors shadow-lg"
               title={t.share.share}
             >
               <Share2 className="w-4 h-4" />
@@ -153,16 +164,16 @@ export function VerseCard({ verse }: VerseCardProps) {
           </div>
         </div>
 
-        <div className="space-y-6">
-          <p className="text-3xl leading-relaxed text-right font-arabic text-gray-900 dark:text-white" dir="rtl">
+        <div className="space-y-8">
+          <p className="text-4xl sm:text-5xl leading-[1.8] text-right font-arabic text-foreground selection:bg-primary/30" dir="rtl">
             {verse.verse}
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400 italic leading-relaxed">
+          <p className="text-base text-muted-foreground/60 leading-relaxed font-light tracking-wide lg:max-w-3xl">
             {language === 'en' ? verse.transcription_en : verse.transcription}
           </p>
           {verse.translation && (
-            <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
-              <p className="text-gray-900 dark:text-gray-100 leading-relaxed">
+            <div className="pt-6 border-t border-border">
+              <p className="text-foreground leading-relaxed">
                 {verse.translation.text}
               </p>
 
@@ -171,7 +182,7 @@ export function VerseCard({ verse }: VerseCardProps) {
                 <div className="mt-4 space-y-2">
                   <button
                     onClick={() => setShowTranslations(!showTranslations)}
-                    className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
+                    className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
                   >
                     <span>{showTranslations ? t.verse.hideFootnotes : t.verse.showFootnotes}</span>
                     {showTranslations ? (
@@ -181,10 +192,10 @@ export function VerseCard({ verse }: VerseCardProps) {
                     )}
                   </button>
                   {showTranslations && (
-                    <div className="pl-4 border-l-2 border-emerald-200 dark:border-emerald-800 space-y-2">
+                    <div className="pl-4 border-l-2 border-border/50 space-y-2">
                       {verse.translation.footnotes.map((footnote) => (
-                        <p key={footnote.id} className="text-sm text-gray-600 dark:text-gray-400">
-                          <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                        <p key={footnote.id} className="text-sm text-muted-foreground">
+                          <span className="font-medium text-primary">
                             [{footnote.number}]
                           </span>{' '}
                           {footnote.text}
@@ -200,7 +211,7 @@ export function VerseCard({ verse }: VerseCardProps) {
                 <div className="mt-4 space-y-2">
                   <button
                     onClick={() => setShowNotes(!showNotes)}
-                    className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
+                    className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
                   >
                     <span>Notes</span>
                     {showNotes ? (
@@ -210,7 +221,7 @@ export function VerseCard({ verse }: VerseCardProps) {
                     )}
                   </button>
                   {showNotes && (
-                    <div className="pl-4 border-l-2 border-emerald-200 dark:border-emerald-800">
+                    <div className="pl-4 border-l-2 border-primary/20">
                       <CardNoteSection
                         verseId={verse.verse_number}
                         surahId={verse.surah_id}
@@ -225,7 +236,7 @@ export function VerseCard({ verse }: VerseCardProps) {
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       <ShareMenu
         isOpen={showShareMenu}

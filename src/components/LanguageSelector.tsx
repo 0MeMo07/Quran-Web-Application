@@ -50,10 +50,7 @@ export function LanguageSelector({
         ...theme,
         colors: {
           ...theme.colors,
-          primary: '#059669',
-          primary75: '#10b981',
-          primary50: '#6ee7b7',
-          primary25: '#d1fae5',
+          primary: 'var(--color-primary)',
         },
       })}
     />

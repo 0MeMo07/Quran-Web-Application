@@ -121,8 +121,8 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-2 sm:p-4">
-      <Card className="w-full max-w-4xl bg-white dark:bg-gray-800 rounded-lg shadow-lg border-none">
+    <div className="flex flex-col items-center justify-start min-h-screen bg-gradient-to-b from-surface to-secondary p-0 sm:p-4">
+      <Card className="w-full max-w-4xl bg-surface rounded-none sm:rounded-lg shadow-none sm:shadow-lg border-none min-h-screen sm:min-h-[auto]">
         <BookLayoutTopActions
           isHeaderVisible={isHeaderVisible}
           showSettings={showSettings}

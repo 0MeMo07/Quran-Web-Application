@@ -30,8 +30,9 @@ import {
   setLoading,
 } from './store/slices/translationsSlice';
 import { useTranslations } from './translations';
-import { selectReadingType, selectVisualTheme } from './store/slices/uiSlice';
+import { selectReadingType } from './store/slices/uiSlice';
 import { SearchDialog } from './components/SearchDialog';
+import { cn } from './components/ui/cn';
 
 function App() {
   const language = useSelector(selectSearchLanguage);
@@ -44,7 +45,6 @@ function App() {
   const verses = useSelector(selectVerses);
   const allVerses = useSelector(selectAllVerses);
   const readingType = useSelector(selectReadingType);
-  const visualTheme = useSelector(selectVisualTheme);
   const currentSurah = useSelector(selectCurrentSurah);
   const loading = useSelector(selectLoading);
   const selectedAuthor = useSelector(selectSelectedAuthor);
@@ -104,15 +104,13 @@ function App() {
           <meta name="description" content="Loading Quran content..." />
         </Helmet>
         <div
-          className={`flex items-center justify-center min-h-screen ${
-            visualTheme === 'simple'
-              ? 'bg-gray-50 dark:bg-gray-900'
-              : 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-gray-800'
-          }`}
+          className={cn(
+            'flex items-center justify-center min-h-screen bg-background'
+          )}
         >
           <div className="text-center">
-            <Loader2 className="w-10 h-10 animate-spin text-emerald-600 dark:text-emerald-400 mx-auto" />
-            <p className="mt-4 text-gray-600 dark:text-gray-300">{t.loading}</p>
+            <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
+            <p className="mt-4 text-muted-foreground">{t.loading}</p>
           </div>
         </div>
       </>
@@ -130,12 +128,10 @@ function App() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <html lang={language} />
       </Helmet>
-      <div
-        className={`min-h-screen pt-16 ${
-          visualTheme === 'simple'
-            ? 'bg-gray-50 dark:bg-gray-900'
-            : 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-gray-800'
-        }`}
+      <main
+        className={cn(
+          'min-h-screen pt-16 transition-colors duration-500 bg-background'
+        )}
       >
         {isPopoverVisible && (
           <div
@@ -180,7 +176,7 @@ function App() {
               <div className="absolute right-4 top-4 lg:hidden">
                 <button
                   onClick={() => setIsSidebarOpen(false)}
-                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                  className="p-2 rounded-full bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -194,8 +190,8 @@ function App() {
               allVerses.length === 0 ? (
                 <div className="flex items-center justify-center min-h-screen">
                   <div className="text-center">
-                    <Loader2 className="w-10 h-10 animate-spin text-emerald-600 dark:text-emerald-400 mx-auto" />
-                    <p className="mt-4 text-gray-600 dark:text-gray-300">{t.loading}</p>
+                    <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
+                    <p className="mt-4 text-muted-foreground">{t.loading}</p>
                   </div>
                 </div>
               ) : (
@@ -212,7 +208,7 @@ function App() {
             )}
           </main>
         </div>
-      </div>
+      </main>
     </>
   );
 }

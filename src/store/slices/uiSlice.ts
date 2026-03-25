@@ -70,6 +70,14 @@ const uiSlice = createSlice({
 
       applyThemeClasses(state.isDarkMode, state.visualTheme);
     },
+    setTheme: (state, action: PayloadAction<{ isDarkMode: boolean, visualTheme: VisualTheme }>) => {
+      state.isDarkMode = action.payload.isDarkMode;
+      state.visualTheme = action.payload.visualTheme;
+      localStorage.setItem('isDarkMode', JSON.stringify(state.isDarkMode));
+      localStorage.setItem('visualTheme', state.visualTheme);
+
+      applyThemeClasses(state.isDarkMode, state.visualTheme);
+    },
     setLanguage: (state, action: PayloadAction<'tr' | 'en'>) => {
       state.language = action.payload;
       localStorage.setItem('language', action.payload);
@@ -115,6 +123,7 @@ applyThemeClasses(initialState.isDarkMode, initialState.visualTheme);
 export const { 
   toggleTheme, 
   setVisualTheme,
+  setTheme,
   setLanguage, 
   toggleLanguage,
   setReadingType,

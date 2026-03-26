@@ -3,7 +3,6 @@ import type { RootState } from '../store';
 
 export type ReadingType = 'card' | 'book' | 'detail';
 export type ViewType = 'meal' | 'meal+kuran' | 'kuran+meal' | 'kuran';
-export type LayoutType = 'list' | 'flipbook';
 export type VisualTheme = 'default' | 'simple';
 
 export interface Note {
@@ -21,7 +20,6 @@ interface UIState {
   language: 'tr' | 'en';
   readingType: ReadingType;
   viewType: ViewType;
-  layoutType: LayoutType;
   notes: Note[];
 }
 
@@ -30,17 +28,15 @@ const savedVisualTheme = localStorage.getItem('visualTheme');
 const savedLanguage = localStorage.getItem('language');
 const savedReadingType = localStorage.getItem('readingType');
 const savedViewType = localStorage.getItem('viewType');
-const savedLayoutType = localStorage.getItem('layoutType');
 const savedNotes = localStorage.getItem('quran-notes');
 const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
 const initialState: UIState = {
   isDarkMode: savedTheme ? JSON.parse(savedTheme) : prefersDarkMode,
   visualTheme: (savedVisualTheme as VisualTheme) || 'default',
-  language: savedLanguage as 'tr' | 'en' || 'en',
+  language: (savedLanguage as 'tr' | 'en') || 'en',
   readingType: (savedReadingType as ReadingType) || 'book',
   viewType: (savedViewType as ViewType) || 'meal',
-  layoutType: (savedLayoutType as LayoutType) || 'list',
   notes: savedNotes ? JSON.parse(savedNotes) : [],
 };
 
@@ -99,10 +95,6 @@ const uiSlice = createSlice({
       state.viewType = action.payload;
       localStorage.setItem('viewType', action.payload);
     },
-    setLayoutType: (state, action: PayloadAction<LayoutType>) => {
-      state.layoutType = action.payload;
-      localStorage.setItem('layoutType', action.payload);
-    },
     addNote: (state, action: PayloadAction<Note>) => {
       const noteIndex = state.notes.findIndex(
         note => note.surahId === action.payload.surahId && note.verseId === action.payload.verseId
@@ -136,7 +128,6 @@ export const {
   toggleLanguage,
   setReadingType,
   setViewType,
-  setLayoutType,
   addNote,
   deleteNote
 } = uiSlice.actions;
@@ -146,7 +137,6 @@ export const selectVisualTheme = (state: RootState) => state.ui.visualTheme;
 export const selectLanguage = (state: RootState) => state.ui.language;
 export const selectReadingType = (state: RootState) => state.ui.readingType;
 export const selectViewType = (state: RootState) => state.ui.viewType;
-export const selectLayoutType = (state: RootState) => state.ui.layoutType;
 export const selectNotes = (state: RootState) => state.ui.notes;
 
 export const selectNoteByVerseAndSurah = (state: RootState, surahId: number, verseId: number) => 
@@ -154,4 +144,4 @@ export const selectNoteByVerseAndSurah = (state: RootState, surahId: number, ver
 
 export const selectTheme = (state: RootState) => state.ui.isDarkMode ? 'dark' : 'light';
 
-export default uiSlice.reducer;
+export default uiSlice.reducer;

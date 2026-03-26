@@ -32,7 +32,7 @@ import {
   selectAuthors,
 } from './store/slices/translationsSlice';
 import { useTranslations } from './translations';
-import { selectReadingType, selectLayoutType } from './store/slices/uiSlice';
+import { selectReadingType } from './store/slices/uiSlice';
 import { SearchDialog } from './components/SearchDialog';
 import { cn } from './components/ui/cn';
 
@@ -52,8 +52,6 @@ function App() {
   const currentSurah = useSelector(selectCurrentSurah);
   const loading = useSelector(selectLoading);
   const selectedAuthor = useSelector(selectSelectedAuthor);
-  const layoutType = useSelector(selectLayoutType);
-  const isFlipBookMode = readingType === 'book' && layoutType === 'flipbook';
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { surahId, authorId } = useParams();
   const surahs = useSelector(selectSurahs);
@@ -167,8 +165,7 @@ function App() {
       </Helmet>
       <main
         className={cn(
-          'min-h-screen transition-colors duration-500 bg-background',
-          !isFlipBookMode && 'pt-16'
+          'min-h-screen transition-colors duration-500 bg-background pt-16'
         )}
       >
         {isPopoverVisible && (
@@ -180,56 +177,51 @@ function App() {
             }}
           />
         )}
-        {!isFlipBookMode && (
-          <Header
-            onMenuClick={toggleSidebar}
-            onSearchOpen={() => setIsSearchOpen(true)}
-          />
-        )}
+        <Header
+          onMenuClick={toggleSidebar}
+          onSearchOpen={() => setIsSearchOpen(true)}
+        />
 
         <SearchDialog isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
         <div className="flex">
-          {!isFlipBookMode && (
+          <div
+            className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-72 z-40 
+            ${
+              isSidebarOpen
+                ? 'max-lg:opacity-100 max-lg:pointer-events-auto lg:opacity-100 lg:pointer-events-auto'
+                : 'max-lg:opacity-0 max-lg:pointer-events-none lg:opacity-100 lg:pointer-events-auto'
+            }
+            `}
+          >
             <div
-              className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-72 z-40 
-              ${
-                isSidebarOpen
-                  ? 'max-lg:opacity-100 max-lg:pointer-events-auto lg:opacity-100 lg:pointer-events-auto'
-                  : 'max-lg:opacity-0 max-lg:pointer-events-none lg:opacity-100 lg:pointer-events-auto'
-              }
-              `}
-            >
-              <div
-                className={`fixed inset-0 bg-black/50 transition-opacity duration-300 lg:hidden
-                  ${
-                    isSidebarOpen
-                      ? 'opacity-100'
-                      : 'opacity-0 pointer-events-none display-none'
-                  }`}
-                onClick={() => setIsSidebarOpen(false)}
-              />
+              className={`fixed inset-0 bg-black/50 transition-opacity duration-300 lg:hidden
+                ${
+                  isSidebarOpen
+                    ? 'opacity-100'
+                    : 'opacity-0 pointer-events-none display-none'
+                }`}
+              onClick={() => setIsSidebarOpen(false)}
+            />
 
-              <div
-                className={`absolute top-0 left-0 h-full w-full transform transition-transform duration-300 lg:translate-x-0
-                  ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
-              >
-                <div className="absolute right-4 top-4 lg:hidden">
-                  <button
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="p-2 rounded-full bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                <Sidebar />
+            <div
+              className={`absolute top-0 left-0 h-full w-full transform transition-transform duration-300 lg:translate-x-0
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+            >
+              <div className="absolute right-4 top-4 lg:hidden">
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="p-2 rounded-full bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
+              <Sidebar />
             </div>
-          )}
+          </div>
 
           <main className={cn(
-            'flex-1 transition-all duration-300',
-            !isFlipBookMode && 'ml-0 lg:ml-72'
+            'flex-1 transition-all duration-300 ml-0 lg:ml-72'
           )}>
             {readingType === 'book' ? (
               allVerses.length === 0 ? (

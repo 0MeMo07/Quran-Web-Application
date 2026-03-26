@@ -1,7 +1,7 @@
 import { type Dispatch, type SetStateAction, useMemo } from 'react';
-import { type ViewType, type LayoutType } from '../../store/slices/uiSlice';
+import { type ViewType } from '../../store/slices/uiSlice';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, BookOpen, Languages, Type, AlignLeft, Minus, Plus, Book, LayoutList } from 'lucide-react';
+import { FileText, BookOpen, Languages, Type, AlignLeft, Minus, Plus } from 'lucide-react';
 
 interface BookLayoutSettingsPanelProps {
   showSettings: boolean;
@@ -9,8 +9,6 @@ interface BookLayoutSettingsPanelProps {
   t: ReturnType<typeof import('../../translations').useTranslations>;
   viewType: ViewType;
   onSetViewType: (viewType: ViewType) => void;
-  layoutType: LayoutType;
-  onSetLayoutType: (layoutType: LayoutType) => void;
   fontSize: number;
   setFontSize: Dispatch<SetStateAction<number>>;
   lineHeight: number;
@@ -23,8 +21,6 @@ export function BookLayoutSettingsPanel({
   t,
   viewType,
   onSetViewType,
-  layoutType,
-  onSetLayoutType,
   fontSize,
   setFontSize,
   lineHeight,
@@ -36,16 +32,10 @@ export function BookLayoutSettingsPanel({
     { type: 'kuran' as const, icon: Languages, label: 'Kuran' },
   ], []);
 
-  const layoutOptions = useMemo(() => [
-    { type: 'list' as const, icon: LayoutList, label: 'Liste' },
-    { type: 'flipbook' as const, icon: Book, label: 'Kitap' },
-  ], []);
-
   return (
     <AnimatePresence>
       {showSettings && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -54,7 +44,6 @@ export function BookLayoutSettingsPanel({
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           />
 
-          {/* Popup Panel */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -62,7 +51,6 @@ export function BookLayoutSettingsPanel({
             className="relative z-10 w-full max-w-sm max-h-[90vh] bg-background/95 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 shadow-[0_30px_70px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden"
           >
             <div className="p-7 space-y-7 overflow-y-auto custom-scrollbar">
-              {/* Header */}
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-primary/10 rounded-2xl">
@@ -80,80 +68,40 @@ export function BookLayoutSettingsPanel({
                 </button>
               </div>
 
-              {/* Configuration Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* View Type Selection */}
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50 px-1">
-                    İçerik
-                  </label>
-                  <div className="grid grid-cols-3 p-1 bg-secondary/30 rounded-2xl relative">
-                    {viewOptions.map((opt) => {
-                      const isActive = viewType === opt.type;
-                      const Icon = opt.icon;
-                      return (
-                        <button
-                          key={opt.type}
-                          onClick={() => onSetViewType(opt.type)}
-                          className={`relative flex flex-col items-center gap-1.5 py-4 transition-all duration-300 z-10 ${
-                            isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                          }`}
-                        >
-                          {isActive && (
-                            <motion.div
-                              layoutId="active-view-bg"
-                              className="absolute inset-0 bg-background rounded-xl shadow-lg border border-white/5"
-                              transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                            />
-                          )}
-                          <Icon className="w-4 h-4 relative z-20" />
-                          <span className="text-[9px] font-bold uppercase tracking-tighter relative z-20">
-                            {opt.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Layout Type Selection */}
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50 px-1">
-                    Görünüm
-                  </label>
-                  <div className="grid grid-cols-2 p-1 bg-secondary/30 rounded-2xl relative">
-                    {layoutOptions.map((opt) => {
-                      const isActive = layoutType === opt.type;
-                      const Icon = opt.icon;
-                      return (
-                        <button
-                          key={opt.type}
-                          onClick={() => onSetLayoutType(opt.type)}
-                          className={`relative flex flex-col items-center gap-1.5 py-4 transition-all duration-300 z-10 ${
-                            isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                          }`}
-                        >
-                          {isActive && (
-                            <motion.div
-                              layoutId="active-layout-bg"
-                              className="absolute inset-0 bg-background rounded-xl shadow-lg border border-white/5"
-                              transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                            />
-                          )}
-                          <Icon className="w-4 h-4 relative z-20" />
-                          <span className="text-[9px] font-bold uppercase tracking-tighter relative z-20">
-                            {opt.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50 px-1">
+                  İçerik Görünümü
+                </label>
+                <div className="grid grid-cols-3 p-1 bg-secondary/30 rounded-2xl relative">
+                  {viewOptions.map((opt) => {
+                    const isActive = viewType === opt.type;
+                    const Icon = opt.icon;
+                    return (
+                      <button
+                        key={opt.type}
+                        onClick={() => onSetViewType(opt.type)}
+                        className={`relative flex flex-col items-center gap-1.5 py-4 transition-all duration-300 z-10 ${
+                          isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {isActive && (
+                          <motion.div
+                            layoutId="active-view-bg"
+                            className="absolute inset-0 bg-background rounded-xl shadow-lg border border-white/5"
+                            transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                          />
+                        )}
+                        <Icon className="w-4 h-4 relative z-20" />
+                        <span className="text-[9px] font-bold uppercase tracking-tighter relative z-20">
+                          {opt.label}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Sliders Section */}
               <div className="space-y-7 px-1">
-                {/* Font Size */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
                     <div className="flex items-center gap-2">
@@ -200,7 +148,6 @@ export function BookLayoutSettingsPanel({
                   </div>
                 </div>
 
-                {/* Line Height */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
                     <div className="flex items-center gap-2">
@@ -249,7 +196,6 @@ export function BookLayoutSettingsPanel({
                 </div>
               </div>
 
-              {/* Preview Section */}
               <div className="pt-6 border-t border-white/5 space-y-4">
                 <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50 px-1">
                   Önizleme
@@ -277,15 +223,6 @@ export function BookLayoutSettingsPanel({
                         Rahman ve Rahim olan Allah'ın adıyla.
                       </motion.div>
                     )}
-                    {/* {layoutType === 'flipbook' && (
-                      <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 0.5 }}
-                        className="text-[10px] text-center font-bold uppercase tracking-widest mt-2"
-                      >
-                        Sayfa Görünümü Aktif
-                      </motion.div>
-                    )} */}
                   </div>
                 </div>
               </div>

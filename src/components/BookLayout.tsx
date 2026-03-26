@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
-import { useSelector,useDispatch } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { selectSurahs } from '../store/slices/quranSlice';
 import { Verse } from '../api/types';
 import { useTranslations } from '../translations';
-import { selectBookCurrentSurahId, setBookCurrentSurahId  } from '../store/slices/quranSlice';
+import { selectBookCurrentSurahId, setBookCurrentSurahId } from '../store/slices/quranSlice';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { selectTranslationsLoading } from '../store/slices/translationsSlice';
-import { selectViewType, setViewType, selectLayoutType, setLayoutType } from '../store/slices/uiSlice';
+import { selectViewType, setViewType } from '../store/slices/uiSlice';
 import { BookLayoutTopActions } from './book/BookLayoutTopActions';
 import { BookLayoutSettingsPanel } from './book/BookLayoutSettingsPanel';
 import { BookLayoutExpandedHeader } from './book/BookLayoutExpandedHeader';
@@ -36,22 +36,23 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   const [lineHeight, setLineHeight] = useState(1.5);
   const [showSettings, setShowSettings] = useState(false);
   const { surahId, verseId, pageNumber: urlPageNumber } = useParams();
-  // Derive currentPage directly from URL to avoid stale-state renders during navigation
+  
   const urlPageNum = urlPageNumber ? Number(urlPageNumber) : NaN;
   const currentPage = !Number.isNaN(urlPageNum) && urlPageNum >= 1 ? urlPageNum : stateCurrentPage;
   const navigate = useNavigate();
   const location = useLocation();
   const isLoading = useSelector(selectTranslationsLoading);
   const viewType = useSelector(selectViewType);
-  const layoutType = useSelector(selectLayoutType);
 
   const minPage = verses.length > 0 ? Math.min(...verses.map((verse) => verse.page)) : 1;
   const loadedMaxPage = verses.length > 0 ? Math.max(...verses.map((verse) => verse.page)) : 1;
   const totalPages = Math.max(TOTAL_QURAN_PAGES, loadedMaxPage);
+  
   const currentPageVerses = useMemo(
     () => verses.filter((verse) => verse.page === currentPage),
     [verses, currentPage]
   );
+  
   const versesBySurah = useMemo(
     () => currentPageVerses.reduce((acc, verse) => {
       if (!acc[verse.surah_id]) {
@@ -128,17 +129,14 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   };
 
   return (
-    <div className={`flex flex-col items-center ${layoutType === 'flipbook' ? 'justify-center bg-[#0a0a0a] overflow-hidden' : 'justify-start bg-gradient-to-b from-surface to-secondary p-0 sm:p-4'} ${layoutType === 'flipbook' ? 'h-screen' : 'min-h-[calc(100vh-64px)]'} transition-all duration-700`}>
-      <Card className={`w-full ${layoutType === 'flipbook' ? 'max-w-none border-none p-0 bg-transparent flex-1 flex flex-col h-full' : 'max-w-4xl bg-surface rounded-none sm:rounded-lg shadow-none sm:shadow-lg border-none'} min-h-0 transition-all duration-500`}>
-        <div className={layoutType === 'flipbook' ? 'absolute top-0 right-0 z-[80] p-4' : ''}>
-          <BookLayoutTopActions
-            isHeaderVisible={isHeaderVisible}
-            showSettings={showSettings}
-            onToggleSettings={() => setShowSettings(!showSettings)}
-            onToggleHeaderVisible={() => setIsHeaderVisible(!isHeaderVisible)}
-            layoutType={layoutType}
-          />
-        </div>
+    <div className="flex flex-col items-center justify-start bg-gradient-to-b from-surface to-secondary p-0 sm:p-4 min-h-[calc(100vh-64px)] transition-all duration-700">
+      <Card className="w-full max-w-4xl bg-surface rounded-none sm:rounded-lg shadow-none sm:shadow-lg border-none min-h-0 transition-all duration-500">
+        <BookLayoutTopActions
+          isHeaderVisible={isHeaderVisible}
+          showSettings={showSettings}
+          onToggleSettings={() => setShowSettings(!showSettings)}
+          onToggleHeaderVisible={() => setIsHeaderVisible(!isHeaderVisible)}
+        />
 
         <BookLayoutSettingsPanel
           showSettings={showSettings}
@@ -146,67 +144,58 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
           t={t}
           viewType={viewType}
           onSetViewType={(nextViewType) => dispatch(setViewType(nextViewType))}
-          layoutType={layoutType}
-          onSetLayoutType={(nextLayoutType) => dispatch(setLayoutType(nextLayoutType))}
           fontSize={fontSize}
           setFontSize={setFontSize}
           lineHeight={lineHeight}
           setLineHeight={setLineHeight}
         />
 
-        {layoutType !== 'flipbook' && (
-          <>
-            <BookLayoutExpandedHeader
-              isHeaderVisible={isHeaderVisible}
-              layoutType={layoutType}
-              currentSurahName={getCurrentSurahName()}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              pageLabel={t.verse.page}
-              ofLabel={t.verse.of}
-              selectSurahLabel={t.sidebar.selectSurah}
-              verseLabel={t.verse.verse}
-              searchSurah={searchSurah}
-              searchVerse={searchVerse}
-              showSurahDropdown={showSurahDropdown}
-              showVerseDropdown={showVerseDropdown}
-              filteredSurahs={filteredSurahs}
-              availableVerses={availableVerses}
-              inputPage={inputPage}
-              onSearchSubmit={handleSearch}
-              onSearchSurahChange={handleSearchSurahChange}
-              onSearchVerseChange={handleSearchVerseChange}
-              onSurahInputFocus={handleSurahInputFocus}
-              onVerseInputFocus={handleVerseInputFocus}
-              onSurahSelect={handleSurahSelect}
-              onVerseSelect={handleVerseSelect}
-              onPrevPage={handlePreviousPage}
-              onNextPage={handleNextPage}
-              onPageInputChange={handlePageChange}
-              onPageInputBlur={handlePageBlur}
-              onPageInputKeyDown={handlePageKeyDown}
-            />
+        <BookLayoutExpandedHeader
+          isHeaderVisible={isHeaderVisible}
+          currentSurahName={getCurrentSurahName()}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageLabel={t.verse.page}
+          ofLabel={t.verse.of}
+          selectSurahLabel={t.sidebar.selectSurah}
+          verseLabel={t.verse.verse}
+          searchSurah={searchSurah}
+          searchVerse={searchVerse}
+          showSurahDropdown={showSurahDropdown}
+          showVerseDropdown={showVerseDropdown}
+          filteredSurahs={filteredSurahs}
+          availableVerses={availableVerses}
+          inputPage={inputPage}
+          onSearchSubmit={handleSearch}
+          onSearchSurahChange={handleSearchSurahChange}
+          onSearchVerseChange={handleSearchVerseChange}
+          onSurahInputFocus={handleSurahInputFocus}
+          onVerseInputFocus={handleVerseInputFocus}
+          onSurahSelect={handleSurahSelect}
+          onVerseSelect={handleVerseSelect}
+          onPrevPage={handlePreviousPage}
+          onNextPage={handleNextPage}
+          onPageInputChange={handlePageChange}
+          onPageInputBlur={handlePageBlur}
+          onPageInputKeyDown={handlePageKeyDown}
+        />
 
-            <BookLayoutCollapsedHeader
-              isHeaderVisible={isHeaderVisible}
-              currentSurahName={getCurrentSurahName()}
-              pageLabel={t.verse.page}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPrevPage={handlePreviousPage}
-              onNextPage={handleNextPage}
-            />
-          </>
-        )}
+        <BookLayoutCollapsedHeader
+          isHeaderVisible={isHeaderVisible}
+          currentSurahName={getCurrentSurahName()}
+          pageLabel={t.verse.page}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPrevPage={handlePreviousPage}
+          onNextPage={handleNextPage}
+        />
 
         <BookLayoutContent
           isLoading={isLoading}
           loadingText={t.loading}
-          verses={verses}
           versesBySurah={versesBySurah}
           surahs={surahs}
           viewType={viewType}
-          layoutType={layoutType}
           fontSize={fontSize}
           lineHeight={lineHeight}
           showFootnotes={showFootnotes}

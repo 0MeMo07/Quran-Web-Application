@@ -1,22 +1,22 @@
-import { useCallback, type Dispatch, type SetStateAction } from 'react';
+import { useCallback } from 'react';
 import { type NavigateFunction } from 'react-router-dom';
 
 interface UseBookLayoutPaginationParams {
   currentPage: number;
   minPage: number;
   totalPages: number;
-  surahId?: string;
+  surahs: import('../api/types').Surah[];
   currentSurahId: number | null;
   navigate: NavigateFunction;
-  setCurrentPage: Dispatch<SetStateAction<number>>;
-  setInputPage: Dispatch<SetStateAction<string>>;
+  setCurrentPage: (page: number) => void;
+  setInputPage: (val: string) => void;
 }
 
 export function useBookLayoutPagination({
   currentPage,
   minPage,
   totalPages,
-  surahId,
+  surahs,
   currentSurahId,
   navigate,
   setCurrentPage,
@@ -32,12 +32,14 @@ export function useBookLayoutPagination({
       setInputPage(nextPage.toString());
       window.scrollTo(0, 0);
 
-      const targetSurahId = currentSurahId ?? (surahId ? Number(surahId) : null);
-      if (targetSurahId) {
-        navigate(`/surah/${targetSurahId}/page/${nextPage}`, { replace: true });
-      }
+      // Find the surah that contains this page
+      const targetSurahId = [...surahs]
+        .sort((a, b) => b.page_number - a.page_number)
+        .find(s => s.page_number <= nextPage)?.id || currentSurahId || 1;
+
+      navigate(`/surah/${targetSurahId}/page/${nextPage}`, { replace: true });
     },
-    [currentSurahId, minPage, navigate, setCurrentPage, setInputPage, surahId, totalPages]
+    [surahs, currentSurahId, minPage, navigate, setCurrentPage, setInputPage, totalPages]
   );
 
   const handleNextPage = useCallback(() => {

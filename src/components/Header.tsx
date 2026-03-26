@@ -29,13 +29,7 @@ export function Header({ onMenuClick, onSearchOpen }: HeaderProps) {
 
   const handleLanguageChange = (newLang: "tr" | "en") => {
     dispatch(setLanguage(newLang));
-    
-    if (newLang === 'tr') {
-      dispatch(setSelectedAuthor(null));
-    } else {
-      selectFirstAuthorByLanguage(newLang);
-    }
-    
+    selectFirstAuthorByLanguage(newLang);
     setIsLangMenuOpen(false);
     setIsMobileMenuOpen(false);
   };

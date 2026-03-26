@@ -2,6 +2,10 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { type Verse } from '../../api/types';
 import { type ViewType } from '../../store/slices/uiSlice';
 import { NoteSection } from '../notes/BookNoteSection';
+import { useSelector } from 'react-redux';
+import { selectHighlightedVerse } from '../../store/slices/quranSlice';
+import { useEffect, useRef } from 'react';
+import { cn } from '../../lib/utils';
 
 interface BookLayoutVerseItemProps {
   verse: Verse;
@@ -22,7 +26,17 @@ export function BookLayoutVerseItem({
   onToggleFootnote,
   t,
 }: BookLayoutVerseItemProps) {
+  const highlightedVerse = useSelector(selectHighlightedVerse);
+  const itemRef = useRef<HTMLDivElement>(null);
+  
+  const isHighlighted = highlightedVerse?.surahId === Number(verse.surah_id) && 
+                      highlightedVerse?.verseNumber === Number(verse.verse_number);
 
+  useEffect(() => {
+    if (isHighlighted && itemRef.current) {
+      itemRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [isHighlighted]);
   const renderArabic = () => (
     (viewType === 'kuran' || viewType === 'kuran+meal' || viewType === 'meal+kuran') && (
       <div className={viewType === 'kuran' ? 'inline break-words' : 'mb-6 sm:mb-4'}>
@@ -76,9 +90,13 @@ export function BookLayoutVerseItem({
 
   return (
     <div
+      ref={itemRef}
       data-verse-id={verse.verse_number}
       data-surah-id={verse.surah_id}
-      className="relative group"
+      className={cn(
+        "relative group p-4 rounded-2xl transition-all duration-700",
+        isHighlighted ? "bg-blue-500/10 ring-2 ring-blue-500/30 border-blue-500/20 shadow-lg shadow-blue-500/10" : "border-transparent"
+      )}
     >
       {renderArabic()}
       {renderMeal()}

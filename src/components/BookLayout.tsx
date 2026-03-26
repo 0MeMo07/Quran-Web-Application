@@ -1,10 +1,19 @@
 import { useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectSurahs } from '../store/slices/quranSlice';
+import { 
+  selectSurahs, 
+  selectBookCurrentSurahId, 
+  setBookCurrentSurahId, 
+  selectLoading, 
+  selectLoadingBookSurahIds, 
+  setHighlightedVerse, 
+  selectPendingVerseJump, 
+  setPendingVerseJump, 
+  clearPendingVerseJump 
+} from '../store/slices/quranSlice';
 import { Verse } from '../api/types';
 import { useTranslations } from '../translations';
-import { selectBookCurrentSurahId, setBookCurrentSurahId, selectLoading } from '../store/slices/quranSlice';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { selectViewType, setViewType } from '../store/slices/uiSlice';
 import { BookLayoutTopActions } from './book/BookLayoutTopActions';
 import { BookLayoutSettingsPanel } from './book/BookLayoutSettingsPanel';
@@ -14,6 +23,7 @@ import { BookLayoutContent } from './book/BookLayoutContent';
 import { useBookLayoutPagination } from '../hooks/useBookLayoutPagination';
 import { useBookLayoutRoutingSync } from '../hooks/useBookLayoutRoutingSync';
 import { useBookLayoutSearch } from '../hooks/useBookLayoutSearch';
+import { useVerseNavigation } from '../hooks/useVerseNavigation';
 import { Card } from './ui';
 
 interface BookLayoutProps {
@@ -39,8 +49,16 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   const urlPageNum = urlPageNumber ? Number(urlPageNumber) : NaN;
   const currentPage = !Number.isNaN(urlPageNum) && urlPageNum >= 1 ? urlPageNum : stateCurrentPage;
   const navigate = useNavigate();
-  const location = useLocation();
-  const isLoading = useSelector(selectLoading);
+  const isGlobalLoading = useSelector(selectLoading);
+  const loadingSurahIds = useSelector(selectLoadingBookSurahIds);
+  const findSurahByPage = (page: number) => {
+    return [...surahs]
+      .sort((a, b) => b.page_number - a.page_number)
+      .find(s => s.page_number <= page)?.id;
+  };
+  const targetSurahIdForPage = findSurahByPage(currentPage);
+  const isIncrementalLoading = targetSurahIdForPage ? loadingSurahIds.includes(targetSurahIdForPage) : false;
+  const isLoading = isGlobalLoading || isIncrementalLoading;
   const viewType = useSelector(selectViewType);
 
   const minPage = verses.length > 0 ? Math.min(...verses.map((verse) => verse.page)) : 1;
@@ -53,13 +71,13 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   );
   
   const versesBySurah = useMemo(
-    () => currentPageVerses.reduce((acc, verse) => {
+    () => currentPageVerses.reduce((acc: Record<number, Verse[]>, verse: Verse) => {
       if (!acc[verse.surah_id]) {
         acc[verse.surah_id] = [];
       }
       acc[verse.surah_id].push(verse);
       return acc;
-    }, {} as { [key: number]: Verse[] }),
+    }, {} as Record<number, Verse[]>),
     [currentPageVerses]
   );
 
@@ -79,6 +97,20 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
     closeDropdowns,
   } = useBookLayoutSearch({ surahs, verses });
 
+  const pendingVerseJump = useSelector(selectPendingVerseJump);
+
+  const { navigateToVerse } = useVerseNavigation({
+    verses,
+    surahs,
+    setCurrentPage,
+    setInputPage,
+    setCurrentSurahId: (id) => dispatch(setBookCurrentSurahId(id)),
+    setHighlightedVerse: (payload) => dispatch(setHighlightedVerse(payload)),
+    pendingVerseJump,
+    setPendingVerseJump: (payload) => dispatch(setPendingVerseJump(payload)),
+    clearPendingVerseJump: () => dispatch(clearPendingVerseJump()),
+  });
+
   const { handleSearch } = useBookLayoutRoutingSync({
     verses,
     surahs,
@@ -93,11 +125,11 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
     totalPages,
     currentSurahId,
     currentPageVerses,
-    locationState: location.state,
     navigate,
     setCurrentPage,
     setInputPage,
-    setCurrentSurahIdInStore: (id) => dispatch(setBookCurrentSurahId(id)),
+    setCurrentSurahIdInStore: (id: number) => dispatch(setBookCurrentSurahId(id)),
+    navigateToVerse,
   });
 
   const {
@@ -110,7 +142,7 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
     currentPage,
     minPage,
     totalPages,
-    surahId,
+    surahs,
     currentSurahId,
     navigate,
     setCurrentPage,

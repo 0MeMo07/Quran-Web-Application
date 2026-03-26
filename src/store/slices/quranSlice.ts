@@ -21,6 +21,8 @@ interface QuranState {
   loadingBookSurahIds: number[];
   loading: boolean;
   error: string | null;
+  highlightedVerse: { surahId: number; verseNumber: number } | null;
+  pendingVerseJump: { surahId: number; verseNumber: number } | null;
 }
 
 const initialState: QuranState = {
@@ -34,6 +36,8 @@ const initialState: QuranState = {
   loadingBookSurahIds: [],
   loading: false,
   error: null,
+  highlightedVerse: null,
+  pendingVerseJump: null,
 };
 
 
@@ -100,6 +104,15 @@ const quranSlice = createSlice({
     },
     setBookCurrentSurahId: (state, action) => {
       state.currentSurahId = action.payload;
+    },
+    setHighlightedVerse: (state, action: { payload: { surahId: number; verseNumber: number } | null }) => {
+      state.highlightedVerse = action.payload;
+    },
+    setPendingVerseJump: (state, action: { payload: { surahId: number; verseNumber: number } | null }) => {
+      state.pendingVerseJump = action.payload;
+    },
+    clearPendingVerseJump: (state) => {
+      state.pendingVerseJump = null;
     },
     resetBookVersesCache: (state) => {
       state.allVerses = [];
@@ -185,7 +198,14 @@ const quranSlice = createSlice({
   },
 });
 
-export const { setCurrentSurah, setBookCurrentSurahId, resetBookVersesCache } = quranSlice.actions;
+export const { 
+  setCurrentSurah, 
+  setBookCurrentSurahId, 
+  resetBookVersesCache, 
+  setHighlightedVerse,
+  setPendingVerseJump,
+  clearPendingVerseJump
+} = quranSlice.actions;
 
 export const selectSurahs = (state: RootState) => state.quran.surahs;
 export const selectCurrentSurah = (state: RootState) => state.quran.currentSurah;
@@ -196,4 +216,6 @@ export const selectLoadedBookSurahIds = (state: RootState) => state.quran.loaded
 export const selectLoadingBookSurahIds = (state: RootState) => state.quran.loadingBookSurahIds;
 export const selectLoading = (state: RootState) => state.quran.loading;
 export const selectBookCurrentSurahId = (state: RootState) => state.quran.currentSurahId;
+export const selectHighlightedVerse = (state: RootState) => state.quran.highlightedVerse;
+export const selectPendingVerseJump = (state: RootState) => state.quran.pendingVerseJump;
 export default quranSlice.reducer;

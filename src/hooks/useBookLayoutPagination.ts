@@ -3,6 +3,7 @@ import { type NavigateFunction } from 'react-router-dom';
 
 interface UseBookLayoutPaginationParams {
   currentPage: number;
+  minPage: number;
   totalPages: number;
   surahId?: string;
   currentSurahId: number | null;
@@ -13,6 +14,7 @@ interface UseBookLayoutPaginationParams {
 
 export function useBookLayoutPagination({
   currentPage,
+  minPage,
   totalPages,
   surahId,
   currentSurahId,
@@ -22,7 +24,7 @@ export function useBookLayoutPagination({
 }: UseBookLayoutPaginationParams) {
   const navigateToPage = useCallback(
     (nextPage: number) => {
-      if (nextPage < 0 || nextPage > totalPages) {
+      if (nextPage < minPage || nextPage > totalPages) {
         return;
       }
 
@@ -35,7 +37,7 @@ export function useBookLayoutPagination({
         navigate(`/surah/${targetSurahId}/page/${nextPage}`, { replace: true });
       }
     },
-    [currentSurahId, navigate, setCurrentPage, setInputPage, surahId, totalPages]
+    [currentSurahId, minPage, navigate, setCurrentPage, setInputPage, surahId, totalPages]
   );
 
   const handleNextPage = useCallback(() => {
@@ -63,14 +65,14 @@ export function useBookLayoutPagination({
       }
 
       const pageNumber = Number(trimmedValue);
-      if (!Number.isNaN(pageNumber) && pageNumber >= 0 && pageNumber <= totalPages) {
+      if (!Number.isNaN(pageNumber) && pageNumber >= minPage && pageNumber <= totalPages) {
         navigateToPage(pageNumber);
         return;
       }
 
       setInputPage(currentPage.toString());
     },
-    [currentPage, navigateToPage, setInputPage, totalPages]
+    [currentPage, minPage, navigateToPage, setInputPage, totalPages]
   );
 
   const handlePageBlur = useCallback(

@@ -5,6 +5,7 @@ import { type Verse } from '../api/types';
 interface SurahOption {
   id: number;
   name: string;
+  page_number?: number;
 }
 
 interface UseBookLayoutRoutingSyncParams {
@@ -16,6 +17,7 @@ interface UseBookLayoutRoutingSyncParams {
   surahId?: string;
   verseId?: string;
   urlPageNumber?: string;
+  minPage: number;
   currentPage: number;
   totalPages: number;
   currentSurahId: number | null;
@@ -55,6 +57,7 @@ export function useBookLayoutRoutingSync({
   surahId,
   verseId,
   urlPageNumber,
+  minPage,
   currentPage,
   totalPages,
   currentSurahId,
@@ -81,6 +84,12 @@ export function useBookLayoutRoutingSync({
           setInputPage(targetVerse.page.toString());
           setCurrentSurahIdInStore(targetSurah.id);
           highlightVerse(targetSurah.id, targetVerse.verse_number, 500);
+        } else if (targetSurah.page_number) {
+          // If this surah isn't loaded yet, jump using API page metadata.
+          navigate(`/surah/${targetSurah.id}/page/${targetSurah.page_number}`, { replace: true });
+          setCurrentPage(targetSurah.page_number);
+          setInputPage(targetSurah.page_number.toString());
+          setCurrentSurahIdInStore(targetSurah.id);
         }
       }
 
@@ -144,10 +153,10 @@ export function useBookLayoutRoutingSync({
     }
 
     const pageNum = Number(urlPageNumber);
-    if (!Number.isNaN(pageNum) && pageNum >= 0 && pageNum <= totalPages) {
+    if (!Number.isNaN(pageNum) && pageNum >= minPage && pageNum <= totalPages) {
       setInputPage((prevPage) => (prevPage === urlPageNumber ? prevPage : urlPageNumber));
     }
-  }, [surahId, urlPageNumber, totalPages, setInputPage]);
+  }, [surahId, urlPageNumber, minPage, totalPages, setInputPage]);
 
   useEffect(() => {
     if (surahId && verseId) {

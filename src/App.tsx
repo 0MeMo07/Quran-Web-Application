@@ -15,7 +15,10 @@ import {
   selectCurrentSurah,
   selectLoading,
   fetchAllSurahs,
-  fetchAllVerses,
+  fetchBookSurahVerses,
+  selectLoadedBookSurahIds,
+  selectLoadingBookSurahIds,
+  resetBookVersesCache,
   selectAllVerses,
   setBookCurrentSurahId,
   setCurrentSurah,
@@ -27,10 +30,9 @@ import {
   selectSelectedAuthor,
   setSelectedAuthor,
   selectAuthors,
-  setLoading,
 } from './store/slices/translationsSlice';
 import { useTranslations } from './translations';
-import { selectReadingType } from './store/slices/uiSlice';
+import { selectReadingType, selectLayoutType } from './store/slices/uiSlice';
 import { SearchDialog } from './components/SearchDialog';
 import { cn } from './components/ui/cn';
 
@@ -44,15 +46,22 @@ function App() {
   const dispatch = useDispatch<AppDispatch>();
   const verses = useSelector(selectVerses);
   const allVerses = useSelector(selectAllVerses);
+  const loadedBookSurahIds = useSelector(selectLoadedBookSurahIds);
+  const loadingBookSurahIds = useSelector(selectLoadingBookSurahIds);
   const readingType = useSelector(selectReadingType);
   const currentSurah = useSelector(selectCurrentSurah);
   const loading = useSelector(selectLoading);
   const selectedAuthor = useSelector(selectSelectedAuthor);
+  const layoutType = useSelector(selectLayoutType);
+  const isFlipBookMode = readingType === 'book' && layoutType === 'flipbook';
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { surahId, authorId } = useParams();
   const surahs = useSelector(selectSurahs);
   const authors = useSelector(selectAuthors);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const activeBookSurahId = surahId ? Number(surahId) : null;
+  const selectedAuthorId = selectedAuthor?.id;
+  const shouldShowGlobalLoading = loading && !(readingType === 'book' && allVerses.length > 0);
 
   useEffect(() => {
     dispatch(fetchAllSurahs());
@@ -60,43 +69,71 @@ function App() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (currentSurah) {
-      dispatch(fetchVerses({ surahId: currentSurah, authorId: selectedAuthor?.id }));
+    if (readingType !== 'book' && currentSurah) {
+      dispatch(fetchVerses({ surahId: currentSurah, authorId: selectedAuthorId }));
     }
-  }, [dispatch, currentSurah, selectedAuthor]);
+  }, [dispatch, currentSurah, readingType, selectedAuthorId]);
 
   useEffect(() => {
     if (readingType === 'book') {
-      dispatch(fetchAllVerses(selectedAuthor?.id)).then(() => {
-        dispatch(setLoading(false));
-      });
+      dispatch(resetBookVersesCache());
     }
-  }, [dispatch, readingType, selectedAuthor]);
+  }, [dispatch, readingType, selectedAuthorId]);
+
+  useEffect(() => {
+    if (readingType !== 'book' || surahs.length === 0) {
+      return;
+    }
+
+    const initialSurahs = [1, 2].filter((id) => surahs.some((s) => s.id === id));
+    for (const targetId of initialSurahs) {
+      if (!loadedBookSurahIds.includes(targetId) && !loadingBookSurahIds.includes(targetId)) {
+        dispatch(fetchBookSurahVerses({ surahId: targetId, authorId: selectedAuthorId }));
+      }
+    }
+
+    const targetSurahId = activeBookSurahId || 1;
+    if (!loadedBookSurahIds.includes(targetSurahId) && !loadingBookSurahIds.includes(targetSurahId)) {
+      dispatch(fetchBookSurahVerses({ surahId: targetSurahId, authorId: selectedAuthorId }));
+    }
+  }, [
+    dispatch,
+    readingType,
+    surahs,
+    loadedBookSurahIds,
+    loadingBookSurahIds,
+    activeBookSurahId,
+    selectedAuthorId,
+  ]);
 
   useEffect(() => {
     if (surahId) {
       if (readingType === 'book') {
         dispatch(setBookCurrentSurahId(Number(surahId)));
+        dispatch(setCurrentSurah(Number(surahId)));
       } else {
         dispatch(setCurrentSurah(Number(surahId)));
       }
 
       if (authorId) {
         const author = authors.find(a => a.id === Number(authorId));
-        if (author) {
+        if (author && author.id !== selectedAuthorId) {
           dispatch(setSelectedAuthor(author));
         }
       }
     } else if (!currentSurah && surahs.length > 0) {
       dispatch(setCurrentSurah(surahs[0].id));
+      if (readingType === 'book') {
+        dispatch(setBookCurrentSurahId(surahs[0].id));
+      }
     }
-  }, [surahId, readingType, authorId, dispatch, authors, currentSurah, surahs]);
+  }, [surahId, readingType, authorId, dispatch, authors, currentSurah, surahs, selectedAuthorId]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  if (loading) {
+  if (shouldShowGlobalLoading) {
     return (
       <>
         <Helmet>
@@ -130,7 +167,8 @@ function App() {
       </Helmet>
       <main
         className={cn(
-          'min-h-screen pt-16 transition-colors duration-500 bg-background'
+          'min-h-screen transition-colors duration-500 bg-background',
+          !isFlipBookMode && 'pt-16'
         )}
       >
         {isPopoverVisible && (
@@ -142,50 +180,57 @@ function App() {
             }}
           />
         )}
-        <Header
-          onMenuClick={toggleSidebar}
-          onSearchOpen={() => setIsSearchOpen(true)}
-        />
+        {!isFlipBookMode && (
+          <Header
+            onMenuClick={toggleSidebar}
+            onSearchOpen={() => setIsSearchOpen(true)}
+          />
+        )}
 
         <SearchDialog isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
         <div className="flex">
-          <div
-            className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-72 z-40 
-            ${
-              isSidebarOpen
-                ? 'max-lg:opacity-100 max-lg:pointer-events-auto lg:opacity-100 lg:pointer-events-auto'
-                : 'max-lg:opacity-0 max-lg:pointer-events-none lg:opacity-100 lg:pointer-events-auto'
-            }
-            `}
-          >
+          {!isFlipBookMode && (
             <div
-              className={`fixed inset-0 bg-black/50 transition-opacity duration-300 lg:hidden
-                ${
-                  isSidebarOpen
-                    ? 'opacity-100'
-                    : 'opacity-0 pointer-events-none display-none'
-                }`}
-              onClick={() => setIsSidebarOpen(false)}
-            />
-
-            <div
-              className={`absolute top-0 left-0 h-full w-full transform transition-transform duration-300 lg:translate-x-0
-                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+              className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-72 z-40 
+              ${
+                isSidebarOpen
+                  ? 'max-lg:opacity-100 max-lg:pointer-events-auto lg:opacity-100 lg:pointer-events-auto'
+                  : 'max-lg:opacity-0 max-lg:pointer-events-none lg:opacity-100 lg:pointer-events-auto'
+              }
+              `}
             >
-              <div className="absolute right-4 top-4 lg:hidden">
-                <button
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="p-2 rounded-full bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <Sidebar />
-            </div>
-          </div>
+              <div
+                className={`fixed inset-0 bg-black/50 transition-opacity duration-300 lg:hidden
+                  ${
+                    isSidebarOpen
+                      ? 'opacity-100'
+                      : 'opacity-0 pointer-events-none display-none'
+                  }`}
+                onClick={() => setIsSidebarOpen(false)}
+              />
 
-          <main className="flex-1 ml-0 lg:ml-72 transition-all duration-300">
+              <div
+                className={`absolute top-0 left-0 h-full w-full transform transition-transform duration-300 lg:translate-x-0
+                  ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+              >
+                <div className="absolute right-4 top-4 lg:hidden">
+                  <button
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="p-2 rounded-full bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <Sidebar />
+              </div>
+            </div>
+          )}
+
+          <main className={cn(
+            'flex-1 transition-all duration-300',
+            !isFlipBookMode && 'ml-0 lg:ml-72'
+          )}>
             {readingType === 'book' ? (
               allVerses.length === 0 ? (
                 <div className="flex items-center justify-center min-h-screen">

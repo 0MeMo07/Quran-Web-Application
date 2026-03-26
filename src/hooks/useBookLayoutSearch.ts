@@ -4,6 +4,7 @@ import { type Verse } from '../api/types';
 interface SurahOption {
   id: number;
   name: string;
+  page_number?: number;
 }
 
 interface UseBookLayoutSearchParams {

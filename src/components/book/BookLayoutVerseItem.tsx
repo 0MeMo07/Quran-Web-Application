@@ -2,6 +2,10 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { type Verse } from '../../api/types';
 import { type ViewType } from '../../store/slices/uiSlice';
 import { NoteSection } from '../notes/BookNoteSection';
+import { useSelector } from 'react-redux';
+import { selectHighlightedVerse } from '../../store/slices/quranSlice';
+import { useEffect, useRef } from 'react';
+import { cn } from '../../lib/utils';
 
 interface BookLayoutVerseItemProps {
   verse: Verse;
@@ -22,58 +26,81 @@ export function BookLayoutVerseItem({
   onToggleFootnote,
   t,
 }: BookLayoutVerseItemProps) {
+  const highlightedVerse = useSelector(selectHighlightedVerse);
+  const itemRef = useRef<HTMLDivElement>(null);
+  
+  const isHighlighted = highlightedVerse?.surahId === Number(verse.surah_id) && 
+                      highlightedVerse?.verseNumber === Number(verse.verse_number);
+
+  useEffect(() => {
+    if (isHighlighted && itemRef.current) {
+      itemRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [isHighlighted]);
+  const renderArabic = () => (
+    (viewType === 'kuran' || viewType === 'kuran+meal' || viewType === 'meal+kuran') && (
+      <div className={viewType === 'kuran' ? 'inline break-words' : 'mb-6 sm:mb-4'}>
+        <span
+          className={`
+            font-scheherazade text-foreground select-text tracking-wide
+            ${viewType === 'kuran'
+              ? 'text-4xl mx-1 inline break-words'
+              : 'text-3xl block text-right'
+            }
+          `}
+          style={{
+            wordSpacing: '0.1em',
+            fontSize: `${fontSize * 2}px`,
+          }}
+        >
+          {verse.verse}
+          {viewType === 'kuran' && (
+            <span
+              className="inline-block mx-2 text-muted-foreground align-middle font-numbers font-medium opacity-60"
+              style={{ fontSize: `${fontSize * 0.8}px` }}
+            >
+              {verse.verse_number}
+            </span>
+          )}
+        </span>
+      </div>
+    )
+  );
+
+  const renderMeal = () => (
+    (viewType === 'meal' || viewType === 'meal+kuran' || viewType === 'kuran+meal') && (
+      <div className={`${viewType !== 'meal' ? 'border-t border-border mt-6 sm:mt-4 pt-4 sm:pt-4' : ''}`}>
+        <p className="text-foreground">
+          <span
+            className="text-foreground"
+            style={{ fontSize: `${fontSize}px`, lineHeight }}
+          >
+            {verse.translation?.text}{' '}
+          </span>
+          <span
+            className="text-primary/60 font-numbers font-bold ml-1 align-baseline inline-block scale-90"
+            style={{ fontSize: `${fontSize * 0.8}px`, lineHeight }}
+          >
+            • {verse.verse_number}
+          </span>
+        </p>
+      </div>
+    )
+  );
+
   return (
     <div
+      ref={itemRef}
       data-verse-id={verse.verse_number}
       data-surah-id={verse.surah_id}
-      className="relative group"
+      className={cn(
+        "relative group p-4 rounded-2xl transition-all duration-700",
+        isHighlighted ? "bg-blue-500/10 ring-2 ring-blue-500/30 border-blue-500/20 shadow-lg shadow-blue-500/10" : "border-transparent"
+      )}
     >
-      {(viewType === 'kuran' || viewType === 'kuran+meal') && (
-        <div className={viewType === 'kuran' ? 'inline break-words' : 'mb-6 sm:mb-4'}>
-          <span
-            className={`
-              font-scheherazade text-foreground select-text tracking-wide
-              ${viewType === 'kuran'
-                ? 'text-4xl mx-1 inline break-words'
-                : 'text-3xl block text-right'
-              }
-            `}
-            style={{
-              wordSpacing: '0.1em',
-              fontSize: `${fontSize * 2}px`,
-            }}
-          >
-            {verse.verse}
-            {viewType === 'kuran' && (
-              <span
-                className="inline-block mx-2 text-muted-foreground align-middle font-numbers font-medium opacity-60"
-                style={{ fontSize: `${fontSize * 0.8}px` }}
-              >
-                {verse.verse_number}
-              </span>
-            )}
-          </span>
-        </div>
-      )}
+      {renderArabic()}
+      {renderMeal()}
 
-      {(viewType === 'meal' || viewType === 'meal+kuran' || viewType === 'kuran+meal') && (
-        <div className={`${viewType !== 'meal' ? 'border-t border-border mt-6 sm:mt-4 pt-4 sm:pt-4' : ''}`}>
-          <p className="text-foreground">
-            <span
-              className="text-foreground"
-              style={{ fontSize: `${fontSize}px`, lineHeight }}
-            >
-              {verse.translation?.text}{' '}
-            </span>
-            <span
-              className="text-primary/60 font-numbers font-bold ml-1 align-baseline inline-block scale-90"
-              style={{ fontSize: `${fontSize * 0.8}px`, lineHeight }}
-            >
-              • {verse.verse_number}
-            </span>
-          </p>
-        </div>
-      )}
 
       {viewType !== 'kuran' && (verse.translation?.footnotes?.length ?? 0) > 0 && (
         <div className={`${viewType === 'meal' ? 'mt-2' : 'mt-3'}`}>

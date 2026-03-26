@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { ChevronDown, PlayCircle, PauseCircle, Search, ArrowRight, Loader2, X } from 'lucide-react';
 import { selectSurahs, setCurrentSurah, selectCurrentSurah, selectBookCurrentSurahId, setBookCurrentSurahId } from '../store/slices/quranSlice';
-import { selectAuthors, selectSelectedAuthor, setSelectedAuthor, setLoading } from '../store/slices/translationsSlice';
+import { selectAuthors, selectSelectedAuthor, setSelectedAuthor } from '../store/slices/translationsSlice';
 import { selectSearchLanguage } from '../store/slices/searchSlice';
 import { useTranslations } from '../translations';
 import { selectReadingType } from '../store/slices/uiSlice';
@@ -22,7 +22,7 @@ export function Sidebar() {
   const currentSurah = useSelector(selectCurrentSurah);
   const authors = useSelector(selectAuthors);
   const selectedAuthor = useSelector(selectSelectedAuthor);
-  const { surahId, verseId, authorId } = useParams();
+  const { surahId, verseId, authorId, pageNumber } = useParams();
 
   const selectedSurah = readingType === 'book' 
     ? surahs.find((surah) => surah.id === currentSurahId)
@@ -129,7 +129,6 @@ export function Sidebar() {
 
   const handleAuthorChange = (authorId: number) => {
     const author = authors.find(a => a.id === Number(authorId));
-    dispatch(setLoading(true));
     dispatch(setSelectedAuthor(author || null));
     
     if (readingType === 'card' && currentSurah) {
@@ -152,9 +151,14 @@ export function Sidebar() {
           ? `/surah/${surahId}/verse/${verseId}/${author.id}`
           : `/surah/${surahId}/verse/${verseId}`;
         navigate(url, { replace: true });
+      } else if (pageNumber) {
+        // Sayfa numarası varsa, onu koruyarak authorId ekle
+        const url = author 
+          ? `/surah/${surahId}/page/${pageNumber}/${author.id}`
+          : `/surah/${surahId}/page/${pageNumber}`;
+        navigate(url, { replace: true });
       } else {
-        // VerseId yoksa, sadece authorId ekle (eğer author seçildiyse)
-        // Artık /surah/:surahId/:authorId rotasını destekliyoruz, bu yüzden direkt oraya gidebiliriz
+        // Ne verseId ne de pageNumber varsa, sadece authorId ekle
         if (author) {
           navigate(`/surah/${surahId}/${author.id}`, { replace: true });
         } else {

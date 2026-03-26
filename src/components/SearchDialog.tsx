@@ -11,11 +11,11 @@ import {
   selectSearchLanguage,
   selectRandomVerse,
 } from '../store/slices/searchSlice';
-import { setCurrentSurah, setBookCurrentSurahId } from '../store/slices/quranSlice';
+import { setCurrentSurah, setBookCurrentSurahId, setHighlightedVerse } from '../store/slices/quranSlice';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { useTranslations } from '../translations';
 import { useNavigate } from 'react-router-dom';
-import { selectReadingType } from '../store/slices/uiSlice';
+import { setReadingType } from '../store/slices/uiSlice';
 import { selectSelectedAuthor } from '../store/slices/translationsSlice';
 import { HighlightedText } from '../helpers/HighlightedText';
 
@@ -34,7 +34,6 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
   const randomVerse = useSelector(selectRandomVerse);
   const { isPlaying, currentAudioId, playAudio } = useAudioPlayer();
   const navigate = useNavigate();
-  const readingType = useSelector(selectReadingType);
   const selectedAuthor = useSelector(selectSelectedAuthor);
 
   useEffect(() => {
@@ -60,27 +59,29 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
     return () => clearTimeout(debounceTimer);
   }, [searchTerm, language, dispatch]);
 
-  const handleVerseClick = (surahId: number, verseNumber: number) => {
-    if (readingType === 'book') {
+  const [activeResultId, setActiveResultId] = useState<number | null>(null);
+
+  const handleVerseClick = (result: any, mode: 'book' | 'detail' = 'book') => {
+    const surahId = result.surah.id;
+    const verseNumber = result.verse.verse_number;
+    const pageNumber = result.verse.page;
+
+    if (mode === 'book') {
+      dispatch(setReadingType('book'));
       dispatch(setBookCurrentSurahId(surahId));
+      dispatch(setHighlightedVerse({ surahId, verseNumber }));
       
       onClose();
-
+      navigate(`/surah/${surahId}/page/${pageNumber}`, { 
+        state: { targetVerseId: verseNumber } 
+      });
+      
+      // Clear highlight after 5 seconds
       setTimeout(() => {
-        navigate(`/surah/${surahId}/verse/${verseNumber}`);
-        
-        setTimeout(() => {
-          const verseElement = document.querySelector(`[data-verse-id="${verseNumber}"][data-surah-id="${surahId}"]`);
-          if (verseElement) {
-            verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            verseElement.classList.add('bg-accent/10');
-            setTimeout(() => {
-              verseElement.classList.remove('bg-accent/10');
-            }, 2000);
-          }
-        }, 500);
-      }, 100);
+        dispatch(setHighlightedVerse(null));
+      }, 5000);
     } else {
+      dispatch(setReadingType('card'));
       dispatch(setCurrentSurah(surahId));
       const url = selectedAuthor 
         ? `/surah/${surahId}/verse/${verseNumber}/${selectedAuthor.id}`
@@ -210,9 +211,41 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="group p-4 sm:p-6 cursor-pointer hover:bg-secondary/30 transition-all duration-300"
-                        onClick={() => handleVerseClick(randomVerse.surah.id, randomVerse.verse.verse_number)}
+                        onClick={() => setActiveResultId(randomVerse.verse.id)}
                       >
-                        <div className="flex items-start gap-5">
+                        <div className="flex items-start gap-5 relative">
+                          {activeResultId === randomVerse.verse.id && (
+                            <motion.div 
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              className="absolute inset-0 z-50 bg-surface/90 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center gap-4 border border-primary/20"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-[280px] px-4">
+                                <button
+                                  onClick={() => handleVerseClick(randomVerse, 'book')}
+                                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-primary/20"
+                                >
+                                  <Book className="w-4 h-4" />
+                                  {t.search.goToBook}
+                                </button>
+                                <button
+                                  onClick={() => handleVerseClick(randomVerse, 'detail')}
+                                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-foreground rounded-xl font-medium hover:bg-secondary/80 active:scale-95 transition-all border border-border"
+                                >
+                                  <Search className="w-4 h-4" />
+                                  {t.search.goToDetail}
+                                </button>
+                              </div>
+                              <button 
+                                onClick={() => setActiveResultId(null)}
+                                className="text-xs text-muted-foreground hover:text-foreground transition-colors font-medium underline underline-offset-4"
+                              >
+                                {t.header.close}
+                              </button>
+                            </motion.div>
+                          )}
                           <div className="bg-gradient-to-br from-primary/10 to-accent/10 p-3.5 rounded-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
                             <Shuffle className="w-6 h-6 text-primary" />
                           </div>
@@ -266,10 +299,42 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: Math.min(idx * 0.05, 0.3) }}
-                        onClick={() => handleVerseClick(result.surah.id, result.verse.verse_number)}
-                        className="w-full p-4 sm:p-6 text-left group hover:bg-secondary/30 transition-all duration-300"
+                        onClick={() => setActiveResultId(result.id)}
+                        className="w-full p-4 sm:p-6 text-left group hover:bg-secondary/30 transition-all duration-300 relative"
                       >
                         <div className="flex items-start gap-5">
+                          {activeResultId === result.id && (
+                            <motion.div 
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              className="absolute inset-0 z-50 bg-surface/95 backdrop-blur-md flex flex-col items-center justify-center gap-4"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex flex-col sm:flex-row gap-4 w-full max-w-[320px] px-6">
+                                <button
+                                  onClick={() => handleVerseClick(result, 'book')}
+                                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-primary/20"
+                                >
+                                  <Book className="w-5 h-5" />
+                                  {t.search.goToBook}
+                                </button>
+                                <button
+                                  onClick={() => handleVerseClick(result, 'detail')}
+                                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 bg-secondary text-foreground rounded-xl font-bold hover:bg-secondary/80 active:scale-95 transition-all border border-border"
+                                >
+                                  <Search className="w-5 h-5" />
+                                  {t.search.goToDetail}
+                                </button>
+                              </div>
+                              <button 
+                                onClick={() => setActiveResultId(null)}
+                                className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium hover:underline underline-offset-4"
+                              >
+                                {t.header.close}
+                              </button>
+                            </motion.div>
+                          )}
                           <div className="bg-gradient-to-br from-primary/10 to-accent/10 p-3.5 rounded-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
                             <Book className="w-6 h-6 text-primary" />
                           </div>

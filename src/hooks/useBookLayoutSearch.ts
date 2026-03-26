@@ -4,6 +4,8 @@ import { type Verse } from '../api/types';
 interface SurahOption {
   id: number;
   name: string;
+  page_number?: number;
+  verse_count?: number;
 }
 
 interface UseBookLayoutSearchParams {
@@ -22,9 +24,14 @@ export function useBookLayoutSearch({ surahs, verses }: UseBookLayoutSearchParam
   useEffect(() => {
     const selectedSurah = surahs.find((s) => s.name === searchSurah);
     if (selectedSurah) {
-      const surahVerses = verses.filter((v) => v.surah_id === selectedSurah.id);
-      const verseNumbers = [...new Set(surahVerses.map((v) => v.verse_number))];
-      setAvailableVerses(verseNumbers.sort((a, b) => a - b));
+      if (selectedSurah.verse_count) {
+        const verseNumbers = Array.from({ length: selectedSurah.verse_count }, (_, i) => i + 1);
+        setAvailableVerses(verseNumbers);
+      } else {
+        const surahVerses = verses.filter((v) => v.surah_id === selectedSurah.id);
+        const verseNumbers = [...new Set(surahVerses.map((v) => v.verse_number))];
+        setAvailableVerses(verseNumbers.sort((a, b) => a - b));
+      }
     } else {
       setAvailableVerses([]);
     }

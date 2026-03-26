@@ -15,13 +15,15 @@ export function BookLayoutTopActions({
   onToggleHeaderVisible,
 }: BookLayoutTopActionsProps) {
   return (
-    <div className="flex items-center justify-end gap-2 px-4 py-2">
-      <IconButton
+    <div className="flex items-center justify-end gap-2 px-4 py-3">
+      <button
         onClick={onToggleSettings}
-        className="bg-surface shadow-md hover:shadow-lg"
+        className="flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 bg-surface shadow-md hover:shadow-lg text-muted-foreground"
         title="Settings"
-        icon={<Settings className={`w-5 h-5 text-muted-foreground transition-transform ${showSettings ? 'rotate-45' : ''}`} />}
-      />
+      >
+        <Settings className={`w-5 h-5 transition-transform duration-500 origin-center ${showSettings ? 'rotate-90 text-primary' : ''}`} />
+      </button>
+
       <IconButton
         onClick={onToggleHeaderVisible}
         className="bg-surface shadow-md hover:shadow-lg"

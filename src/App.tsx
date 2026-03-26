@@ -15,7 +15,10 @@ import {
   selectCurrentSurah,
   selectLoading,
   fetchAllSurahs,
-  fetchAllVerses,
+  fetchBookSurahVerses,
+  selectLoadedBookSurahIds,
+  selectLoadingBookSurahIds,
+  resetBookVersesCache,
   selectAllVerses,
   setBookCurrentSurahId,
   setCurrentSurah,
@@ -27,7 +30,6 @@ import {
   selectSelectedAuthor,
   setSelectedAuthor,
   selectAuthors,
-  setLoading,
 } from './store/slices/translationsSlice';
 import { useTranslations } from './translations';
 import { selectReadingType } from './store/slices/uiSlice';
@@ -44,6 +46,8 @@ function App() {
   const dispatch = useDispatch<AppDispatch>();
   const verses = useSelector(selectVerses);
   const allVerses = useSelector(selectAllVerses);
+  const loadedBookSurahIds = useSelector(selectLoadedBookSurahIds);
+  const loadingBookSurahIds = useSelector(selectLoadingBookSurahIds);
   const readingType = useSelector(selectReadingType);
   const currentSurah = useSelector(selectCurrentSurah);
   const loading = useSelector(selectLoading);
@@ -53,6 +57,9 @@ function App() {
   const surahs = useSelector(selectSurahs);
   const authors = useSelector(selectAuthors);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const activeBookSurahId = surahId ? Number(surahId) : null;
+  const selectedAuthorId = selectedAuthor?.id;
+  const shouldShowGlobalLoading = loading && !(readingType === 'book' && allVerses.length > 0);
 
   useEffect(() => {
     dispatch(fetchAllSurahs());
@@ -60,43 +67,71 @@ function App() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (currentSurah) {
-      dispatch(fetchVerses({ surahId: currentSurah, authorId: selectedAuthor?.id }));
+    if (readingType !== 'book' && currentSurah) {
+      dispatch(fetchVerses({ surahId: currentSurah, authorId: selectedAuthorId }));
     }
-  }, [dispatch, currentSurah, selectedAuthor]);
+  }, [dispatch, currentSurah, readingType, selectedAuthorId]);
 
   useEffect(() => {
     if (readingType === 'book') {
-      dispatch(fetchAllVerses(selectedAuthor?.id)).then(() => {
-        dispatch(setLoading(false));
-      });
+      dispatch(resetBookVersesCache());
     }
-  }, [dispatch, readingType, selectedAuthor]);
+  }, [dispatch, readingType, selectedAuthorId]);
+
+  useEffect(() => {
+    if (readingType !== 'book' || surahs.length === 0) {
+      return;
+    }
+
+    const initialSurahs = [1, 2].filter((id) => surahs.some((s) => s.id === id));
+    for (const targetId of initialSurahs) {
+      if (!loadedBookSurahIds.includes(targetId) && !loadingBookSurahIds.includes(targetId)) {
+        dispatch(fetchBookSurahVerses({ surahId: targetId, authorId: selectedAuthorId }));
+      }
+    }
+
+    const targetSurahId = activeBookSurahId || 1;
+    if (!loadedBookSurahIds.includes(targetSurahId) && !loadingBookSurahIds.includes(targetSurahId)) {
+      dispatch(fetchBookSurahVerses({ surahId: targetSurahId, authorId: selectedAuthorId }));
+    }
+  }, [
+    dispatch,
+    readingType,
+    surahs,
+    loadedBookSurahIds,
+    loadingBookSurahIds,
+    activeBookSurahId,
+    selectedAuthorId,
+  ]);
 
   useEffect(() => {
     if (surahId) {
       if (readingType === 'book') {
         dispatch(setBookCurrentSurahId(Number(surahId)));
+        dispatch(setCurrentSurah(Number(surahId)));
       } else {
         dispatch(setCurrentSurah(Number(surahId)));
       }
 
       if (authorId) {
         const author = authors.find(a => a.id === Number(authorId));
-        if (author) {
+        if (author && author.id !== selectedAuthorId) {
           dispatch(setSelectedAuthor(author));
         }
       }
     } else if (!currentSurah && surahs.length > 0) {
       dispatch(setCurrentSurah(surahs[0].id));
+      if (readingType === 'book') {
+        dispatch(setBookCurrentSurahId(surahs[0].id));
+      }
     }
-  }, [surahId, readingType, authorId, dispatch, authors, currentSurah, surahs]);
+  }, [surahId, readingType, authorId, dispatch, authors, currentSurah, surahs, selectedAuthorId]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  if (loading) {
+  if (shouldShowGlobalLoading) {
     return (
       <>
         <Helmet>
@@ -130,7 +165,7 @@ function App() {
       </Helmet>
       <main
         className={cn(
-          'min-h-screen pt-16 transition-colors duration-500 bg-background'
+          'min-h-screen transition-colors duration-500 bg-background pt-16'
         )}
       >
         {isPopoverVisible && (
@@ -185,7 +220,9 @@ function App() {
             </div>
           </div>
 
-          <main className="flex-1 ml-0 lg:ml-72 transition-all duration-300">
+          <main className={cn(
+            'flex-1 transition-all duration-300 ml-0 lg:ml-72'
+          )}>
             {readingType === 'book' ? (
               allVerses.length === 0 ? (
                 <div className="flex items-center justify-center min-h-screen">

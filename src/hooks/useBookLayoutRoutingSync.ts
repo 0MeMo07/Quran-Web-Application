@@ -5,6 +5,7 @@ import { type Verse } from '../api/types';
 interface SurahOption {
   id: number;
   name: string;
+  page_number?: number;
 }
 
 interface UseBookLayoutRoutingSyncParams {
@@ -16,35 +17,19 @@ interface UseBookLayoutRoutingSyncParams {
   surahId?: string;
   verseId?: string;
   urlPageNumber?: string;
+  minPage: number;
   currentPage: number;
   totalPages: number;
   currentSurahId: number | null;
   currentPageVerses: Verse[];
-  locationState: unknown;
   navigate: NavigateFunction;
   setCurrentPage: Dispatch<SetStateAction<number>>;
   setInputPage: Dispatch<SetStateAction<string>>;
   setCurrentSurahIdInStore: (surahId: number) => void;
+  navigateToVerse: (surahId: number, verseNumber: number, surahStartPage?: number) => void;
 }
 
-function highlightVerse(surahId: number, verseNumber: number, delay = 300) {
-  setTimeout(() => {
-    const verseElement = document.querySelector(
-      `[data-verse-id="${verseNumber}"][data-surah-id="${surahId}"]`
-    );
 
-    if (!verseElement) {
-      return;
-    }
-
-    verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    verseElement.classList.add('bg-blue-50', 'dark:bg-blue-900/20');
-
-    setTimeout(() => {
-      verseElement.classList.remove('bg-blue-50', 'dark:bg-blue-900/20');
-    }, 2000);
-  }, delay);
-}
 
 export function useBookLayoutRoutingSync({
   verses,
@@ -55,15 +40,16 @@ export function useBookLayoutRoutingSync({
   surahId,
   verseId,
   urlPageNumber,
+  minPage,
   currentPage,
   totalPages,
   currentSurahId,
   currentPageVerses,
-  locationState,
   navigate,
   setCurrentPage,
   setInputPage,
   setCurrentSurahIdInStore,
+  navigateToVerse,
 }: UseBookLayoutRoutingSyncParams) {
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
@@ -71,17 +57,7 @@ export function useBookLayoutRoutingSync({
       const targetSurah = surahs.find((s) => s.name === searchSurah);
 
       if (targetSurah) {
-        const targetVerse = verses.find(
-          (v) => v.surah_id === targetSurah.id && v.verse_number === Number(searchVerse)
-        );
-
-        if (targetVerse) {
-          navigate(`/surah/${targetSurah.id}/page/${targetVerse.page}`, { replace: true });
-          setCurrentPage(targetVerse.page);
-          setInputPage(targetVerse.page.toString());
-          setCurrentSurahIdInStore(targetSurah.id);
-          highlightVerse(targetSurah.id, targetVerse.verse_number, 500);
-        }
+        navigateToVerse(targetSurah.id, Number(searchVerse), targetSurah.page_number);
       }
 
       closeDropdowns();
@@ -139,55 +115,36 @@ export function useBookLayoutRoutingSync({
   }, [currentPage, currentPageVerses, navigate, setCurrentSurahIdInStore, surahId, verseId]);
 
   useEffect(() => {
-    if (!surahId || !urlPageNumber) {
+    if (!urlPageNumber) {
       return;
     }
 
     const pageNum = Number(urlPageNumber);
-    if (!Number.isNaN(pageNum) && pageNum >= 0 && pageNum <= totalPages) {
+    if (!Number.isNaN(pageNum) && pageNum >= minPage && pageNum <= totalPages) {
       setInputPage((prevPage) => (prevPage === urlPageNumber ? prevPage : urlPageNumber));
     }
-  }, [surahId, urlPageNumber, totalPages, setInputPage]);
+  }, [urlPageNumber, minPage, totalPages, setInputPage, surahId]); // Added surahId here just for completeness, but the main fix is keeping it stable.
 
   useEffect(() => {
     if (surahId && verseId) {
-      const targetVerse = verses.find(
-        (v) => v.surah_id === Number(surahId) && v.verse_number === Number(verseId)
-      );
-
-      if (targetVerse) {
-        setCurrentPage(targetVerse.page);
-        setInputPage(targetVerse.page.toString());
-        setCurrentSurahIdInStore(Number(surahId));
-        highlightVerse(Number(surahId), targetVerse.verse_number, 300);
-      }
+      navigateToVerse(Number(surahId), Number(verseId));
       return;
     }
 
-    if (surahId && urlPageNumber) {
-      return;
-    }
-
-    if (surahId && !verseId) {
-      const stateVerse = (locationState as { targetVerseId?: unknown } | null)?.targetVerseId;
-      const targetVerseNumber = stateVerse ? Number(stateVerse) : null;
-
-      const firstVerseOfSurah = targetVerseNumber
-        ? verses.find(
-            (v) => v.surah_id === Number(surahId) && v.verse_number === targetVerseNumber
-          )
-        : verses.find((v) => v.surah_id === Number(surahId));
+    if (surahId && !verseId && !urlPageNumber) {
+      const firstVerseOfSurah = verses.find((v) => v.surah_id === Number(surahId));
 
       if (firstVerseOfSurah) {
         const pageToSet = firstVerseOfSurah.page;
         setInputPage(pageToSet.toString());
         setCurrentSurahIdInStore(Number(surahId));
-        navigate(`/surah/${surahId}/page/${pageToSet}`, { replace: true });
-        window.scrollTo(0, 0);
-
-        if (targetVerseNumber) {
-          highlightVerse(Number(surahId), targetVerseNumber, 500);
+        
+        // Just sync URL if it doesn't have page
+        if (!urlPageNumber) {
+          navigate(`/surah/${surahId}/page/${pageToSet}`, { replace: true });
         }
+        
+        window.scrollTo(0, 0);
       }
     }
   }, [
@@ -195,28 +152,10 @@ export function useBookLayoutRoutingSync({
     verseId,
     urlPageNumber,
     verses,
-    setCurrentPage,
     setCurrentSurahIdInStore,
     setInputPage,
-    totalPages,
     navigate,
-    locationState,
   ]);
-
-  useEffect(() => {
-    if (surahId && verseId && currentPage > 0) {
-      const targetVerse = verses.find(
-        (v) =>
-          v.surah_id === Number(surahId) &&
-          v.verse_number === Number(verseId) &&
-          v.page === currentPage
-      );
-
-      if (targetVerse) {
-        highlightVerse(Number(surahId), targetVerse.verse_number, 300);
-      }
-    }
-  }, [currentPage, surahId, verseId, verses]);
 
   return { handleSearch };
 }

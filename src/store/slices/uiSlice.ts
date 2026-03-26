@@ -34,7 +34,7 @@ const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matche
 const initialState: UIState = {
   isDarkMode: savedTheme ? JSON.parse(savedTheme) : prefersDarkMode,
   visualTheme: (savedVisualTheme as VisualTheme) || 'default',
-  language: savedLanguage as 'tr' | 'en' || 'en',
+  language: (savedLanguage as 'tr' | 'en') || 'en',
   readingType: (savedReadingType as ReadingType) || 'book',
   viewType: (savedViewType as ViewType) || 'meal',
   notes: savedNotes ? JSON.parse(savedNotes) : [],
@@ -144,4 +144,4 @@ export const selectNoteByVerseAndSurah = (state: RootState, surahId: number, ver
 
 export const selectTheme = (state: RootState) => state.ui.isDarkMode ? 'dark' : 'light';
 
-export default uiSlice.reducer;
+export default uiSlice.reducer;

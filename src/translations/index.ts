@@ -13,7 +13,9 @@ const translations = {
         random: 'Get random verse',
         searching: 'Searching...',
         searchTip: 'You can search for verse text or surah names',
-        tryDifferent: 'Try a different search term'
+        tryDifferent: 'Try a different search term',
+        goToBook: 'Book View',
+        goToDetail: 'Detailed Analysis'
       },
       header: {
         toggleMenu: 'Toggle menu',
@@ -182,7 +184,9 @@ const translations = {
         random: 'Rastgele ayet getir',
         searching: 'Aranıyor...',
         searchTip: 'Ayet metni veya sure adlarında arama yapabilirsiniz',
-        tryDifferent: 'Farklı bir arama terimi deneyin'
+        tryDifferent: 'Farklı bir arama terimi deneyin',
+        goToBook: 'Kitap Görünümü',
+        goToDetail: 'Detaylı İnceleme'
       },
       header: {
         toggleMenu: 'Menüyü aç/kapat',

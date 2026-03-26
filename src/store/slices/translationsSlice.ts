@@ -46,9 +46,6 @@ const translationsSlice = createSlice({
         localStorage.setItem('lastSelectedAuthorId', action.payload.id.toString());
       }
     },
-    setLoading: (state, action) => {
-      state.loading = action.payload;
-    }
   },
   extraReducers: (builder) => {
     builder
@@ -69,7 +66,7 @@ const translationsSlice = createSlice({
   },
 });
 
-export const { setSelectedAuthor, setLoading } = translationsSlice.actions;
+export const { setSelectedAuthor } = translationsSlice.actions;
 
 export const selectAuthors = (state: RootState) => state.translations.authors;
 export const selectSelectedAuthor = (state: RootState) => state.translations.selectedAuthor;

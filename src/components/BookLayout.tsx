@@ -3,9 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectSurahs } from '../store/slices/quranSlice';
 import { Verse } from '../api/types';
 import { useTranslations } from '../translations';
-import { selectBookCurrentSurahId, setBookCurrentSurahId } from '../store/slices/quranSlice';
+import { selectBookCurrentSurahId, setBookCurrentSurahId, selectLoading } from '../store/slices/quranSlice';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { selectTranslationsLoading } from '../store/slices/translationsSlice';
 import { selectViewType, setViewType } from '../store/slices/uiSlice';
 import { BookLayoutTopActions } from './book/BookLayoutTopActions';
 import { BookLayoutSettingsPanel } from './book/BookLayoutSettingsPanel';
@@ -41,7 +40,7 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   const currentPage = !Number.isNaN(urlPageNum) && urlPageNum >= 1 ? urlPageNum : stateCurrentPage;
   const navigate = useNavigate();
   const location = useLocation();
-  const isLoading = useSelector(selectTranslationsLoading);
+  const isLoading = useSelector(selectLoading);
   const viewType = useSelector(selectViewType);
 
   const minPage = verses.length > 0 ? Math.min(...verses.map((verse) => verse.page)) : 1;

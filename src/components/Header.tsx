@@ -4,7 +4,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { setLanguage, selectSearchLanguage } from "../store/slices/searchSlice";
 import { useTranslations } from "../translations";
 import { setSelectedAuthor, selectAuthors } from "../store/slices/translationsSlice";
-import { setLoading } from "../store/slices/translationsSlice";
 import { Link } from "react-router-dom";
 
 interface HeaderProps {
@@ -21,7 +20,6 @@ export function Header({ onMenuClick, onSearchOpen }: HeaderProps) {
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
   const selectFirstAuthorByLanguage = (lang: string) => {
-    dispatch(setLoading(true));
     const filteredAuthors = authors.filter(author => author.language === lang);
     if (filteredAuthors.length > 0) {
       const selectedAuthor = filteredAuthors[0];
@@ -33,7 +31,6 @@ export function Header({ onMenuClick, onSearchOpen }: HeaderProps) {
     dispatch(setLanguage(newLang));
     
     if (newLang === 'tr') {
-      dispatch(setLoading(true));
       dispatch(setSelectedAuthor(null));
     } else {
       selectFirstAuthorByLanguage(newLang);

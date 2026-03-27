@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { IconButton } from '../ui';
+import { IconButton } from '../../ui';
 
 interface BookLayoutCollapsedHeaderProps {
   isHeaderVisible: boolean;

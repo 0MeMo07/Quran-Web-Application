@@ -1,5 +1,5 @@
-import { type Verse } from '../../api/types';
-import { type ViewType } from '../../store/slices/uiSlice';
+import { type Verse } from '../../../api/types';
+import { type ViewType } from '../../../store/slices/uiSlice';
 import { BookLayoutVerseItem } from './BookLayoutVerseItem';
 
 interface SurahOption {
@@ -16,7 +16,7 @@ interface BookLayoutSurahSectionProps {
   lineHeight: number;
   showFootnotes: Record<number, boolean>;
   onToggleFootnote: (verseId: number) => void;
-  t: ReturnType<typeof import('../../translations').useTranslations>;
+  t: ReturnType<typeof import('../../../translations').useTranslations>;
 }
 
 export function BookLayoutSurahSection({

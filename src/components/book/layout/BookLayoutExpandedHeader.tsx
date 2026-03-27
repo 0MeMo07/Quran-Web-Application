@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
-import { Button, Input } from '../ui';
+import { Button, Input } from '../../ui';
 
 interface SurahOption {
   id: number;
@@ -137,9 +137,9 @@ export function BookLayoutExpandedHeader({
                   </div>
                 )}
               </div>
-              <Button type="submit" variant="soft" size="icon" className="w-9 h-9 sm:w-10 sm:h-10 min-w-9 bg-secondary/30">
-                <Search className="w-4 h-4 mx-auto text-muted-foreground" />
-              </Button>
+              <button type="submit" className="w-9 h-9 sm:w-10 sm:h-10 min-w-9 bg-secondary/30 rounded-lg flex items-center justify-center hover:bg-secondary/50 transition-colors">
+                <Search className="w-4 h-4 text-muted-foreground" />
+              </button>
             </div>
           </form>
 

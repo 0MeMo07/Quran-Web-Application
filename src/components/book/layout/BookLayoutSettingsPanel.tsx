@@ -1,18 +1,20 @@
 import { type Dispatch, type SetStateAction, useMemo } from 'react';
-import { type ViewType } from '../../store/slices/uiSlice';
+import { type ViewType, type BookLayoutType } from '../../../store/slices/uiSlice';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, BookOpen, Languages, Type, AlignLeft, Minus, Plus } from 'lucide-react';
 
 interface BookLayoutSettingsPanelProps {
   showSettings: boolean;
   onClose: () => void;
-  t: ReturnType<typeof import('../../translations').useTranslations>;
+  t: ReturnType<typeof import('../../../translations').useTranslations>;
   viewType: ViewType;
   onSetViewType: (viewType: ViewType) => void;
   fontSize: number;
   setFontSize: Dispatch<SetStateAction<number>>;
   lineHeight: number;
   setLineHeight: Dispatch<SetStateAction<number>>;
+  bookLayoutType: BookLayoutType;
+  onSetBookLayoutType: (layout: BookLayoutType) => void;
 }
 
 export function BookLayoutSettingsPanel({
@@ -25,6 +27,8 @@ export function BookLayoutSettingsPanel({
   setFontSize,
   lineHeight,
   setLineHeight,
+  bookLayoutType,
+  onSetBookLayoutType,
 }: BookLayoutSettingsPanelProps) {
   const viewOptions = useMemo(() => [
     { type: 'meal' as const, icon: FileText, label: 'Meal' },
@@ -35,13 +39,13 @@ export function BookLayoutSettingsPanel({
   return (
     <AnimatePresence>
       {showSettings && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-md"
           />
 
           <motion.div
@@ -94,6 +98,38 @@ export function BookLayoutSettingsPanel({
                         <Icon className="w-4 h-4 relative z-20" />
                         <span className="text-[9px] font-bold uppercase tracking-tighter relative z-20">
                           {opt.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50 px-1">
+                  Sayfa Düzeni
+                </label>
+                <div className="grid grid-cols-2 p-1 bg-secondary/30 rounded-2xl relative">
+                  {(['standard', 'pageflip'] as const).map((type) => {
+                    const isActive = bookLayoutType === type;
+                    const label = type === 'standard' ? 'Sıralı' : 'Kitap';
+                    return (
+                      <button
+                        key={type}
+                        onClick={() => onSetBookLayoutType(type)}
+                        className={`relative flex flex-col items-center gap-1.5 py-4 transition-all duration-300 z-10 ${
+                          isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {isActive && (
+                          <motion.div
+                            layoutId="active-layout-bg"
+                            className="absolute inset-0 bg-background rounded-xl shadow-lg border border-white/5"
+                            transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                          />
+                        )}
+                        <span className="text-[10px] font-bold uppercase tracking-tighter relative z-20">
+                          {label}
                         </span>
                       </button>
                     );

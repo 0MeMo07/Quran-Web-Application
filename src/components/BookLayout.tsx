@@ -14,17 +14,19 @@ import {
 import { Verse } from '../api/types';
 import { useTranslations } from '../translations';
 import { useParams, useNavigate } from 'react-router-dom';
-import { selectViewType, setViewType } from '../store/slices/uiSlice';
-import { BookLayoutTopActions } from './book/BookLayoutTopActions';
-import { BookLayoutSettingsPanel } from './book/BookLayoutSettingsPanel';
-import { BookLayoutExpandedHeader } from './book/BookLayoutExpandedHeader';
-import { BookLayoutCollapsedHeader } from './book/BookLayoutCollapsedHeader';
-import { BookLayoutContent } from './book/BookLayoutContent';
+import { selectViewType, setViewType, selectBookLayoutType, setBookLayoutType } from '../store/slices/uiSlice';
+import { BookLayoutTopActions } from './book/layout/BookLayoutTopActions';
+import { BookLayoutSettingsPanel } from './book/layout/BookLayoutSettingsPanel';
+import { BookLayoutExpandedHeader } from './book/layout/BookLayoutExpandedHeader';
+import { BookLayoutCollapsedHeader } from './book/layout/BookLayoutCollapsedHeader';
+import { BookLayoutContent } from './book/layout/BookLayoutContent';
+import { FlipBookContent } from './book/flip-book/FlipBookContent';
 import { useBookLayoutPagination } from '../hooks/useBookLayoutPagination';
 import { useBookLayoutRoutingSync } from '../hooks/useBookLayoutRoutingSync';
 import { useBookLayoutSearch } from '../hooks/useBookLayoutSearch';
 import { useVerseNavigation } from '../hooks/useVerseNavigation';
 import { Card } from './ui';
+import { cn } from './ui/cn';
 
 interface BookLayoutProps {
   verses: Verse[];
@@ -60,6 +62,7 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   const isIncrementalLoading = targetSurahIdForPage ? loadingSurahIds.includes(targetSurahIdForPage) : false;
   const isLoading = isGlobalLoading || isIncrementalLoading;
   const viewType = useSelector(selectViewType);
+  const bookLayoutType = useSelector(selectBookLayoutType);
 
   const minPage = verses.length > 0 ? Math.min(...verses.map((verse) => verse.page)) : 1;
   const loadedMaxPage = verses.length > 0 ? Math.max(...verses.map((verse) => verse.page)) : 1;
@@ -136,6 +139,7 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
     handleNextPage,
     handlePreviousPage,
     handlePageChange,
+    handlePageJump,
     handlePageBlur,
     handlePageKeyDown,
   } = useBookLayoutPagination({
@@ -159,15 +163,25 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
     return surah?.name || t.sidebar.selectSurah;
   };
 
+  const isPageFlip = bookLayoutType === 'pageflip';
+
   return (
-    <div className="flex flex-col items-center justify-start bg-gradient-to-b from-surface to-secondary p-0 sm:p-4 min-h-[calc(100vh-64px)] transition-all duration-700">
-      <Card className="w-full max-w-4xl bg-surface rounded-none sm:rounded-lg shadow-none sm:shadow-lg border-none min-h-0 transition-all duration-500">
-        <BookLayoutTopActions
-          isHeaderVisible={isHeaderVisible}
-          showSettings={showSettings}
-          onToggleSettings={() => setShowSettings(!showSettings)}
-          onToggleHeaderVisible={() => setIsHeaderVisible(!isHeaderVisible)}
-        />
+    <div className={cn(
+      "flex flex-col items-center justify-start transition-all duration-700 w-full",
+      isPageFlip ? "p-0 min-h-screen h-screen overflow-hidden" : "bg-gradient-to-b from-surface to-secondary p-0 sm:p-4 min-h-[calc(100vh-64px)]"
+    )}>
+      <Card className={cn(
+        "w-full transition-all duration-500 min-h-0 border-none",
+        isPageFlip ? "max-w-none bg-transparent shadow-none rounded-none h-full" : "max-w-4xl bg-surface rounded-none sm:rounded-lg shadow-none sm:shadow-lg"
+      )}>
+        {!isPageFlip && (
+          <BookLayoutTopActions
+            isHeaderVisible={isHeaderVisible}
+            showSettings={showSettings}
+            onToggleSettings={() => setShowSettings(!showSettings)}
+            onToggleHeaderVisible={() => setIsHeaderVisible(!isHeaderVisible)}
+          />
+        )}
 
         <BookLayoutSettingsPanel
           showSettings={showSettings}
@@ -179,60 +193,75 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
           setFontSize={setFontSize}
           lineHeight={lineHeight}
           setLineHeight={setLineHeight}
+          bookLayoutType={bookLayoutType}
+          onSetBookLayoutType={(nextLayout) => dispatch(setBookLayoutType(nextLayout))}
         />
 
-        <BookLayoutExpandedHeader
-          isHeaderVisible={isHeaderVisible}
-          currentSurahName={getCurrentSurahName()}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          pageLabel={t.verse.page}
-          ofLabel={t.verse.of}
-          selectSurahLabel={t.sidebar.selectSurah}
-          verseLabel={t.verse.verse}
-          searchSurah={searchSurah}
-          searchVerse={searchVerse}
-          showSurahDropdown={showSurahDropdown}
-          showVerseDropdown={showVerseDropdown}
-          filteredSurahs={filteredSurahs}
-          availableVerses={availableVerses}
-          inputPage={inputPage}
-          onSearchSubmit={handleSearch}
-          onSearchSurahChange={handleSearchSurahChange}
-          onSearchVerseChange={handleSearchVerseChange}
-          onSurahInputFocus={handleSurahInputFocus}
-          onVerseInputFocus={handleVerseInputFocus}
-          onSurahSelect={handleSurahSelect}
-          onVerseSelect={handleVerseSelect}
-          onPrevPage={handlePreviousPage}
-          onNextPage={handleNextPage}
-          onPageInputChange={handlePageChange}
-          onPageInputBlur={handlePageBlur}
-          onPageInputKeyDown={handlePageKeyDown}
-        />
+        {!isPageFlip && (
+          <BookLayoutExpandedHeader
+            isHeaderVisible={isHeaderVisible}
+            currentSurahName={getCurrentSurahName()}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageLabel={t.verse.page}
+            ofLabel={t.verse.of}
+            selectSurahLabel={t.sidebar.selectSurah}
+            verseLabel={t.verse.verse}
+            searchSurah={searchSurah}
+            searchVerse={searchVerse}
+            showSurahDropdown={showSurahDropdown}
+            showVerseDropdown={showVerseDropdown}
+            filteredSurahs={filteredSurahs}
+            availableVerses={availableVerses}
+            inputPage={inputPage}
+            onSearchSubmit={handleSearch}
+            onSearchSurahChange={handleSearchSurahChange}
+            onSearchVerseChange={handleSearchVerseChange}
+            onSurahInputFocus={handleSurahInputFocus}
+            onVerseInputFocus={handleVerseInputFocus}
+            onSurahSelect={handleSurahSelect}
+            onVerseSelect={handleVerseSelect}
+            onPrevPage={handlePreviousPage}
+            onNextPage={handleNextPage}
+            onPageInputChange={handlePageChange}
+            onPageInputBlur={handlePageBlur}
+            onPageInputKeyDown={handlePageKeyDown}
+          />
+        )}
 
-        <BookLayoutCollapsedHeader
-          isHeaderVisible={isHeaderVisible}
-          currentSurahName={getCurrentSurahName()}
-          pageLabel={t.verse.page}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPrevPage={handlePreviousPage}
-          onNextPage={handleNextPage}
-        />
+        {!isPageFlip && (
+          <BookLayoutCollapsedHeader
+            isHeaderVisible={isHeaderVisible}
+            currentSurahName={getCurrentSurahName()}
+            pageLabel={t.verse.page}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPrevPage={handlePreviousPage}
+            onNextPage={handleNextPage}
+          />
+        )}
 
-        <BookLayoutContent
-          isLoading={isLoading}
-          loadingText={t.loading}
-          versesBySurah={versesBySurah}
-          surahs={surahs}
-          viewType={viewType}
-          fontSize={fontSize}
-          lineHeight={lineHeight}
-          showFootnotes={showFootnotes}
-          onToggleFootnote={toggleFootnote}
-          t={t}
-        />
+        {isPageFlip ? (
+          <FlipBookContent
+            propPage={currentPage}
+            onPageChange={handlePageJump}
+            t={t}
+            onShowSettings={() => setShowSettings(true)}
+          />
+        ) : (
+          <BookLayoutContent
+            isLoading={isLoading}
+            loadingText={t.loading}
+            versesBySurah={versesBySurah}
+            surahs={surahs}
+            viewType={viewType}
+            fontSize={fontSize}
+            lineHeight={lineHeight}
+            showFootnotes={showFootnotes}
+            onToggleFootnote={toggleFootnote}
+            t={t}
+          />
+        )}
       </Card>
     </div>
   );

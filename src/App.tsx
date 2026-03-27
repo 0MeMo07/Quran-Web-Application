@@ -32,7 +32,7 @@ import {
   selectAuthors,
 } from './store/slices/translationsSlice';
 import { useTranslations } from './translations';
-import { selectReadingType } from './store/slices/uiSlice';
+import { selectReadingType, selectBookLayoutType } from './store/slices/uiSlice';
 import { SearchDialog } from './components/SearchDialog';
 import { cn } from './components/ui/cn';
 
@@ -49,6 +49,7 @@ function App() {
   const loadedBookSurahIds = useSelector(selectLoadedBookSurahIds);
   const loadingBookSurahIds = useSelector(selectLoadingBookSurahIds);
   const readingType = useSelector(selectReadingType);
+  const bookLayoutType = useSelector(selectBookLayoutType);
   const currentSurah = useSelector(selectCurrentSurah);
   const loading = useSelector(selectLoading);
   const selectedAuthor = useSelector(selectSelectedAuthor);
@@ -59,6 +60,7 @@ function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const activeBookSurahId = surahId ? Number(surahId) : null;
   const selectedAuthorId = selectedAuthor?.id;
+  const isImmersive = readingType === 'book' && bookLayoutType === 'pageflip' && allVerses.length > 0;
   const shouldShowGlobalLoading = loading && !(readingType === 'book' && allVerses.length > 0);
 
   useEffect(() => {
@@ -165,7 +167,8 @@ function App() {
       </Helmet>
       <main
         className={cn(
-          'min-h-screen transition-colors duration-500 bg-background pt-16'
+          'min-h-screen transition-colors duration-500 bg-background',
+          !isImmersive && 'pt-16'
         )}
       >
         {isPopoverVisible && (
@@ -177,51 +180,56 @@ function App() {
             }}
           />
         )}
-        <Header
-          onMenuClick={toggleSidebar}
-          onSearchOpen={() => setIsSearchOpen(true)}
-        />
+        {!isImmersive && (
+          <Header
+            onMenuClick={toggleSidebar}
+            onSearchOpen={() => setIsSearchOpen(true)}
+          />
+        )}
 
         <SearchDialog isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
         <div className="flex">
-          <div
-            className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-72 z-40 
-            ${
-              isSidebarOpen
-                ? 'max-lg:opacity-100 max-lg:pointer-events-auto lg:opacity-100 lg:pointer-events-auto'
-                : 'max-lg:opacity-0 max-lg:pointer-events-none lg:opacity-100 lg:pointer-events-auto'
-            }
-            `}
-          >
+          {!isImmersive && (
             <div
-              className={`fixed inset-0 bg-black/50 transition-opacity duration-300 lg:hidden
-                ${
-                  isSidebarOpen
-                    ? 'opacity-100'
-                    : 'opacity-0 pointer-events-none display-none'
-                }`}
-              onClick={() => setIsSidebarOpen(false)}
-            />
-
-            <div
-              className={`absolute top-0 left-0 h-full w-full transform transition-transform duration-300 lg:translate-x-0
-                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+              className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-72 z-40 
+              ${
+                isSidebarOpen
+                  ? 'max-lg:opacity-100 max-lg:pointer-events-auto lg:opacity-100 lg:pointer-events-auto'
+                  : 'max-lg:opacity-0 max-lg:pointer-events-none lg:opacity-100 lg:pointer-events-auto'
+              }
+              `}
             >
-              <div className="absolute right-4 top-4 lg:hidden">
-                <button
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="p-2 rounded-full bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+              <div
+                className={`fixed inset-0 bg-black/50 transition-opacity duration-300 lg:hidden
+                  ${
+                    isSidebarOpen
+                      ? 'opacity-100'
+                      : 'opacity-0 pointer-events-none display-none'
+                  }`}
+                onClick={() => setIsSidebarOpen(false)}
+              />
+
+              <div
+                className={`absolute top-0 left-0 h-full w-full transform transition-transform duration-300 lg:translate-x-0
+                  ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+              >
+                <div className="absolute right-4 top-4 lg:hidden">
+                  <button
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="p-2 rounded-full bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <Sidebar />
               </div>
-              <Sidebar />
             </div>
-          </div>
+          )}
 
           <main className={cn(
-            'flex-1 transition-all duration-300 ml-0 lg:ml-72'
+            'flex-1 transition-all duration-300 ml-0',
+            !isImmersive && 'lg:ml-72'
           )}>
             {readingType === 'book' ? (
               allVerses.length === 0 ? (

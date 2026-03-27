@@ -29,7 +29,7 @@ export function useFlipBook({ propPage, onPageChange, t }: UseFlipBookProps) {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [isSinglePageOverride, setIsSinglePageOverride] = useState(false);
+  const [isSinglePageOverride, setIsSinglePageOverride] = useState(window.innerWidth < 1024);
   const [selectedSurah, setSelectedSurah] = useState('');
   const [selectedVerse, setSelectedVerse] = useState('');
   const [isNavOpen, setIsNavOpen] = useState(false);
@@ -66,24 +66,20 @@ export function useFlipBook({ propPage, onPageChange, t }: UseFlipBookProps) {
   }, []);
 
   const isMobile = dimensions.width < 1024;
-  const isSinglePageMode = isMobile || isSinglePageOverride;
+  const isSinglePageMode = isSinglePageOverride;
 
   const viewportScale = useMemo(() => {
-    const bottomBarHeight = 48;
-    const paddingMultiplier = 0.98;
+    const bottomBarHeight = 64; // Increased to account for mobile safe areas and bottom bar
+    const paddingMultiplier = 0.95;
     const availableW = dimensions.width * paddingMultiplier;
     const availableH = (dimensions.height - bottomBarHeight) * paddingMultiplier;
-
-    if (isMobile) {
-      return dimensions.width / LOGICAL_PAGE_WIDTH;
-    }
     
     const targetW = isSinglePageOverride ? LOGICAL_PAGE_WIDTH : LOGICAL_PAGE_WIDTH * 2;
     const targetH = LOGICAL_PAGE_HEIGHT;
     const scaleW = availableW / targetW;
     const scaleH = availableH / targetH;
     return Math.min(scaleW, scaleH);
-  }, [dimensions.width, dimensions.height, isMobile, isSinglePageOverride]);
+  }, [dimensions.width, dimensions.height, isSinglePageOverride]);
 
   useEffect(() => {
     setZoomLevel(1);

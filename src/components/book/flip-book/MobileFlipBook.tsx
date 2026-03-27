@@ -4,8 +4,10 @@ import {
   Search, ChevronLeft, ChevronRight, BookOpen,
   Headphones, Pause, Settings, Maximize2, Minimize2,
   X, ChevronsLeft, ChevronsRight, AlignJustify,
-  Play, SkipBack, SkipForward,
+  Play, SkipBack, SkipForward, FileText
 } from 'lucide-react';
+// @ts-ignore
+import HTMLPageFlip from 'react-pageflip';
 import { cn } from '../../ui/cn';
 import { FlipBookPage } from './FlipBookPage';
 import { LOGICAL_PAGE_HEIGHT, LOGICAL_PAGE_WIDTH } from './hooks/useFlipBook';
@@ -26,6 +28,9 @@ interface MobileFlipBookProps {
   handlePageJump: (index: number) => void;
   currentPage: number;
   pages: any[];
+  bookRef: React.RefObject<any>;
+  onPage: (e: any) => void;
+  viewportScale: number;
   scrollContainerRef: React.RefObject<HTMLDivElement>;
   isScrubberVisible: boolean;
   setIsScrubberVisible: (visible: boolean | ((prev: boolean) => boolean)) => void;
@@ -42,7 +47,7 @@ interface MobileFlipBookProps {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Floating top button  (same style as original)
+// Floating top button
 // ─────────────────────────────────────────────────────────────────────────────
 
 function FloatingButton({
@@ -73,7 +78,7 @@ function FloatingButton({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Nav Sheet  — original style, slightly cleaned
+// Nav Sheet
 // ─────────────────────────────────────────────────────────────────────────────
 
 function NavSheet({
@@ -100,7 +105,6 @@ function NavSheet({
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
             key="nav-backdrop"
             initial={{ opacity: 0 }}
@@ -110,7 +114,6 @@ function NavSheet({
             onClick={onClose}
           />
 
-          {/* Sheet */}
           <motion.div
             key="nav-sheet"
             initial={{ y: '-100%' }}
@@ -126,13 +129,11 @@ function NavSheet({
               'pt-[env(safe-area-inset-top)]',
             )}
           >
-            {/* Handle */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-8 h-1 rounded-full bg-white/15" />
             </div>
 
             <div className="flex flex-col gap-4 px-5 pb-6 pt-2">
-              {/* Header */}
               <div className="flex items-center justify-between">
                 <span className="text-[9px] font-black tracking-[0.18em] uppercase text-white/25 select-none">
                   Navigasyon
@@ -145,7 +146,6 @@ function NavSheet({
                 </button>
               </div>
 
-              {/* Surah + Verse row */}
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <select
@@ -195,7 +195,6 @@ function NavSheet({
                 </motion.button>
               </div>
 
-              {/* Page stepper */}
               <div className="flex items-center justify-between rounded-2xl bg-white/[0.04] border border-white/[0.06] px-2 h-11">
                 <button
                   onClick={() => handlePageJump(Math.max(0, currentPage - 1))}
@@ -227,7 +226,7 @@ function NavSheet({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Audio Panel  — slides up from bottom bar on headphone tap
+// Audio Panel
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AudioPanel({
@@ -243,8 +242,7 @@ function AudioPanel({
   pages: any[];
   bottomOffset: string;
 }) {
-  // Mock progress — replace with real values from your audio context
-  const progress = 34; // percent 0-100
+  const progress = 34;
   const elapsed = '2:14';
   const remaining = '-4:32';
 
@@ -252,7 +250,6 @@ function AudioPanel({
     <AnimatePresence>
       {open && (
         <>
-          {/* Panel */}
           <motion.div
             key="audio-panel"
             initial={{ y: '100%', opacity: 0, bottom: bottomOffset }}
@@ -266,13 +263,11 @@ function AudioPanel({
               'rounded-3xl mx-3 mb-2 overflow-hidden',
             )}
           >
-            {/* Drag handle */}
             <div className="flex justify-center pt-2.5 pb-1">
               <div className="w-8 h-1 rounded-full bg-foreground/15" />
             </div>
 
             <div className="px-5 pb-5 pt-2 flex flex-col gap-4">
-              {/* Surah label */}
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] tracking-[0.12em] uppercase text-foreground/30 font-medium">
@@ -293,27 +288,21 @@ function AudioPanel({
                 </button>
               </div>
 
-              {/* Progress track — matches image style */}
               <div className="flex items-center gap-3">
                 <span className="text-[10px] text-foreground/30 tabular-nums w-8 text-right">
                   {elapsed}
                 </span>
 
-                {/* Track */}
                 <div className="relative flex-1 h-5 flex items-center">
-                  {/* BG */}
                   <div className="absolute inset-x-0 h-px bg-foreground/12 rounded-full" />
-                  {/* Fill */}
                   <div
                     className="absolute left-0 h-px bg-foreground/50 rounded-full"
                     style={{ width: `${progress}%` }}
                   />
-                  {/* Thumb — same as image: small filled circle */}
                   <div
                     className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-foreground shadow-sm pointer-events-none"
                     style={{ left: `calc(${progress}% - 6px)` }}
                   />
-                  {/* Hidden range */}
                   <input
                     type="range"
                     min={0}
@@ -328,7 +317,6 @@ function AudioPanel({
                 </span>
               </div>
 
-              {/* Controls */}
               <div className="flex items-center justify-center gap-6">
                 <button className="p-2 text-foreground/35 hover:text-foreground/60 transition-colors active:scale-90">
                   <SkipBack className="w-5 h-5" />
@@ -363,7 +351,7 @@ function AudioPanel({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Scrubber row  (original style kept)
+// Scrubber row
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ScrubberRow({
@@ -392,14 +380,11 @@ function ScrubberRow({
       </button>
 
       <div className="relative flex-1 h-12 flex items-center">
-        {/* BG */}
         <div className="absolute inset-x-0 h-px bg-foreground/10 rounded-full" />
-        {/* Fill */}
         <div
           className="absolute left-0 h-px bg-foreground/40 rounded-full"
           style={{ width: `${pct}%` }}
         />
-        {/* Thumb */}
         <div
           className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-foreground shadow-sm pointer-events-none"
           style={{ left: `calc(${pct}% - 6px)` }}
@@ -465,7 +450,8 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
     selectedSurah, handleSurahSelectChange,
     selectedVerse, setSelectedVerse,
     handleSearch, handlePageJump,
-    currentPage, pages, scrollContainerRef,
+    currentPage, pages, bookRef, onPage,
+    viewportScale, scrollContainerRef,
     isScrubberVisible, setIsScrubberVisible,
     isSinglePageOverride, setIsSinglePageOverride,
     handleAudioToggle, isPlaying, currentAudioId, currentSurahOnPage,
@@ -532,26 +518,81 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
         bottomOffset={isScrubberVisible ? 'calc(108px + env(safe-area-inset-bottom))' : 'calc(56px + env(safe-area-inset-bottom))'}
       />
 
-      {/* ── Scrollable pages ─────────────────────────────────────────────── */}
-      <div className="flex-1 relative overflow-hidden overscroll-none">
-        <div
-          ref={scrollContainerRef}
-          className="h-full w-full overflow-y-auto overflow-x-hidden flex flex-col overscroll-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {pages.map((p, index) => (
-            <div
-              key={index}
-              id={`quran-page-${index}`}
-              data-page-index={index}
-              className="relative flex-shrink-0"
-              style={{ width: '100dvw', height: pageHeight }}
+      {/* ── Pages Area ───────────────────────────────────────────────────── */}
+      <div className="flex-1 relative overflow-hidden overscroll-none bg-[#0a0a0a] flex items-center justify-center">
+        {isSinglePageOverride ? (
+          <div
+            ref={scrollContainerRef}
+            className="h-full w-full overflow-y-auto overflow-x-hidden flex flex-col overscroll-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden items-center"
+          >
+            {pages.map((p, index) => (
+              <div
+                key={index}
+                id={`quran-page-${index}`}
+                data-page-index={index}
+                className="relative flex-shrink-0"
+                style={{ width: '100dvw', height: pageHeight }}
+              >
+                <FlipBookPage number={p.number} total={pages.length} isLeft={p.isLeft} isMobile>
+                  {null}
+                </FlipBookPage>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: viewportScale }}
+            className="relative flex items-center justify-center origin-center will-change-transform"
+            style={{ backfaceVisibility: 'hidden', touchAction: 'none' }}
+          >
+            <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-black/10 z-50 -translate-x-1/2 pointer-events-none" />
+            <HTMLPageFlip
+              key="double-mobile"
+              ref={bookRef}
+              width={LOGICAL_PAGE_WIDTH}
+              height={LOGICAL_PAGE_HEIGHT}
+              size="fixed"
+              minWidth={300}
+              maxWidth={3000}
+              minHeight={400}
+              maxHeight={3000}
+              maxShadowOpacity={0.2}
+              showCover={true}
+              mobileScrollSupport={true}
+              usePortrait={false}
+              flippingTime={600}
+              startPage={currentPage}
+              drawShadow={true}
+              startZIndex={0}
+              autoSize={false}
+              clickEventForward={true}
+              useMouseEvents={true}
+              swipeDistance={30}
+              showPageCorners={false}
+              disableFlipByClick={false}
+              onFlip={onPage}
+              className="quran-flipbook"
+              style={{ backgroundColor: '#fdfbf7' }}
             >
-              <FlipBookPage number={p.number} total={pages.length} isLeft={p.isLeft} isMobile>
-                {null}
-              </FlipBookPage>
-            </div>
-          ))}
-        </div>
+              {pages.map((p, idx) => (
+                <div 
+                  key={p.number} 
+                  className="page-wrapper" 
+                  style={{ 
+                    width: LOGICAL_PAGE_WIDTH, 
+                    height: LOGICAL_PAGE_HEIGHT,
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <FlipBookPage number={p.number} total={pages.length} isLeft={p.isLeft} isMobile={false}>
+                    {null}
+                  </FlipBookPage>
+                </div>
+              ))}
+            </HTMLPageFlip>
+          </motion.div>
+        )}
       </div>
 
       {/* ── Bottom bar ───────────────────────────────────────────────────── */}
@@ -592,11 +633,15 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
             </BarBtn>
 
             <BarBtn
-              title="Tek sayfa"
-              active={isSinglePageOverride}
+              title={isSinglePageOverride ? "Kitap Modu" : "Tek Sayfa Modu"}
+              active={!isSinglePageOverride}
               onClick={() => setIsSinglePageOverride((p) => !p)}
             >
-              <BookOpen className="w-[17px] h-[17px]" />
+              {isSinglePageOverride ? (
+                <BookOpen className="w-[17px] h-[17px]" />
+              ) : (
+                <FileText className="w-[17px] h-[17px]" />
+              )}
             </BarBtn>
 
             {/* hairline separator */}

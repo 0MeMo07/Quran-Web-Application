@@ -10,6 +10,7 @@ import HTMLPageFlip from 'react-pageflip';
 import { cn } from '../../ui/cn';
 import { FlipBookPage } from './components/FlipBookPage';
 import { LOGICAL_PAGE_HEIGHT, LOGICAL_PAGE_WIDTH } from './hooks/useFlipBook';
+import { FlippingMode } from '../../../store/slices/uiSlice';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -46,6 +47,7 @@ interface MobileFlipBookProps {
   isFullscreen: boolean;
   t: any;
   surahs: any[];
+  flippingMode: FlippingMode;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -479,7 +481,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
     handleAudioToggle, isPlaying, currentAudioId, currentSurahOnPage,
     currentTime, duration, seek,
     toggleFullscreen, isFullscreen,
-    t, surahs,
+    t, surahs, flippingMode,
   } = props;
 
   const [isAudioPanelOpen, setIsAudioPanelOpen] = useState(false);
@@ -602,7 +604,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
           >
             <div className="absolute left-1/2 top-0 bottom-0 w-[4px] z-0 -translate-x-1/2 pointer-events-none bg-gradient-to-r from-black/20 via-black/5 to-black/20 opacity-60" />
             <HTMLPageFlip
-              key="double-mobile"
+              key={`double-mobile-${flippingMode}`}
               ref={bookRef}
               width={LOGICAL_PAGE_WIDTH}
               height={LOGICAL_PAGE_HEIGHT}
@@ -611,34 +613,40 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
               maxWidth={3000}
               minHeight={400}
               maxHeight={3000}
-              maxShadowOpacity={0.2}
+              maxShadowOpacity={flippingMode === '3d' ? 0.2 : 0}
               showCover={true}
               mobileScrollSupport={true}
               usePortrait={false}
-              flippingTime={600}
+              flippingTime={flippingMode === '3d' ? 800 : 400}
               startPage={currentPage}
-              drawShadow={true}
+              drawShadow={flippingMode === '3d'}
               startZIndex={1}
               autoSize={false}
               clickEventForward={true}
               useMouseEvents={true}
               swipeDistance={30}
               showPageCorners={false}
-              disableFlipByClick={false}
+              disableFlipByClick={true}
               onFlip={onPage}
               className="quran-flipbook"
               style={{ backgroundColor: 'transparent' }}
             >
-              {pages.map((p, idx) => (
+              {pages.map((p) => (
                 <div 
                   key={p.number} 
                   className="page-wrapper" 
+                  data-density={flippingMode === 'flat' ? 'hard' : 'soft'} 
                   style={{ 
                     width: LOGICAL_PAGE_WIDTH, 
                     height: LOGICAL_PAGE_HEIGHT,
                     borderRadius: p.isLeft ? '6px 0 0 6px' : '0 6px 6px 0',
                     overflow: 'hidden',
-                    pointerEvents: 'auto'
+                    pointerEvents: 'auto',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    if (p.isLeft) bookRef.current?.pageFlip()?.flipPrev();
+                    else bookRef.current?.pageFlip()?.flipNext();
                   }}
                 >
                   <FlipBookPage 
@@ -647,6 +655,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
                     isLeft={p.isLeft} 
                     isMobile={false}
                     isSinglePage={false}
+                    flippingMode={flippingMode}
                   >
                     {null}
                   </FlipBookPage>

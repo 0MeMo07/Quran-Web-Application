@@ -8,6 +8,7 @@ interface PageProps {
   isLeft?: boolean;
   isMobile?: boolean;
   isSinglePage?: boolean;
+  flippingMode?: '3d' | 'flat';
 }
 
 export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
@@ -27,6 +28,7 @@ export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
 
     return (
       <div 
+        ref={ref}
         className={cn(
           "bg-[#fdfbf7] flex flex-col h-full relative select-none overflow-hidden transition-all",
           props.isMobile && !props.isSinglePage ? "border-none shadow-none" : "shadow-sm"
@@ -37,7 +39,6 @@ export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
             ? 'none' 
             : '1px solid rgba(80,55,20,0.12)'
         }}
-        ref={ref}
       >
         {/* Simple Page Content */}
         <div className="flex-1 relative z-10 flex flex-col h-full items-center justify-center">

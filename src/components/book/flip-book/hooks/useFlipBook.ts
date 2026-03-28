@@ -5,7 +5,6 @@ import { selectSurahs } from '../../../../store/slices/quranSlice';
 import { selectSearchLanguage } from '../../../../store/slices/searchSlice';
 import { useAudioPlayer } from '../../../../hooks/useAudioPlayer';
 
-// Standard Quran has 604 pages
 export const TOTAL_QURAN_PAGES = 604;
 export const LOGICAL_PAGE_WIDTH = 550;
 export const LOGICAL_PAGE_HEIGHT = 800;
@@ -16,10 +15,13 @@ interface UseFlipBookProps {
   t: any;
 }
 
+import { selectFlippingMode } from '../../../../store/slices/uiSlice';
+
 export function useFlipBook({ propPage, onPageChange }: UseFlipBookProps) {
   const navigate = useNavigate();
   const surahs = useSelector(selectSurahs);
   const language = useSelector(selectSearchLanguage);
+  const flippingMode = useSelector(selectFlippingMode);
   const { isPlaying, currentAudioId, playAudio, currentTime, duration, seek } = useAudioPlayer();
   
   const [dimensions, setDimensions] = useState({
@@ -258,5 +260,6 @@ export function useFlipBook({ propPage, onPageChange }: UseFlipBookProps) {
     duration,
     seek,
     surahs,
+    flippingMode,
   };
 }

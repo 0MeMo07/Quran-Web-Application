@@ -1,5 +1,5 @@
 import { type Dispatch, type SetStateAction, useMemo } from 'react';
-import { type ViewType, type BookLayoutType } from '../../../store/slices/uiSlice';
+import { type ViewType, type BookLayoutType, type FlippingMode } from '../../../store/slices/uiSlice';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, BookOpen, Languages, Type, AlignLeft, Minus, Plus } from 'lucide-react';
 
@@ -15,6 +15,8 @@ interface BookLayoutSettingsPanelProps {
   setLineHeight: Dispatch<SetStateAction<number>>;
   bookLayoutType: BookLayoutType;
   onSetBookLayoutType: (layout: BookLayoutType) => void;
+  flippingMode: FlippingMode;
+  onSetFlippingMode: (mode: FlippingMode) => void;
 }
 
 export function BookLayoutSettingsPanel({
@@ -29,6 +31,8 @@ export function BookLayoutSettingsPanel({
   setLineHeight,
   bookLayoutType,
   onSetBookLayoutType,
+  flippingMode,
+  onSetFlippingMode,
 }: BookLayoutSettingsPanelProps) {
   const viewOptions = useMemo(() => [
     { type: 'meal' as const, icon: FileText, label: 'Meal' },
@@ -136,6 +140,40 @@ export function BookLayoutSettingsPanel({
                   })}
                 </div>
               </div>
+
+              {bookLayoutType === 'pageflip' && (
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50 px-1">
+                    Sayfa Çevirme
+                  </label>
+                  <div className="grid grid-cols-2 p-1 bg-secondary/30 rounded-2xl relative">
+                    {(['3d', 'flat'] as const).map((mode) => {
+                      const isActive = flippingMode === mode;
+                      const label = mode === '3d' ? '3D' : 'Düz';
+                      return (
+                        <button
+                          key={mode}
+                          onClick={() => onSetFlippingMode(mode)}
+                          className={`relative flex flex-col items-center gap-1.5 py-4 transition-all duration-300 z-10 ${
+                            isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          {isActive && (
+                            <motion.div
+                              layoutId="active-flipping-bg"
+                              className="absolute inset-0 bg-background rounded-xl shadow-lg border border-white/5"
+                              transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                            />
+                          )}
+                          <span className="text-[10px] font-bold uppercase tracking-tighter relative z-20">
+                            {label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-7 px-1">
                 <div className="space-y-4">

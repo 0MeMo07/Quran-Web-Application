@@ -4,6 +4,7 @@ import { Search, ChevronLeft, ChevronRight, BookOpen, FileText, LayoutGrid, Zoom
 import HTMLPageFlip from 'react-pageflip';
 import { cn } from '../../ui/cn';
 import { LOGICAL_PAGE_HEIGHT, LOGICAL_PAGE_WIDTH } from './hooks/useFlipBook';
+import { FlippingMode } from '../../../store/slices/uiSlice';
 
 // Sub-components
 import { FlipBookPage } from './components/FlipBookPage';
@@ -44,6 +45,7 @@ interface DesktopFlipBookProps {
   isFullscreen: boolean;
   t: any;
   surahs: any[];
+  flippingMode: FlippingMode;
 }
 
 export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: DesktopFlipBookProps) {
@@ -54,7 +56,8 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
     setIsSinglePageOverride, scrollContainerRef, onPage, handlePageJump,
     handleAudioToggle, isPlaying, currentSurahOnPage,
     currentTime, duration, seek,
-    handleZoomIn, handleZoomOut, toggleFullscreen, isFullscreen, t, surahs
+    handleZoomIn, handleZoomOut, toggleFullscreen, isFullscreen, t, surahs,
+    flippingMode
   } = props;
 
   const [isAudioPanelVisible, setIsAudioPanelVisible] = React.useState(false);
@@ -285,7 +288,7 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
             <div className="relative" style={{ width: LOGICAL_PAGE_WIDTH * 2, height: LOGICAL_PAGE_HEIGHT }}>
               <div className="absolute left-1/2 top-0 bottom-0 w-[4px] z-0 -translate-x-1/2 pointer-events-none bg-gradient-to-r from-black/15 via-black/5 to-black/15 opacity-50" />
               <HTMLPageFlip
-                key="double"
+                key={`double-${flippingMode}`}
                 ref={bookRef}
                 width={LOGICAL_PAGE_WIDTH}
                 height={LOGICAL_PAGE_HEIGHT}
@@ -294,23 +297,23 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
                 maxWidth={3000}
                 minHeight={400}
                 maxHeight={3000}
-                maxShadowOpacity={0.2}
+                maxShadowOpacity={flippingMode === '3d' ? 0.2 : 0}
                 showCover={true}
                 mobileScrollSupport={true}
                 usePortrait={false}
-                flippingTime={600}
+                flippingTime={flippingMode === '3d' ? 800 : 400}
                 startPage={currentPage}
-                drawShadow={true}
-                startZIndex={1}
+                drawShadow={flippingMode === '3d'}
+                startZIndex={20}
                 autoSize={false}
                 clickEventForward={true}
                 useMouseEvents={zoomLevel === 1}
                 swipeDistance={zoomLevel === 1 ? 30 : 0}
                 showPageCorners={false}
-                disableFlipByClick={zoomLevel > 1}
+                disableFlipByClick={true}
                 onFlip={onPage}
                 className="quran-flipbook"
-                style={{ backgroundColor: 'transparent', pointerEvents: zoomLevel > 1 ? 'none' : 'auto' }}
+                style={{ backgroundColor: 'transparent', pointerEvents: zoomLevel > 1 ? 'none' : 'auto', zIndex: 10 }}
               >
                 {pages.map((p, idx) => {
                   const isVisible = Math.abs(idx - currentPage) <= 10;
@@ -318,13 +321,19 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
                       <div 
                         key={idx} 
                         className="page-wrapper" 
+                        data-density={flippingMode === 'flat' ? 'hard' : 'soft'} 
                         style={{ 
                           width: LOGICAL_PAGE_WIDTH, 
                           height: LOGICAL_PAGE_HEIGHT,
-                          // Use the same radius logic as FlipBookPage to avoid overlaps
                           borderRadius: p.isLeft ? '6px 0 0 6px' : '0 6px 6px 0',
                           overflow: 'hidden',
-                          pointerEvents: 'auto'
+                          pointerEvents: 'auto',
+                          cursor: zoomLevel === 1 ? 'pointer' : 'default'
+                        }}
+                        onClick={() => {
+                          if (zoomLevel > 1) return;
+                          if (p.isLeft) bookRef.current?.pageFlip()?.flipPrev();
+                          else bookRef.current?.pageFlip()?.flipNext();
                         }}
                       >
                         {isVisible ? (
@@ -334,6 +343,7 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
                             isLeft={p.isLeft} 
                             isMobile={false}
                             isSinglePage={false}
+                            flippingMode={flippingMode}
                           >
                             {null}
                           </FlipBookPage>

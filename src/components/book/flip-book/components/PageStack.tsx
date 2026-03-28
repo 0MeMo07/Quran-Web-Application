@@ -152,7 +152,7 @@ export const PageStack = React.memo(function PageStack({ side, count, total, onJ
       onMouseLeave={() => setHoverInfo(null)}
       onMouseDown={handleClick}
       className={cn(
-        'absolute top-0 bottom-0 z-[500] cursor-pointer flex items-stretch pointer-events-auto',
+        'absolute top-0 bottom-0 z-[-1] cursor-pointer flex items-stretch pointer-events-auto',
         side === 'left'
           ? 'right-full mr-[-1px] justify-end'
           : 'left-full ml-[-1px] justify-start'

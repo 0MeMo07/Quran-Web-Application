@@ -14,7 +14,14 @@ import {
 import { Verse } from '../api/types';
 import { useTranslations } from '../translations';
 import { useParams, useNavigate } from 'react-router-dom';
-import { selectViewType, setViewType, selectBookLayoutType, setBookLayoutType } from '../store/slices/uiSlice';
+import { 
+  selectViewType, 
+  setViewType, 
+  selectBookLayoutType, 
+  setBookLayoutType,
+  selectFlippingMode,
+  setFlippingMode
+} from '../store/slices/uiSlice';
 import { BookLayoutTopActions } from './book/layout/BookLayoutTopActions';
 import { BookLayoutSettingsPanel } from './book/layout/BookLayoutSettingsPanel';
 import { BookLayoutExpandedHeader } from './book/layout/BookLayoutExpandedHeader';
@@ -63,6 +70,7 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   const isLoading = isGlobalLoading || isIncrementalLoading;
   const viewType = useSelector(selectViewType);
   const bookLayoutType = useSelector(selectBookLayoutType);
+  const flippingMode = useSelector(selectFlippingMode);
 
   const minPage = verses.length > 0 ? Math.min(...verses.map((verse) => verse.page)) : 1;
   const loadedMaxPage = verses.length > 0 ? Math.max(...verses.map((verse) => verse.page)) : 1;
@@ -195,6 +203,8 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
           setLineHeight={setLineHeight}
           bookLayoutType={bookLayoutType}
           onSetBookLayoutType={(nextLayout) => dispatch(setBookLayoutType(nextLayout))}
+          flippingMode={flippingMode}
+          onSetFlippingMode={(mode) => dispatch(setFlippingMode(mode))}
         />
 
         {!isPageFlip && (

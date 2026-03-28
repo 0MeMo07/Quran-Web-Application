@@ -1,4 +1,5 @@
 import React, { forwardRef, memo } from 'react';
+import { cn } from '../../../ui/cn';
 
 interface PageProps {
   children?: React.ReactNode;
@@ -6,17 +7,36 @@ interface PageProps {
   total: number;
   isLeft?: boolean;
   isMobile?: boolean;
+  isSinglePage?: boolean;
 }
 
 export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
   (props, ref) => {
+    // Determine the border radius based on the layout mode
+    let borderRadius = '0';
+    if (!props.isMobile) {
+      if (props.isSinglePage) {
+        borderRadius = '6px'; // Uniform radius for single cards
+      } else {
+        borderRadius = props.isLeft ? '6px 0 0 6px' : '0 6px 6px 0';
+      }
+    } else if (props.isSinglePage) {
+       // On mobile, maybe a small radius for single scroll mode?
+       borderRadius = '3px';
+    }
+
     return (
       <div 
-        className={`bg-[#fdfbf7] flex flex-col h-full relative select-none overflow-hidden ${
-          props.isMobile 
-            ? 'border-none shadow-none' 
-            : `border border-black/5 shadow-sm ${props.isLeft ? 'rounded-l-sm' : 'rounded-r-sm'}`
-        }`} 
+        className={cn(
+          "bg-[#fdfbf7] flex flex-col h-full relative select-none overflow-hidden transition-all",
+          props.isMobile && !props.isSinglePage ? "border-none shadow-none" : "shadow-sm"
+        )}
+        style={{
+          borderRadius,
+          border: props.isMobile && !props.isSinglePage
+            ? 'none' 
+            : '1px solid rgba(80,55,20,0.12)'
+        }}
         ref={ref}
       >
         {/* Simple Page Content */}

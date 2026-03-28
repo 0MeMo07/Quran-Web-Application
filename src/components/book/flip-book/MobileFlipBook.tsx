@@ -3,13 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, ChevronLeft, ChevronRight, BookOpen,
   Headphones, Pause, Settings, Maximize2, Minimize2,
-  X, ChevronsLeft, ChevronsRight, AlignJustify,
-  Play, SkipBack, SkipForward, FileText
+  X, AlignJustify, SkipBack, SkipForward, FileText, Play
 } from 'lucide-react';
 // @ts-ignore
 import HTMLPageFlip from 'react-pageflip';
 import { cn } from '../../ui/cn';
-import { FlipBookPage } from './FlipBookPage';
+import { FlipBookPage } from './components/FlipBookPage';
 import { LOGICAL_PAGE_HEIGHT, LOGICAL_PAGE_WIDTH } from './hooks/useFlipBook';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -53,13 +52,13 @@ interface MobileFlipBookProps {
 // Floating top button
 // ─────────────────────────────────────────────────────────────────────────────
 
-function FloatingButton({
+const FloatingButton = React.memo(({
   onClick, children, className,
 }: {
   onClick: () => void;
   children: React.ReactNode;
   className?: string;
-}) {
+}) => {
   return (
     <motion.button
       initial={{ opacity: 0, scale: 0.8 }}
@@ -78,13 +77,9 @@ function FloatingButton({
       {children}
     </motion.button>
   );
-}
+});
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Nav Sheet
-// ─────────────────────────────────────────────────────────────────────────────
-
-function NavSheet({
+const NavSheet = React.memo(({
   open, onClose,
   selectedSurah, handleSurahSelectChange,
   selectedVerse, setSelectedVerse,
@@ -103,9 +98,9 @@ function NavSheet({
   handlePageJump: (i: number) => void;
   t: any;
   surahs: any[];
-}) {
+}) => {
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {open && (
         <>
           <motion.div
@@ -226,13 +221,9 @@ function NavSheet({
       )}
     </AnimatePresence>
   );
-}
+});
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Audio Panel
-// ─────────────────────────────────────────────────────────────────────────────
-
-function AudioPanel({
+const AudioPanel = React.memo(({
   open, onClose, isPlaying, handleAudioToggle,
   currentSurahOnPage, currentPage, pages, bottomOffset,
   currentTime, duration, seek,
@@ -248,7 +239,7 @@ function AudioPanel({
   currentTime: number;
   duration: number;
   seek: (time: number) => void;
-}) {
+}) => {
   const formatTime = (time: number) => {
     if (isNaN(time)) return '0:00';
     const minutes = Math.floor(time / 60);
@@ -261,8 +252,7 @@ function AudioPanel({
   return (
     <AnimatePresence>
       {open && (
-        <>
-          <motion.div
+        <motion.div
             key="audio-panel"
             initial={{ y: '110%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -356,24 +346,24 @@ function AudioPanel({
               </div>
             </div>
           </motion.div>
-        </>
       )}
     </AnimatePresence>
   );
-}
+});
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Scrubber row
-// ─────────────────────────────────────────────────────────────────────────────
-
-function ScrubberRow({
-  currentPage, pages, handlePageJump,
+const ScrubberRow = React.memo(({
+  currentPage, pages, handlePageJump, bookRef, isSinglePageOverride, sliderValue, setSliderValue
 }: {
   currentPage: number;
   pages: any[];
   handlePageJump: (i: number) => void;
-}) {
-  const pct = pages.length > 1 ? (currentPage / (pages.length - 1)) * 100 : 0;
+  bookRef: React.RefObject<any>;
+  isSinglePageOverride: boolean;
+  sliderValue: number | null;
+  setSliderValue: (v: number | null) => void;
+}) => {
+  const displayValue = sliderValue === null ? currentPage : sliderValue;
+  const pct = pages.length > 1 ? (displayValue / (pages.length - 1)) * 100 : 0;
 
   return (
     <motion.div
@@ -385,10 +375,16 @@ function ScrubberRow({
       className="flex items-center gap-3 px-4 overflow-hidden border-b border-border/40"
     >
       <button
-        onClick={() => handlePageJump(Math.max(0, currentPage - 1))}
+        onClick={() => {
+          if (isSinglePageOverride) {
+            handlePageJump(Math.max(0, currentPage - 1));
+          } else {
+            bookRef.current?.pageFlip()?.flipPrev();
+          }
+        }}
         className="p-1.5 text-foreground/40 active:text-foreground transition-colors"
       >
-        <ChevronsLeft className="w-4 h-4" />
+        <ChevronLeft className="w-5 h-5" />
       </button>
 
       <div className="relative flex-1 h-12 flex items-center">
@@ -405,27 +401,41 @@ function ScrubberRow({
           type="range"
           min={0}
           max={Math.max(0, pages.length - 1)}
-          value={currentPage}
-          onChange={(e) => handlePageJump(Number(e.target.value))}
+          value={displayValue}
+          onChange={(e) => setSliderValue(Number(e.target.value))}
+          onPointerUp={() => {
+            if (sliderValue !== null) {
+              handlePageJump(sliderValue);
+              setSliderValue(null);
+            }
+          }}
+          onMouseUp={() => {
+            if (sliderValue !== null) {
+              handlePageJump(sliderValue);
+              setSliderValue(null);
+            }
+          }}
           className="absolute inset-0 w-full opacity-0 cursor-pointer z-10"
         />
       </div>
 
       <button
-        onClick={() => handlePageJump(Math.min(pages.length - 1, currentPage + 1))}
+        onClick={() => {
+          if (isSinglePageOverride) {
+            handlePageJump(Math.min(pages.length - 1, currentPage + 1));
+          } else {
+            bookRef.current?.pageFlip()?.flipNext();
+          }
+        }}
         className="p-1.5 text-foreground/40 active:text-foreground transition-colors"
       >
-        <ChevronsRight className="w-4 h-4" />
+        <ChevronRight className="w-5 h-5" />
       </button>
     </motion.div>
   );
-}
+});
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Bottom bar button
-// ─────────────────────────────────────────────────────────────────────────────
-
-function BarBtn({
+const BarBtn = React.memo(({
   onClick, children, active = false, accent = false, title,
 }: {
   onClick: () => void;
@@ -433,7 +443,7 @@ function BarBtn({
   active?: boolean;
   accent?: boolean;
   title?: string;
-}) {
+}) => {
   return (
     <motion.button
       aria-label={title}
@@ -450,7 +460,7 @@ function BarBtn({
       {children}
     </motion.button>
   );
-}
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MobileFlipBook — root
@@ -473,6 +483,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
   } = props;
 
   const [isAudioPanelOpen, setIsAudioPanelOpen] = useState(false);
+  const [sliderValue, setSliderValue] = React.useState<number | null>(null);
 
   const pageHeight =
     typeof window !== 'undefined'
@@ -539,30 +550,57 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
         {isSinglePageOverride ? (
           <div
             ref={scrollContainerRef}
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              const idx = Math.round(el.scrollTop / pageHeight);
+              if (idx !== currentPage && idx >= 0 && idx < pages.length) {
+                onPage({ data: idx });
+              }
+            }}
             className="h-full w-full overflow-y-auto overflow-x-hidden flex flex-col overscroll-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden items-center"
           >
-            {pages.map((p, index) => (
-              <div
-                key={index}
-                id={`quran-page-${index}`}
-                data-page-index={index}
-                className="relative flex-shrink-0"
-                style={{ width: '100dvw', height: pageHeight }}
-              >
-                <FlipBookPage number={p.number} total={pages.length} isLeft={p.isLeft} isMobile>
-                  {null}
-                </FlipBookPage>
-              </div>
-            ))}
+            {pages.map((p, index) => {
+              // Virtualization: only render pages within a small range
+              const isVisible = Math.abs(index - currentPage) <= 3;
+              
+              return (
+                <div
+                  key={index}
+                  id={`quran-page-${index}`}
+                  data-page-index={index}
+                  className="relative flex-shrink-0"
+                  style={{ width: '100dvw', height: pageHeight }}
+                >
+                  {isVisible ? (
+                    <FlipBookPage 
+                      number={p.number} 
+                      total={pages.length} 
+                      isLeft={p.isLeft} 
+                      isMobile={true}
+                      isSinglePage={true}
+                    >
+                      {null}
+                    </FlipBookPage>
+                  ) : (
+                    // Light placeholder with the same visual style
+                    <div className="w-full h-full bg-[#fdfbf7] border-b border-black/[0.03]" />
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: viewportScale }}
+            animate={{ 
+              opacity: 1, 
+              scale: viewportScale,
+              x: (currentPage === 0 ? -LOGICAL_PAGE_WIDTH / 2 : (currentPage === pages.length - 1 ? LOGICAL_PAGE_WIDTH / 2 : 0)) * viewportScale
+            }}
             className="relative flex items-center justify-center origin-center will-change-transform"
             style={{ backfaceVisibility: 'hidden', touchAction: 'none' }}
           >
-            <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-black/10 z-50 -translate-x-1/2 pointer-events-none" />
+            <div className="absolute left-1/2 top-0 bottom-0 w-[4px] z-0 -translate-x-1/2 pointer-events-none bg-gradient-to-r from-black/20 via-black/5 to-black/20 opacity-60" />
             <HTMLPageFlip
               key="double-mobile"
               ref={bookRef}
@@ -580,7 +618,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
               flippingTime={600}
               startPage={currentPage}
               drawShadow={true}
-              startZIndex={0}
+              startZIndex={1}
               autoSize={false}
               clickEventForward={true}
               useMouseEvents={true}
@@ -598,10 +636,18 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
                   style={{ 
                     width: LOGICAL_PAGE_WIDTH, 
                     height: LOGICAL_PAGE_HEIGHT,
+                    borderRadius: p.isLeft ? '6px 0 0 6px' : '0 6px 6px 0',
+                    overflow: 'hidden',
                     pointerEvents: 'auto'
                   }}
                 >
-                  <FlipBookPage number={p.number} total={pages.length} isLeft={p.isLeft} isMobile={false}>
+                  <FlipBookPage 
+                    number={p.number} 
+                    total={pages.length} 
+                    isLeft={p.isLeft} 
+                    isMobile={false}
+                    isSinglePage={false}
+                  >
                     {null}
                   </FlipBookPage>
                 </div>
@@ -621,6 +667,10 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
               currentPage={currentPage}
               pages={pages}
               handlePageJump={handlePageJump}
+              bookRef={bookRef}
+              isSinglePageOverride={isSinglePageOverride}
+              sliderValue={sliderValue}
+              setSliderValue={setSliderValue}
             />
           )}
         </AnimatePresence>
@@ -631,7 +681,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
           {/* Page info */}
           <div className="flex items-baseline gap-1 min-w-[60px]">
             <span className="text-sm font-semibold text-foreground tabular-nums leading-none">
-              {pages[currentPage]?.number ?? '—'}
+              {pages[sliderValue === null ? currentPage : sliderValue]?.number ?? '—'}
             </span>
             <span className="text-[11px] text-foreground/30 leading-none">
               / {pages.length}

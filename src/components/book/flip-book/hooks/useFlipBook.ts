@@ -39,32 +39,6 @@ export function useFlipBook({ propPage, onPageChange }: UseFlipBookProps) {
   const bookRef = useRef<any>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    let resizeTimer: any;
-    const handleResize = () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        setDimensions({ width: window.innerWidth, height: window.innerHeight });
-      }, 150);
-    };
-    window.addEventListener('resize', handleResize);
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') bookRef.current?.pageFlip()?.flipNext();
-      if (e.key === 'ArrowLeft') bookRef.current?.pageFlip()?.flipPrev();
-      if (e.key === 'f') toggleFullscreen();
-      if (e.key === '=' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleZoomIn(); }
-      if (e.key === '-' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleZoomOut(); }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('keydown', handleKeyDown);
-      clearTimeout(resizeTimer);
-    };
-  }, []);
-
   const isMobile = dimensions.width < 1024;
   const isSinglePageMode = isSinglePageOverride;
 
@@ -93,6 +67,20 @@ export function useFlipBook({ propPage, onPageChange }: UseFlipBookProps) {
       }
     }
   }, [propPage, isSinglePageMode]);
+
+  // Handle scrolling to current page when switching to single page mode
+  useEffect(() => {
+    if (isSinglePageMode && scrollContainerRef.current) {
+      // Small timeout to ensure the DOM is ready
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`quran-page-${currentPage}`);
+        if (el && scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = el.offsetTop;
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isSinglePageMode]);
 
   const totalBookWidth = isSinglePageMode ? LOGICAL_PAGE_WIDTH : LOGICAL_PAGE_WIDTH * 2;
   const scaledWidth = totalBookWidth * viewportScale * zoomLevel;
@@ -188,6 +176,48 @@ export function useFlipBook({ propPage, onPageChange }: UseFlipBookProps) {
       playAudio(audioUrl, currentSurahOnPage.id);
     }
   };
+
+  useEffect(() => {
+    let resizeTimer: any;
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        setDimensions({ width: window.innerWidth, height: window.innerHeight });
+      }, 150);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (e.key === 'ArrowRight') {
+        if (isSinglePageMode) {
+          handlePageJump(Math.min(pages.length - 1, currentPage + 1));
+        } else {
+          bookRef.current?.pageFlip()?.flipNext();
+        }
+      }
+      if (e.key === 'ArrowLeft') {
+        if (isSinglePageMode) {
+          handlePageJump(Math.max(0, currentPage - 1));
+        } else {
+          bookRef.current?.pageFlip()?.flipPrev();
+        }
+      }
+      if (e.key === 'f') toggleFullscreen();
+      if (e.key === '=' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleZoomIn(); }
+      if (e.key === '-' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleZoomOut(); }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSinglePageMode, currentPage, pages, handlePageJump, handleZoomIn, handleZoomOut, toggleFullscreen]);
 
   return {
     dimensions,

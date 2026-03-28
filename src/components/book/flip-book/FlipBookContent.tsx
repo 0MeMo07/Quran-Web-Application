@@ -26,12 +26,12 @@ export function FlipBookContent({ propPage, onPageChange, onShowSettings, t }: F
     );
   }
 
-  // Combine hook state with props
-  const commonProps = {
+  // Combine hook state with memoized props to prevent unnecessary re-renders
+  const commonProps = React.useMemo(() => ({
     ...flipBook,
     onShowSettings: onShowSettings || (() => {}),
     t,
-  };
+  }), [flipBook, onShowSettings, t]);
 
   return flipBook.isMobile ? (
     <MobileFlipBook {...commonProps} />

@@ -1,11 +1,14 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChevronLeft, ChevronRight, BookOpen, FileText, LayoutGrid, ZoomIn, ZoomOut, Maximize2, Minimize2, Play, Headphones, Pause, Settings, SkipBack, SkipForward, X } from 'lucide-react';
-// @ts-ignore
+import { Search, ChevronLeft, ChevronRight, BookOpen, FileText, LayoutGrid, ZoomIn, ZoomOut, Maximize2, Minimize2, Headphones, Settings } from 'lucide-react';
 import HTMLPageFlip from 'react-pageflip';
 import { cn } from '../../ui/cn';
-import { FlipBookPage } from './FlipBookPage';
 import { LOGICAL_PAGE_HEIGHT, LOGICAL_PAGE_WIDTH } from './hooks/useFlipBook';
+
+// Sub-components
+import { FlipBookPage } from './components/FlipBookPage';
+import { AudioPanel } from './components/AudioPanel';
+import { PageStack } from './components/PageStack';
 
 interface DesktopFlipBookProps {
   onShowSettings: () => void;
@@ -43,235 +46,7 @@ interface DesktopFlipBookProps {
   surahs: any[];
 }
 
-function AudioPanel({
-  isPlaying, currentSurahOnPage, currentTime, duration, seek, handleAudioToggle, pages, currentPage, onClose, onSkip
-}: {
-  isPlaying: boolean;
-  currentSurahOnPage: any;
-  currentTime: number;
-  duration: number;
-  seek: (time: number) => void;
-  handleAudioToggle: () => void;
-  pages: any[];
-  currentPage: number;
-  onClose: () => void;
-  onSkip: (seconds: number) => void;
-}) {
-  const formatTime = (time: number) => {
-    if (isNaN(time)) return '00:00';
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-  };
-
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-
-  return (
-    <motion.div
-      initial={{ y: 50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 50, opacity: 0 }}
-      className="absolute bottom-12 left-0 right-0 z-[100] w-full bg-card/90 backdrop-blur-xl border-t border-border h-14 flex items-center shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-all duration-300"
-    >
-      <div className="w-full mx-auto px-6 h-full flex items-center justify-between gap-8">
-        {/* Left: Info */}
-        <div className="flex items-center gap-3 min-w-[220px]">
-          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <Headphones className="w-4 h-4 text-primary" />
-          </div>
-          <div className="flex flex-col">
-            <p className="text-[9px] tracking-[0.1em] uppercase text-muted-foreground/60 font-bold leading-none mb-0.5">
-              SESLİ OKUMA
-            </p>
-            <p className="text-xs font-bold text-foreground leading-none">
-              {currentSurahOnPage?.name ?? 'Sure'}
-              <span className="text-muted-foreground/50 font-medium ml-2">
-                S. {pages[currentPage]?.number}
-              </span>
-            </p>
-          </div>
-        </div>
-
-        {/* Center: Essential Controls & Progress Integrated */}
-        <div className="flex-1 flex items-center gap-6 max-w-4xl">
-          <div className="flex items-center gap-5">
-            <button 
-              onClick={() => onSkip(-5)}
-              className="text-foreground/40 hover:text-primary transition-all active:scale-90 p-1 group relative"
-              title="5sn Geri"
-            >
-              <SkipBack className="w-6 h-6 fill-current opacity-60 group-hover:opacity-100" />
-              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-bold text-primary opacity-0 group-hover:opacity-100">-5s</span>
-            </button>
-            <button
-              onClick={handleAudioToggle}
-              className="w-11 h-11 rounded-full bg-primary text-secondary flex items-center justify-center shadow-lg hover:bg-primary/90 transition-all active:scale-95"
-            >
-              {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current translate-x-0.5" />}
-            </button>
-            <button 
-              onClick={() => onSkip(5)}
-              className="text-foreground/40 hover:text-primary transition-all active:scale-90 p-1 group relative"
-              title="5sn İleri"
-            >
-              <SkipForward className="w-6 h-6 fill-current opacity-60 group-hover:opacity-100" />
-              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-bold text-primary opacity-0 group-hover:opacity-100">+5s</span>
-            </button>
-          </div>
-          
-          <div className="flex-1 flex items-center gap-3">
-            <span className="text-[10px] text-muted-foreground font-bold tabular-nums w-8 text-right shrink-0">
-              {formatTime(currentTime)}
-            </span>
-            <div className="relative flex-1 h-1 bg-muted rounded-full overflow-hidden group cursor-pointer hover:h-1.5 transition-all">
-              <div
-                className="absolute left-0 h-full bg-primary transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-              <input
-                type="range"
-                min={0}
-                max={duration || 100}
-                value={currentTime}
-                onChange={(e) => seek(Number(e.target.value))}
-                className="absolute inset-0 w-full opacity-0 cursor-pointer z-10"
-              />
-            </div>
-            <span className="text-[10px] text-muted-foreground font-bold tabular-nums w-8 shrink-0">
-              {formatTime(duration)}
-            </span>
-          </div>
-        </div>
-
-        {/* Right: Close (Clean) */}
-        <div className="min-w-[60px] flex justify-end">
-          <button 
-            onClick={onClose}
-            className="p-2 text-muted-foreground/30 hover:text-destructive transition-all hover:scale-110"
-            title="Kapat"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-function PageStack({ side, count, total, onJump, currentPage }: { 
-  side: 'left' | 'right'; 
-  count: number; 
-  total: number; 
-  onJump: (pageIndex: number) => void;
-  currentPage: number;
-}) {
-  const [hoverPage, setHoverPage] = React.useState<number | null>(null);
-  const [hoverY, setHoverY] = React.useState(0);
-  const [hoverPercentX, setHoverPercentX] = React.useState(0);
-  const containerRef = React.useRef<HTMLDivElement>(null);
-
-  const visualThickness = Math.min(24, 4 + (count / total) * 20);
-  const interactiveWidth = 32; 
-  
-  if (count <= 0) return null;
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const relativeX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const relativeY = e.clientY - rect.top;
-    
-    let pageIndex: number;
-    if (side === 'left') {
-      pageIndex = Math.floor(relativeX * count);
-    } else {
-      const startPage = currentPage + 2;
-      const remainingCount = total - startPage;
-      pageIndex = startPage + Math.floor(relativeX * Math.max(1, remainingCount));
-    }
-    
-    pageIndex = Math.max(0, Math.min(total - 1, pageIndex));
-    setHoverPage(pageIndex);
-    setHoverY(relativeY);
-    setHoverPercentX(relativeX);
-  };
-
-  return (
-    <div 
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={() => setHoverPage(null)}
-      onMouseDown={(e) => {
-        e.stopPropagation();
-        if (hoverPage !== null) onJump(hoverPage);
-      }}
-      className={cn(
-        "absolute top-0 bottom-0 z-[500] cursor-pointer group flex items-stretch pointer-events-auto",
-        side === 'left' ? "right-full mr-[-4px]" : "left-full ml-[-4px]"
-      )}
-      style={{ width: `${interactiveWidth}px` }}
-    >
-      {/* The Visual Part */}
-      <div 
-        className={cn(
-          "h-full relative overflow-hidden transition-all duration-300",
-          side === 'left' ? "w-full ml-auto" : "w-full mr-auto",
-          hoverPage !== null ? "bg-white/10" : "bg-transparent"
-        )}
-        style={{ 
-          width: `${visualThickness}px`,
-          background: `linear-gradient(${side === 'left' ? 'to right' : 'to left'}, 
-            rgba(100, 100, 100, 0.7) 0%, 
-            rgba(160, 160, 160, 0.4) 30%, 
-            rgba(100, 100, 100, 0.7) 60%, 
-            rgba(160, 160, 160, 0.4) 80%, 
-            rgba(100, 100, 100, 0.7) 100%)`,
-          boxShadow: side === 'left' 
-            ? '-1px 0 2px rgba(0,0,0,0.1)' 
-            : '1px 0 3px rgba(0,0,0,0.1)',
-        }}
-      >
-        <div className="absolute inset-0 opacity-15 pointer-events-none" 
-          style={{
-            background: `repeating-linear-gradient(${side === 'left' ? 'to right' : 'to left'}, 
-              transparent 0, 
-              transparent 1px, 
-              rgba(0,0,0,0.2) 1px, 
-              rgba(0,0,0,0.2) 2px)`
-          }} 
-        />
-        {/* Hover Highlight line */}
-        <div className="absolute inset-y-0 w-[1px] bg-white opacity-0 group-hover:opacity-60 transition-opacity"
-          style={{ 
-            left: `${hoverPercentX * visualThickness}px`
-          }}
-        />
-      </div>
-
-      {/* Tooltip positioned outside the visual part but same relative coord space */}
-      <AnimatePresence>
-        {hoverPage !== null && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className={cn(
-              "absolute z-[600] bg-zinc-800 text-white backdrop-blur-md px-2 py-1 rounded shadow-2xl pointer-events-none text-[10px] font-bold border border-white/10 whitespace-nowrap",
-              side === 'left' ? "right-full mr-2" : "left-full ml-2"
-            )}
-            style={{ 
-              top: hoverY - 12
-            }}
-          >
-            Sayfa {hoverPage + 1}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-export function DesktopFlipBook(props: DesktopFlipBookProps) {
+export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: DesktopFlipBookProps) {
   const {
     onShowSettings, isNavOpen, setIsNavOpen, selectedSurah, handleSurahSelectChange,
     selectedVerse, setSelectedVerse, handleSearch, bookRef, pages, currentPage,
@@ -283,6 +58,7 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
   } = props;
 
   const [isAudioPanelVisible, setIsAudioPanelVisible] = React.useState(false);
+  const [sliderValue, setSliderValue] = React.useState<number | null>(null);
 
   // Sync panel visibility with initial play
   React.useEffect(() => {
@@ -296,10 +72,9 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
     seek(newTime);
   };
 
-  // Centralized keyboard shortcuts with strict priority
+  // Centralized keyboard shortcuts
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Audio controls priority
       if (isAudioPanelVisible) {
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
@@ -321,17 +96,8 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
         }
       }
 
-      // Page flipping secondary logic
-      if (!isAudioPanelVisible) {
-        if (e.key === 'ArrowLeft') {
-          bookRef.current?.pageFlip()?.flipPrev();
-        } else if (e.key === 'ArrowRight') {
-          bookRef.current?.pageFlip()?.flipNext();
-        }
-      }
     };
 
-    // Use capture phase (true) to intercept events before other components
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isAudioPanelVisible, currentTime, duration, isPlaying]);
@@ -426,10 +192,10 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
             currentTime={currentTime}
             duration={duration}
             seek={seek}
-            handleAudioToggle={handleAudioToggle} // This only toggles play/pause
+            handleAudioToggle={handleAudioToggle}
             pages={pages}
             currentPage={currentPage}
-            onClose={() => setIsAudioPanelVisible(false)} // Pass specific close handler
+            onClose={() => setIsAudioPanelVisible(false)}
             onSkip={handleSkip}
           />
         )}
@@ -453,7 +219,9 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
           dragTransition={{ power: 0.1, timeConstant: 200 }}
           animate={{ 
             scale: viewportScale * zoomLevel,
-            x: zoomLevel <= 1.01 ? 0 : undefined,
+            x: zoomLevel <= 1.01 
+              ? (isSinglePageOverride ? 0 : (currentPage === 0 ? -LOGICAL_PAGE_WIDTH / 2 : (currentPage === pages.length - 1 ? LOGICAL_PAGE_WIDTH / 2 : 0)))
+              : undefined,
             y: zoomLevel <= 1.01 ? 0 : undefined
           }}
           transition={{ type: 'spring', damping: 35, stiffness: 80 }}
@@ -466,6 +234,13 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
             <div
               className="overflow-y-auto overflow-x-hidden flex flex-col items-center gap-6 py-6 scrollbar-hidden"
               ref={scrollContainerRef}
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                const idx = Math.round(el.scrollTop / LOGICAL_PAGE_HEIGHT);
+                if (idx !== currentPage && idx >= 0 && idx < pages.length) {
+                  onPage({ data: idx });
+                }
+              }}
               style={{
                 width: LOGICAL_PAGE_WIDTH,
                 height: `calc(100vh / ${viewportScale})`,
@@ -479,11 +254,22 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
                       key={index}
                       id={`quran-page-${index}`}
                       data-page-index={index}
-                      className="scroll-page-container relative shadow-xl bg-card flex-shrink-0 rounded-sm"
-                      style={{ width: LOGICAL_PAGE_WIDTH, height: LOGICAL_PAGE_HEIGHT }}
+                      className="scroll-page-container relative shadow-xl bg-card flex-shrink-0"
+                      style={{ 
+                        width: LOGICAL_PAGE_WIDTH, 
+                        height: LOGICAL_PAGE_HEIGHT,
+                        borderRadius: '6px',
+                        overflow: 'hidden'
+                      }}
                     >
                       {isVisible ? (
-                        <FlipBookPage number={p.number} total={pages.length} isLeft={p.isLeft} isMobile={false}>
+                        <FlipBookPage 
+                          number={p.number} 
+                          total={pages.length} 
+                          isLeft={p.isLeft} 
+                          isMobile={false}
+                          isSinglePage={true}
+                        >
                           {null}
                         </FlipBookPage>
                       ) : (
@@ -496,8 +282,8 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
                 })}
             </div>
           ) : (
-            <>
-              <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-black/10 z-50 -translate-x-1/2 pointer-events-none" />
+            <div className="relative" style={{ width: LOGICAL_PAGE_WIDTH * 2, height: LOGICAL_PAGE_HEIGHT }}>
+              <div className="absolute left-1/2 top-0 bottom-0 w-[4px] z-0 -translate-x-1/2 pointer-events-none bg-gradient-to-r from-black/15 via-black/5 to-black/15 opacity-50" />
               <HTMLPageFlip
                 key="double"
                 ref={bookRef}
@@ -515,7 +301,7 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
                 flippingTime={600}
                 startPage={currentPage}
                 drawShadow={true}
-                startZIndex={0}
+                startZIndex={1}
                 autoSize={false}
                 clickEventForward={true}
                 useMouseEvents={zoomLevel === 1}
@@ -529,20 +315,29 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
                 {pages.map((p, idx) => {
                   const isVisible = Math.abs(idx - currentPage) <= 10;
                   return (
-                    <div 
-                      key={p.number} 
-                      className="page-wrapper" 
-                      style={{ 
-                        width: LOGICAL_PAGE_WIDTH, 
-                        height: LOGICAL_PAGE_HEIGHT,
-                        pointerEvents: 'auto'
-                      }}
-                    >
-                      {isVisible ? (
-                        <FlipBookPage number={p.number} total={pages.length} isLeft={p.isLeft} isMobile={false}>
-                          {null}
-                        </FlipBookPage>
-                      ) : (
+                      <div 
+                        key={idx} 
+                        className="page-wrapper" 
+                        style={{ 
+                          width: LOGICAL_PAGE_WIDTH, 
+                          height: LOGICAL_PAGE_HEIGHT,
+                          // Use the same radius logic as FlipBookPage to avoid overlaps
+                          borderRadius: p.isLeft ? '6px 0 0 6px' : '0 6px 6px 0',
+                          overflow: 'hidden',
+                          pointerEvents: 'auto'
+                        }}
+                      >
+                        {isVisible ? (
+                          <FlipBookPage 
+                            number={p.number} 
+                            total={pages.length} 
+                            isLeft={p.isLeft} 
+                            isMobile={false}
+                            isSinglePage={false}
+                          >
+                            {null}
+                          </FlipBookPage>
+                        ) : (
                         <div className="w-full h-full bg-card flex items-center justify-center border border-border/5 opacity-50">
                           <span className="text-black/5 font-serif text-2xl">{p.number}</span>
                         </div>
@@ -552,8 +347,8 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
                 })}
               </HTMLPageFlip>
 
-              {/* Page Stacks (3D Effect) */}
-              {zoomLevel <= 1.01 && (
+              {/* Page Stacks (3D Effect) Always visible */}
+              {(true || zoomLevel <= 1.01) && (
                 <>
                   {/* Left Stack */}
                   <PageStack 
@@ -573,7 +368,7 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
                   />
                 </>
               )}
-            </>
+            </div>
           )}
         </motion.div>
       </motion.div>
@@ -582,30 +377,62 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
       {/* Bottom Bar */}
       <div className="w-full h-12 bg-card border-t border-border flex items-center px-4 z-[70] shadow-xl shrink-0">
         <div className="flex items-center text-xs font-semibold text-foreground min-w-[140px]">
-          Sayfa {pages[currentPage]?.number || 0}
-          <span className="text-muted-foreground font-normal ml-1 hidden sm:inline">(İndeks: {currentPage + 1}/{pages.length})</span>
+          Sayfa {pages[sliderValue === null ? currentPage : sliderValue]?.number || 0}
+          <span className="text-muted-foreground font-normal ml-1 hidden sm:inline">
+            (İndeks: {(sliderValue === null ? currentPage : sliderValue) + 1}/{pages.length})
+          </span>
         </div>
         <div className="flex-1 mx-4 relative h-1.5 bg-muted rounded-full overflow-hidden group/slider cursor-pointer flex items-center">
           <input
             type="range"
             min="0"
             max={Math.max(0, pages.length - 1)}
-            value={currentPage}
-            onChange={(e) => handlePageJump(Number(e.target.value))}
+            value={sliderValue === null ? currentPage : sliderValue}
+            onChange={(e) => setSliderValue(Number(e.target.value))}
+            onPointerUp={() => {
+              if (sliderValue !== null) {
+                handlePageJump(sliderValue);
+                setSliderValue(null);
+              }
+            }}
+            onMouseUp={() => {
+              if (sliderValue !== null) {
+                handlePageJump(sliderValue);
+                setSliderValue(null);
+              }
+            }}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
           <motion.div
             className="absolute top-0 left-0 h-full bg-primary"
-            animate={{ width: `${(currentPage / Math.max(1, pages.length - 1)) * 100}%` }}
+            animate={{ width: `${((sliderValue === null ? currentPage : sliderValue) / Math.max(1, pages.length - 1)) * 100}%` }}
             transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
           />
         </div>
         <div className="flex items-center gap-1.5 justify-end">
-          <button onClick={() => handlePageJump(Math.max(0, currentPage - 1))} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-            <Play className="w-4 h-4 rotate-180 fill-current" />
+          <button 
+            onClick={() => {
+              if (isSinglePageOverride) {
+                handlePageJump(Math.max(0, currentPage - 1));
+              } else {
+                bookRef.current?.pageFlip()?.flipPrev();
+              }
+            }} 
+            className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
           </button>
-          <button onClick={() => handlePageJump(Math.min(pages.length - 1, currentPage + 1))} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-            <Play className="w-4 h-4 fill-current" />
+          <button 
+            onClick={() => {
+              if (isSinglePageOverride) {
+                handlePageJump(Math.min(pages.length - 1, currentPage + 1));
+              } else {
+                bookRef.current?.pageFlip()?.flipNext();
+              }
+            }} 
+            className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
           </button>
           <div className="w-px h-4 bg-border mx-1" />
           <button onClick={() => setIsSinglePageOverride(true)} className={`p-1.5 transition-colors ${isSinglePageOverride ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} title="Dikey Kaydırma">
@@ -635,4 +462,4 @@ export function DesktopFlipBook(props: DesktopFlipBookProps) {
       </div>
     </div>
   );
-}
+});

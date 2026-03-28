@@ -40,6 +40,9 @@ interface MobileFlipBookProps {
   isPlaying: boolean;
   currentAudioId: number | null;
   currentSurahOnPage: any;
+  currentTime: number;
+  duration: number;
+  seek: (time: number) => void;
   toggleFullscreen: () => void;
   isFullscreen: boolean;
   t: any;
@@ -232,6 +235,7 @@ function NavSheet({
 function AudioPanel({
   open, onClose, isPlaying, handleAudioToggle,
   currentSurahOnPage, currentPage, pages, bottomOffset,
+  currentTime, duration, seek,
 }: {
   open: boolean;
   onClose: () => void;
@@ -241,10 +245,18 @@ function AudioPanel({
   currentPage: number;
   pages: any[];
   bottomOffset: string;
+  currentTime: number;
+  duration: number;
+  seek: (time: number) => void;
 }) {
-  const progress = 34;
-  const elapsed = '2:14';
-  const remaining = '-4:32';
+  const formatTime = (time: number) => {
+    if (isNaN(time)) return '0:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
     <AnimatePresence>
@@ -252,94 +264,94 @@ function AudioPanel({
         <>
           <motion.div
             key="audio-panel"
-            initial={{ y: '100%', opacity: 0, bottom: bottomOffset }}
-            animate={{ y: 0, opacity: 1, bottom: bottomOffset }}
-            exit={{ y: '100%', opacity: 0, bottom: bottomOffset }}
-            transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+            initial={{ y: '110%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '110%', opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
             style={{ bottom: bottomOffset }}
             className={cn(
               'absolute inset-x-0 z-[1150]',
-              'bg-card border border-border shadow-[0_-8px_40px_rgba(0,0,0,0.12)]',
-              'rounded-3xl mx-3 mb-2 overflow-hidden',
+              'bg-transparent backdrop-blur-3xl',
+              'rounded-[2.5rem] mx-4 mb-3 overflow-hidden',
             )}
           >
-            <div className="flex justify-center pt-2.5 pb-1">
-              <div className="w-8 h-1 rounded-full bg-foreground/15" />
+            <div className="flex justify-center pt-2.5 pb-0.5">
+              <div className="w-8 h-1 rounded-full bg-muted-foreground/20" />
             </div>
 
-            <div className="px-5 pb-5 pt-2 flex flex-col gap-4">
+            <div className="px-6 pb-6 pt-2 flex flex-col gap-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] tracking-[0.12em] uppercase text-foreground/30 font-medium">
-                    Dinleniyor
+                  <p className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground/50 font-black">
+                    Sesli Okuma
                   </p>
-                  <p className="text-sm font-semibold text-foreground leading-tight mt-0.5">
+                  <p className="text-sm font-bold text-card-foreground leading-tight mt-1">
                     {currentSurahOnPage?.name ?? 'Sure'}
-                    <span className="text-foreground/35 font-normal ml-1.5 text-xs">
+                    <span className="text-muted-foreground/40 font-medium ml-2 text-[11px]">
                       · Sayfa {pages[currentPage]?.number}
                     </span>
                   </p>
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-foreground/25 hover:text-foreground/50 transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-xl bg-secondary hover:bg-secondary/80 text-muted-foreground transition-all active:scale-90"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] text-foreground/30 tabular-nums w-8 text-right">
-                  {elapsed}
-                </span>
-
-                <div className="relative flex-1 h-5 flex items-center">
-                  <div className="absolute inset-x-0 h-px bg-foreground/12 rounded-full" />
+              <div className="flex flex-col gap-1">
+                <div className="relative h-6 flex items-center group">
+                  <div className="absolute inset-x-0 h-1.5 bg-muted rounded-full" />
                   <div
-                    className="absolute left-0 h-px bg-foreground/50 rounded-full"
+                    className="absolute left-0 h-1.5 bg-primary rounded-full transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   />
                   <div
-                    className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-foreground shadow-sm pointer-events-none"
-                    style={{ left: `calc(${progress}% - 6px)` }}
+                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-primary shadow-lg pointer-events-none transition-all duration-300 border-2 border-card"
+                    style={{ left: `calc(${progress}% - 8px)` }}
                   />
                   <input
                     type="range"
                     min={0}
-                    max={100}
-                    defaultValue={progress}
-                    className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                    max={duration || 100}
+                    value={currentTime}
+                    onChange={(e) => seek(Number(e.target.value))}
+                    className="absolute inset-0 w-full opacity-0 cursor-pointer z-10"
                   />
                 </div>
-
-                <span className="text-[10px] text-foreground/30 tabular-nums w-8">
-                  {remaining}
-                </span>
+                <div className="flex items-center justify-between px-0.5">
+                  <span className="text-[10px] text-muted-foreground/60 font-bold tracking-wider tabular-nums">
+                    {formatTime(currentTime)}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/60 font-bold tracking-wider tabular-nums">
+                    {formatTime(duration)}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex items-center justify-center gap-6">
-                <button className="p-2 text-foreground/35 hover:text-foreground/60 transition-colors active:scale-90">
-                  <SkipBack className="w-5 h-5" />
+              <div className="flex items-center justify-center gap-10">
+                <button className="p-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-all active:scale-90">
+                  <SkipBack className="w-6 h-6" />
                 </button>
 
                 <motion.button
                   whileTap={{ scale: 0.88 }}
                   onClick={handleAudioToggle}
                   className={cn(
-                    'w-12 h-12 rounded-full flex items-center justify-center',
-                    'bg-foreground text-background',
-                    'shadow-[0_2px_12px_rgba(0,0,0,0.15)]',
-                    'transition-opacity active:opacity-70',
+                    'w-14 h-14 rounded-full flex items-center justify-center',
+                    'bg-primary text-primary-foreground shadow-[0_8px_32px_rgba(var(--color-primary),0.2)]',
+                    'active:opacity-80 transition-all',
                   )}
                 >
                   {isPlaying
-                    ? <Pause className="w-5 h-5 fill-current" />
-                    : <Play className="w-5 h-5 fill-current translate-x-0.5" />
+                    ? <Pause className="w-6 h-6 fill-current" />
+                    : <Play className="w-6 h-6 fill-current translate-x-0.5" />
                   }
                 </motion.button>
 
-                <button className="p-2 text-foreground/35 hover:text-foreground/60 transition-colors active:scale-90">
-                  <SkipForward className="w-5 h-5" />
+                <button className="p-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-all active:scale-90">
+                  <SkipForward className="w-6 h-6" />
                 </button>
               </div>
             </div>
@@ -455,6 +467,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
     isScrubberVisible, setIsScrubberVisible,
     isSinglePageOverride, setIsSinglePageOverride,
     handleAudioToggle, isPlaying, currentAudioId, currentSurahOnPage,
+    currentTime, duration, seek,
     toggleFullscreen, isFullscreen,
     t, surahs,
   } = props;
@@ -515,11 +528,14 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
         currentSurahOnPage={currentSurahOnPage}
         currentPage={currentPage}
         pages={pages}
+        currentTime={currentTime}
+        duration={duration}
+        seek={seek}
         bottomOffset={isScrubberVisible ? 'calc(108px + env(safe-area-inset-bottom))' : 'calc(56px + env(safe-area-inset-bottom))'}
       />
 
       {/* ── Pages Area ───────────────────────────────────────────────────── */}
-      <div className="flex-1 relative overflow-hidden overscroll-none bg-[#0a0a0a] flex items-center justify-center">
+      <div className="flex-1 relative overflow-hidden overscroll-none bg-background flex items-center justify-center">
         {isSinglePageOverride ? (
           <div
             ref={scrollContainerRef}
@@ -573,7 +589,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
               disableFlipByClick={false}
               onFlip={onPage}
               className="quran-flipbook"
-              style={{ backgroundColor: '#fdfbf7' }}
+              style={{ backgroundColor: 'transparent' }}
             >
               {pages.map((p, idx) => (
                 <div 

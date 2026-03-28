@@ -16,11 +16,11 @@ interface UseFlipBookProps {
   t: any;
 }
 
-export function useFlipBook({ propPage, onPageChange, t }: UseFlipBookProps) {
+export function useFlipBook({ propPage, onPageChange }: UseFlipBookProps) {
   const navigate = useNavigate();
   const surahs = useSelector(selectSurahs);
   const language = useSelector(selectSearchLanguage);
-  const { isPlaying, currentAudioId, playAudio } = useAudioPlayer();
+  const { isPlaying, currentAudioId, playAudio, currentTime, duration, seek } = useAudioPlayer();
   
   const [dimensions, setDimensions] = useState({
     width: window.innerWidth,
@@ -89,7 +89,7 @@ export function useFlipBook({ propPage, onPageChange, t }: UseFlipBookProps) {
     if (propPage !== undefined && propPage !== currentPage) {
       setCurrentPage(propPage);
       if (!isSinglePageMode) {
-        bookRef.current?.pageFlip()?.jumpToPage(propPage);
+        bookRef.current?.pageFlip()?.turnToPage(propPage);
       }
     }
   }, [propPage, isSinglePageMode]);
@@ -130,7 +130,7 @@ export function useFlipBook({ propPage, onPageChange, t }: UseFlipBookProps) {
         scrollContainerRef.current.scrollTo({ top: el.offsetTop, behavior: 'smooth' });
       }
     } else {
-      bookRef.current?.pageFlip()?.jumpToPage(index);
+      bookRef.current?.pageFlip()?.turnToPage(index);
     }
   }, [isSinglePageMode]);
 
@@ -224,6 +224,9 @@ export function useFlipBook({ propPage, onPageChange, t }: UseFlipBookProps) {
     handleAudioToggle,
     isPlaying,
     currentAudioId,
+    currentTime,
+    duration,
+    seek,
     surahs,
   };
 }

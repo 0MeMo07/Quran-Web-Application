@@ -11,6 +11,7 @@ import { cn } from '../../ui/cn';
 import { FlipBookPage } from './components/FlipBookPage';
 import { LOGICAL_PAGE_HEIGHT, LOGICAL_PAGE_WIDTH } from './hooks/useFlipBook';
 import { FlippingMode } from '../../../store/slices/uiSlice';
+import type { MushafPageLayout } from './hooks/mushafPagination';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -40,6 +41,7 @@ interface MobileFlipBookProps {
   isPlaying: boolean;
   currentAudioId: number | null;
   currentSurahOnPage: any;
+  pageLayoutsByNumber: Map<number, MushafPageLayout>;
   currentTime: number;
   duration: number;
   seek: (time: number) => void;
@@ -478,7 +480,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
     viewportScale, scrollContainerRef,
     isScrubberVisible, setIsScrubberVisible,
     isSinglePageOverride, setIsSinglePageOverride,
-    handleAudioToggle, isPlaying, currentAudioId, currentSurahOnPage,
+    handleAudioToggle, isPlaying, currentAudioId, currentSurahOnPage, pageLayoutsByNumber,
     currentTime, duration, seek,
     toggleFullscreen, isFullscreen,
     t, surahs, flippingMode,
@@ -580,6 +582,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
                       isLeft={p.isLeft} 
                       isMobile={true}
                       isSinglePage={true}
+                      pageLayout={pageLayoutsByNumber.get(p.number)}
                     >
                       {null}
                     </FlipBookPage>
@@ -656,6 +659,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
                     isMobile={false}
                     isSinglePage={false}
                     flippingMode={flippingMode}
+                    pageLayout={pageLayoutsByNumber.get(p.number)}
                   >
                     {null}
                   </FlipBookPage>

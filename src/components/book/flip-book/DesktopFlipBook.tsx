@@ -5,6 +5,7 @@ import HTMLPageFlip from 'react-pageflip';
 import { cn } from '../../ui/cn';
 import { LOGICAL_PAGE_HEIGHT, LOGICAL_PAGE_WIDTH } from './hooks/useFlipBook';
 import { FlippingMode } from '../../../store/slices/uiSlice';
+import type { MushafPageLayout } from './hooks/mushafPagination';
 
 // Sub-components
 import { FlipBookPage } from './components/FlipBookPage';
@@ -36,6 +37,7 @@ interface DesktopFlipBookProps {
   isPlaying: boolean;
   currentAudioId: number | null;
   currentSurahOnPage: any;
+  pageLayoutsByNumber: Map<number, MushafPageLayout>;
   currentTime: number;
   duration: number;
   seek: (time: number) => void;
@@ -54,7 +56,7 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
     selectedVerse, setSelectedVerse, handleSearch, bookRef, pages, currentPage,
     zoomLevel, viewportScale, dragMarginX, dragMarginY, isSinglePageOverride,
     setIsSinglePageOverride, scrollContainerRef, onPage, handlePageJump,
-    handleAudioToggle, isPlaying, currentSurahOnPage,
+    handleAudioToggle, isPlaying, currentSurahOnPage, pageLayoutsByNumber,
     currentTime, duration, seek,
     handleZoomIn, handleZoomOut, toggleFullscreen, isFullscreen, t, surahs,
     flippingMode
@@ -272,6 +274,7 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
                           isLeft={p.isLeft} 
                           isMobile={false}
                           isSinglePage={true}
+                          pageLayout={pageLayoutsByNumber.get(p.number)}
                         >
                           {null}
                         </FlipBookPage>
@@ -344,6 +347,7 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
                             isMobile={false}
                             isSinglePage={false}
                             flippingMode={flippingMode}
+                            pageLayout={pageLayoutsByNumber.get(p.number)}
                           >
                             {null}
                           </FlipBookPage>

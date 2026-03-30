@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { selectSurahs } from '../../../../store/slices/quranSlice';
+import { selectAllVerses, selectSurahs } from '../../../../store/slices/quranSlice';
 import { selectSearchLanguage } from '../../../../store/slices/searchSlice';
 import { useAudioPlayer } from '../../../../hooks/useAudioPlayer';
+import { buildPageMap } from './mushafPagination';
+import type { ViewType } from '../../../../store/slices/uiSlice';
 
 export const TOTAL_QURAN_PAGES = 604;
 export const LOGICAL_PAGE_WIDTH = 550;
@@ -12,14 +14,23 @@ export const LOGICAL_PAGE_HEIGHT = 800;
 interface UseFlipBookProps {
   propPage?: number;
   onPageChange?: (page: number) => void;
-  t: any;
+  viewType: ViewType;
+  fontSize: number;
+  lineHeight: number;
 }
 
 import { selectFlippingMode } from '../../../../store/slices/uiSlice';
 
-export function useFlipBook({ propPage, onPageChange }: UseFlipBookProps) {
+export function useFlipBook({
+  propPage,
+  onPageChange,
+  viewType,
+  fontSize,
+  lineHeight,
+}: UseFlipBookProps) {
   const navigate = useNavigate();
   const surahs = useSelector(selectSurahs);
+  const allVerses = useSelector(selectAllVerses);
   const language = useSelector(selectSearchLanguage);
   const flippingMode = useSelector(selectFlippingMode);
   const { isPlaying, currentAudioId, playAudio, currentTime, duration, seek } = useAudioPlayer();
@@ -36,7 +47,7 @@ export function useFlipBook({ propPage, onPageChange }: UseFlipBookProps) {
   const [selectedVerse, setSelectedVerse] = useState('');
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isScrubberVisible, setIsScrubberVisible] = useState(true);
-  const [currentPage, setCurrentPage] = useState(propPage || 0);
+  const [currentPage, setCurrentPage] = useState(() => Math.max(0, (propPage ?? 1) - 1));
 
   const bookRef = useRef<any>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -62,12 +73,22 @@ export function useFlipBook({ propPage, onPageChange }: UseFlipBookProps) {
   }, [isSinglePageOverride]);
 
   useEffect(() => {
-    if (propPage !== undefined && propPage !== currentPage) {
-      setCurrentPage(propPage);
-      if (!isSinglePageMode) {
-        bookRef.current?.pageFlip()?.turnToPage(propPage);
-      }
+    if (propPage === undefined) {
+      return;
     }
+
+    const incomingPageIndex = Math.max(0, propPage - 1);
+    setCurrentPage((previousPage) => {
+      if (incomingPageIndex === previousPage) {
+        return previousPage;
+      }
+
+      if (!isSinglePageMode) {
+        bookRef.current?.pageFlip()?.turnToPage(incomingPageIndex);
+      }
+
+      return incomingPageIndex;
+    });
   }, [propPage, isSinglePageMode]);
 
   // Handle scrolling to current page when switching to single page mode
@@ -91,15 +112,47 @@ export function useFlipBook({ propPage, onPageChange }: UseFlipBookProps) {
   const dragMarginX = Math.max(0, (scaledWidth - dimensions.width) / 2);
   const dragMarginY = Math.max(0, (scaledHeight - (dimensions.height - 48)) / 2 + 50); 
 
+  const pageLayout = useMemo(
+    () =>
+      buildPageMap({
+        verses: allVerses,
+        surahs,
+        pageWidth: LOGICAL_PAGE_WIDTH,
+        pageHeight: LOGICAL_PAGE_HEIGHT,
+        viewType,
+        fontSize,
+        lineHeight,
+        safeInsets: {
+          top: 20,
+          right: 22,
+          bottom: 38,
+          left: 22,
+        },
+      }),
+    [allVerses, surahs, viewType, fontSize, lineHeight],
+  );
+
+  const totalPageCount = useMemo(() => {
+    const maxSurahPage = surahs.reduce((maxPage, surah) => Math.max(maxPage, surah.page_number), 1);
+    const maxVersePage = allVerses.reduce((maxPage, verse) => Math.max(maxPage, Math.max(1, verse.page)), 1);
+    return Math.max(
+      1,
+      maxSurahPage,
+      maxVersePage,
+      pageLayout.maxPageNumber,
+      propPage ?? 1,
+    );
+  }, [surahs, allVerses, pageLayout.maxPageNumber, propPage]);
+
   const pages = useMemo(() => {
-    return Array.from({ length: TOTAL_QURAN_PAGES }, (_, index) => {
+    return Array.from({ length: totalPageCount }, (_, index) => {
       const pageNumber = index + 1;
       return {
         number: pageNumber,
         isLeft: pageNumber % 2 === 0,
       };
     });
-  }, []);
+  }, [totalPageCount]);
 
   const currentSurahOnPage = useMemo(() => {
     const pageNum = pages[currentPage]?.number || 1;
@@ -168,7 +221,7 @@ export function useFlipBook({ propPage, onPageChange }: UseFlipBookProps) {
     const newPage = e.data;
     setCurrentPage(newPage);
     if (onPageChange) {
-      onPageChange(newPage);
+      onPageChange(newPage + 1);
     }
   }, [onPageChange]);
 
@@ -261,5 +314,8 @@ export function useFlipBook({ propPage, onPageChange }: UseFlipBookProps) {
     seek,
     surahs,
     flippingMode,
+    pageLayoutsByNumber: pageLayout.pagesByNumber,
+    safeArea: pageLayout.safeArea,
+    safeInsets: pageLayout.safeInsets,
   };
 }

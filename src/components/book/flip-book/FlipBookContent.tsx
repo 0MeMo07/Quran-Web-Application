@@ -8,14 +8,25 @@ interface FlipBookContentProps {
   onPageChange?: (page: number) => void;
   onShowSettings?: () => void;
   t: any;
+  viewType: import('../../../store/slices/uiSlice').ViewType;
+  fontSize: number;
+  lineHeight: number;
 }
 
 /**
  * FlipBookContent component
  * Orchestrates the FlipBook experience, switching between Mobile and Desktop views.
  */
-export function FlipBookContent({ propPage, onPageChange, onShowSettings, t }: FlipBookContentProps) {
-  const flipBook = useFlipBook({ propPage, onPageChange, t });
+export function FlipBookContent({
+  propPage,
+  onPageChange,
+  onShowSettings,
+  t,
+  viewType,
+  fontSize,
+  lineHeight,
+}: FlipBookContentProps) {
+  const flipBook = useFlipBook({ propPage, onPageChange, viewType, fontSize, lineHeight });
 
   if (flipBook.pages.length === 0) {
     return (

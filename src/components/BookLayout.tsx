@@ -257,6 +257,9 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
             onPageChange={handlePageJump}
             t={t}
             onShowSettings={() => setShowSettings(true)}
+            viewType={viewType}
+            fontSize={fontSize}
+            lineHeight={lineHeight}
           />
         ) : (
           <BookLayoutContent

@@ -1,5 +1,6 @@
 import React, { forwardRef, memo } from 'react';
 import { cn } from '../../../ui/cn';
+import type { MushafPageItem, MushafPageLayout } from '../hooks/mushafPagination';
 
 interface PageProps {
   children?: React.ReactNode;
@@ -9,6 +10,119 @@ interface PageProps {
   isMobile?: boolean;
   isSinglePage?: boolean;
   flippingMode?: '3d' | 'flat';
+  pageLayout?: MushafPageLayout;
+}
+
+function renderPageItem(item: MushafPageItem, pageLayout: MushafPageLayout) {
+  const typography = pageLayout.typography;
+
+  if (item.kind === 'surah-header') {
+    const hasTitle = item.titleLines.length > 0;
+    const hasSubtitle = item.subtitleLines.length > 0;
+    const hasBasmala = item.basmalaLines.length > 0;
+
+    return (
+      <div
+        style={{
+          paddingTop: typography.headerPaddingYPx,
+          paddingBottom: typography.headerPaddingYPx,
+        }}
+      >
+        {hasTitle && (
+          <p
+            className="m-0 text-center text-black/85"
+            style={{
+              fontFamily: typography.headerFontFamily,
+              fontWeight: 700,
+              fontSize: typography.headerTitleFontSize,
+              lineHeight: `${typography.headerTitleLineHeightPx}px`,
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            {item.titleLines.join('\n')}
+          </p>
+        )}
+
+        {hasSubtitle && (
+          <p
+            className="m-0 text-center text-black/55"
+            style={{
+              marginTop: hasTitle ? typography.headerSectionGapPx : 0,
+              fontFamily: typography.translationFontFamily,
+              fontWeight: 600,
+              fontSize: typography.headerSubtitleFontSize,
+              lineHeight: `${typography.headerSubtitleLineHeightPx}px`,
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            {item.subtitleLines.join('\n')}
+          </p>
+        )}
+
+        {hasBasmala && (
+          <p
+            className="m-0 text-right text-black/80"
+            dir="rtl"
+            style={{
+              marginTop: hasTitle || hasSubtitle ? typography.headerSectionGapPx : 0,
+              fontFamily: typography.arabicFontFamily,
+              fontWeight: 600,
+              fontSize: typography.basmalaFontSize,
+              lineHeight: `${typography.basmalaLineHeightPx}px`,
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            {item.basmalaLines.join('\n')}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  const hasArabic = item.arabicLines.length > 0;
+  const hasTranslation = item.translationLines.length > 0;
+
+  return (
+    <div
+      style={{
+        paddingTop: typography.versePaddingYPx,
+        paddingBottom: typography.versePaddingYPx,
+      }}
+    >
+      {hasArabic && (
+        <p
+          className="m-0 text-right text-black/90"
+          dir="rtl"
+          style={{
+            fontFamily: typography.arabicFontFamily,
+            fontWeight: 600,
+            fontSize: typography.arabicFontSize,
+            lineHeight: `${typography.arabicLineHeightPx}px`,
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {item.arabicLines.join('\n')}
+        </p>
+      )}
+
+      {hasTranslation && (
+        <p
+          className="m-0 text-black/80"
+          style={{
+            marginTop: hasArabic ? typography.sectionGapPx : 0,
+            fontFamily: typography.translationFontFamily,
+            fontWeight: 500,
+            fontSize: typography.translationFontSize,
+            lineHeight: `${typography.translationLineHeightPx}px`,
+            whiteSpace: 'pre-wrap',
+            textAlign: 'left',
+          }}
+        >
+          {item.translationLines.join('\n')}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
@@ -26,6 +140,23 @@ export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
        borderRadius = '3px';
     }
 
+    const pageLayout = props.pageLayout;
+    const hasPageContent = Boolean(pageLayout && pageLayout.items.length > 0);
+    const safeAreaStyle: React.CSSProperties = pageLayout
+      ? {
+          top: pageLayout.safeArea.top,
+          left: pageLayout.safeArea.left,
+          width: pageLayout.safeArea.width,
+          height: pageLayout.safeArea.height,
+        }
+      : {
+          top: 24,
+          left: 24,
+          right: 24,
+          bottom: 40,
+        };
+    const interItemGap = pageLayout?.renderGapPx ?? 10;
+
     return (
       <div 
         ref={ref}
@@ -40,15 +171,31 @@ export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
             : '1px solid rgba(80,55,20,0.12)'
         }}
       >
-        {/* Simple Page Content */}
-        <div className="flex-1 relative z-10 flex flex-col h-full items-center justify-center">
+        <div className="flex-1 relative z-10 h-full">
+          {hasPageContent ? (
+            <div className="absolute overflow-hidden flex flex-col" style={safeAreaStyle}>
+              {pageLayout!.items.map((item, index) => (
+                <div
+                  key={item.id}
+                  style={{
+                    marginBottom: index < pageLayout!.items.length - 1 ? interItemGap : 0,
+                  }}
+                >
+                  {renderPageItem(item, pageLayout!)}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-[100px] font-serif text-black/5 select-none pointer-events-none">
+                {props.number}
+              </div>
+            </div>
+          )}
+
           {props.children}
-          <div className="text-[100px] font-serif text-black/5 select-none pointer-events-none">
-            {props.number}
-          </div>
         </div>
 
-        {/* Minimal Footer */}
         <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center text-[10px] font-medium text-black/20 tracking-widest uppercase z-20">
           <span>{props.number} / {props.total}</span>
         </div>

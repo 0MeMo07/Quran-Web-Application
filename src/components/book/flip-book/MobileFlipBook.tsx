@@ -10,7 +10,7 @@ import HTMLPageFlip from 'react-pageflip';
 import { cn } from '../../ui/cn';
 import { FlipBookPage } from './components/FlipBookPage';
 import { LOGICAL_PAGE_HEIGHT, LOGICAL_PAGE_WIDTH } from './hooks/useFlipBook';
-import { FlippingMode } from '../../../store/slices/uiSlice';
+import { FlippingMode, ViewType } from '../../../store/slices/uiSlice';
 import type { MushafPageLayout } from './hooks/mushafPagination';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -49,6 +49,7 @@ interface MobileFlipBookProps {
   isFullscreen: boolean;
   t: any;
   surahs: any[];
+  viewType: ViewType;
   flippingMode: FlippingMode;
 }
 
@@ -483,7 +484,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
     handleAudioToggle, isPlaying, currentAudioId, currentSurahOnPage, pageLayoutsByNumber,
     currentTime, duration, seek,
     toggleFullscreen, isFullscreen,
-    t, surahs, flippingMode,
+    t, surahs, viewType, flippingMode,
   } = props;
 
   const [isAudioPanelOpen, setIsAudioPanelOpen] = useState(false);
@@ -493,6 +494,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
     typeof window !== 'undefined'
       ? (window.innerWidth * LOGICAL_PAGE_HEIGHT) / LOGICAL_PAGE_WIDTH
       : 560;
+  const singlePageScale = pageHeight / LOGICAL_PAGE_HEIGHT;
 
   const isAudioActive = isPlaying && currentAudioId === currentSurahOnPage?.id;
 
@@ -550,7 +552,12 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
       />
 
       {/* ── Pages Area ───────────────────────────────────────────────────── */}
-      <div className="flex-1 relative overflow-hidden overscroll-none bg-background flex items-center justify-center">
+      <div
+        className={cn(
+          "flex-1 relative overflow-hidden overscroll-none bg-background flex items-center justify-center",
+          isSinglePageOverride && "pt-[calc(env(safe-area-inset-top)+56px)]",
+        )}
+      >
         {isSinglePageOverride ? (
           <div
             ref={scrollContainerRef}
@@ -572,24 +579,41 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
                   key={index}
                   id={`quran-page-${index}`}
                   data-page-index={index}
-                  className="relative flex-shrink-0"
+                  className="relative flex-shrink-0 overflow-hidden"
                   style={{ width: '100dvw', height: pageHeight }}
                 >
                   {isVisible ? (
-                    <FlipBookPage 
-                      number={p.number} 
-                      total={pages.length} 
-                      isLeft={p.isLeft} 
-                      isMobile={true}
-                      isSinglePage={true}
-                      coverKind={p.coverKind}
-                      pageLayout={pageLayoutsByNumber.get(p.quranPageNumber)}
+                    <div
+                      className="absolute left-1/2 top-0 origin-top"
+                      style={{
+                        width: LOGICAL_PAGE_WIDTH,
+                        height: LOGICAL_PAGE_HEIGHT,
+                        transform: `translateX(-50%) scale(${singlePageScale})`,
+                      }}
                     >
-                      {null}
-                    </FlipBookPage>
+                      <FlipBookPage 
+                        number={p.number} 
+                        total={pages.length} 
+                        isLeft={p.isLeft} 
+                        isMobile={true}
+                        isSinglePage={true}
+                        viewType={viewType}
+                        coverKind={p.coverKind}
+                        pageLayout={pageLayoutsByNumber.get(p.quranPageNumber)}
+                      >
+                        {null}
+                      </FlipBookPage>
+                    </div>
                   ) : (
                     // Light placeholder with the same visual style
-                    <div className="w-full h-full bg-[#fdfbf7] border-b border-black/[0.03]" />
+                    <div
+                      className="absolute left-1/2 top-0 origin-top bg-[#fdfbf7] border-b border-black/[0.03]"
+                      style={{
+                        width: LOGICAL_PAGE_WIDTH,
+                        height: LOGICAL_PAGE_HEIGHT,
+                        transform: `translateX(-50%) scale(${singlePageScale})`,
+                      }}
+                    />
                   )}
                 </div>
               );
@@ -635,38 +659,49 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
               className="quran-flipbook"
               style={{ backgroundColor: 'transparent' }}
             >
-              {pages.map((p) => (
-                <div 
-                  key={p.key ?? p.number} 
-                  className="page-wrapper" 
-                  data-density={flippingMode === 'flat' ? 'hard' : 'soft'} 
-                  style={{ 
-                    width: LOGICAL_PAGE_WIDTH, 
-                    height: LOGICAL_PAGE_HEIGHT,
-                    borderRadius: p.isLeft ? '6px 0 0 6px' : '0 6px 6px 0',
-                    overflow: 'hidden',
-                    pointerEvents: 'auto',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => {
-                    if (p.isLeft) bookRef.current?.pageFlip()?.flipPrev();
-                    else bookRef.current?.pageFlip()?.flipNext();
-                  }}
-                >
-                  <FlipBookPage 
-                    number={p.number} 
-                    total={pages.length} 
-                    isLeft={p.isLeft} 
-                    isMobile={false}
-                    isSinglePage={false}
-                    flippingMode={flippingMode}
-                    coverKind={p.coverKind}
-                    pageLayout={pageLayoutsByNumber.get(p.quranPageNumber)}
+              {pages.map((p, idx) => {
+                const isVisible = Math.abs(idx - currentPage) <= 8;
+
+                return (
+                  <div 
+                    key={p.key ?? p.number} 
+                    className="page-wrapper" 
+                    data-density={flippingMode === 'flat' ? 'hard' : 'soft'} 
+                    style={{ 
+                      width: LOGICAL_PAGE_WIDTH, 
+                      height: LOGICAL_PAGE_HEIGHT,
+                      borderRadius: p.isLeft ? '6px 0 0 6px' : '0 6px 6px 0',
+                      overflow: 'hidden',
+                      pointerEvents: 'auto',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      if (p.isLeft) bookRef.current?.pageFlip()?.flipPrev();
+                      else bookRef.current?.pageFlip()?.flipNext();
+                    }}
                   >
-                    {null}
-                  </FlipBookPage>
-                </div>
-              ))}
+                    {isVisible ? (
+                      <FlipBookPage 
+                        number={p.number} 
+                        total={pages.length} 
+                        isLeft={p.isLeft} 
+                        isMobile={false}
+                        isSinglePage={false}
+                        flippingMode={flippingMode}
+                        viewType={viewType}
+                        coverKind={p.coverKind}
+                        pageLayout={pageLayoutsByNumber.get(p.quranPageNumber)}
+                      >
+                        {null}
+                      </FlipBookPage>
+                    ) : (
+                      <div className="w-full h-full bg-card flex items-center justify-center border border-border/5 opacity-40">
+                        <span className="text-black/10 font-serif text-xl">{p.number}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </HTMLPageFlip>
           </motion.div>
         )}

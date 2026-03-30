@@ -10,6 +10,10 @@ const DEFAULT_SAFE_INSETS: MushafSafeAreaInsets = {
 };
 
 const DEFAULT_BASMALA = 'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّح۪يمِ';
+const OPENING_SURAH_ID = 2;
+const OPENING_BAQARA_VERSE_LIMIT = 5;
+const OPENING_BAQARA_START_PAGE = 2;
+const OPENING_BAQARA_REMAINDER_START_PAGE = 3;
 
 const widthCache = new Map<string, number>();
 const wrappedLinesCache = new Map<string, string[]>();
@@ -643,8 +647,35 @@ export function prepareVerseBlocks(
         return;
       }
 
-      blocks.push(createSurahHeaderBlock(activeSurahVerses[0], surahById, safeArea, metrics, measure));
-      blocks.push(createArabicFlowVerseBlock(activeSurahVerses, safeArea, metrics, measure));
+      const firstVerse = activeSurahVerses[0];
+
+      if (firstVerse.surah_id === OPENING_SURAH_ID) {
+        const openingHeader = createSurahHeaderBlock(firstVerse, surahById, safeArea, metrics, measure);
+        openingHeader.anchorPage = Math.max(OPENING_BAQARA_START_PAGE, openingHeader.anchorPage);
+        blocks.push(openingHeader);
+
+        const openingVerses = activeSurahVerses.filter((verse) => verse.verse_number <= OPENING_BAQARA_VERSE_LIMIT);
+        const remainderVerses = activeSurahVerses.filter((verse) => verse.verse_number > OPENING_BAQARA_VERSE_LIMIT);
+
+        if (openingVerses.length > 0) {
+          const openingBlock = createArabicFlowVerseBlock(openingVerses, safeArea, metrics, measure);
+          openingBlock.anchorPage = Math.max(OPENING_BAQARA_START_PAGE, openingBlock.anchorPage);
+          blocks.push(openingBlock);
+        }
+
+        if (remainderVerses.length > 0) {
+          const remainderBlock = createArabicFlowVerseBlock(remainderVerses, safeArea, metrics, measure);
+          remainderBlock.anchorPage = Math.max(
+            OPENING_BAQARA_REMAINDER_START_PAGE,
+            remainderBlock.anchorPage,
+          );
+          blocks.push(remainderBlock);
+        }
+      } else {
+        blocks.push(createSurahHeaderBlock(firstVerse, surahById, safeArea, metrics, measure));
+        blocks.push(createArabicFlowVerseBlock(activeSurahVerses, safeArea, metrics, measure));
+      }
+
       activeSurahVerses = [];
     };
 

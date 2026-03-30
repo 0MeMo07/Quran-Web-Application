@@ -1,6 +1,7 @@
 import React, { forwardRef, memo } from 'react';
 import { cn } from '../../../ui/cn';
 import type { MushafPageItem, MushafPageLayout } from '../hooks/mushafPagination';
+import type { ViewType } from '../../../../store/slices/uiSlice';
 
 interface PageProps {
   children?: React.ReactNode;
@@ -10,6 +11,7 @@ interface PageProps {
   isMobile?: boolean;
   isSinglePage?: boolean;
   flippingMode?: '3d' | 'flat';
+  viewType?: ViewType;
   coverKind?: 'front' | 'back' | null;
   pageLayout?: MushafPageLayout;
 }
@@ -135,20 +137,20 @@ function renderCoverPage(kind: 'front' | 'back') {
         className={cn(
           'absolute inset-0',
           isFront
-            ? 'bg-[linear-gradient(145deg,#0f3a2f_0%,#1a5a47_45%,#2f7a5f_100%)]'
-            : 'bg-[linear-gradient(145deg,#173f35_0%,#24584a_50%,#2f6d59_100%)]',
+            ? 'bg-[linear-gradient(145deg,rgba(var(--color-primary),0.85)_0%,rgba(var(--color-primary),0.7)_45%,rgba(var(--color-primary),0.9)_100%)]'
+            : 'bg-[linear-gradient(145deg,rgba(var(--color-primary),0.9)_0%,rgba(var(--color-primary),0.65)_50%,rgba(var(--color-primary),0.85)_100%)]',
         )}
       />
 
-      <div className="absolute inset-[14px] border border-amber-100/35 rounded-[6px]" />
-      <div className="absolute inset-[24px] border border-amber-100/20 rounded-[4px]" />
+      <div className="absolute inset-[14px] border border-primary-foreground/45 rounded-[6px]" />
+      <div className="absolute inset-[24px] border border-primary-foreground/25 rounded-[4px]" />
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-10 text-center text-amber-50">
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-10 text-center text-primary-foreground">
         {isFront ? (
           <>
-            <p className="text-[10px] uppercase tracking-[0.32em] text-amber-100/75">Mushaf</p>
+            <p className="text-[10px] uppercase tracking-[0.32em] text-primary-foreground/80">Mushaf</p>
             <h2
-              className="mt-5 font-serif text-[58px] leading-[1.05] text-amber-50"
+              className="mt-5 font-serif text-[58px] leading-[1.05] text-primary-foreground"
               dir="rtl"
               style={{ fontFamily: 'Scheherazade New, Noto Naskh Arabic, serif' }}
             >
@@ -157,13 +159,85 @@ function renderCoverPage(kind: 'front' | 'back') {
           </>
         ) : (
           <>
-            <div className="w-20 h-20 rounded-full border border-amber-100/40 flex items-center justify-center">
-              <div className="w-8 h-8 rounded-full border border-amber-100/40" />
+            <div className="w-20 h-20 rounded-full border border-primary-foreground/45 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full border border-primary-foreground/45" />
             </div>
-            <p className="mt-8 text-[10px] uppercase tracking-[0.28em] text-amber-100/65">Back Cover</p>
-            <p className="mt-3 text-sm text-amber-100/75">Elhamdulillah</p>
+            <p className="mt-8 text-[10px] uppercase tracking-[0.28em] text-primary-foreground/70">Back Cover</p>
+            <p className="mt-3 text-sm text-primary-foreground/85">Elhamdulillah</p>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+function renderVerseLoadingState() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center px-10">
+      <div className="w-full max-w-[75%] space-y-3">
+        <div className="h-2.5 rounded-full bg-primary/20 animate-pulse" />
+        <div className="h-2.5 rounded-full bg-primary/15 animate-pulse" />
+        <div className="h-2.5 w-[84%] ml-auto rounded-full bg-primary/20 animate-pulse" />
+        <div className="h-2.5 w-[68%] ml-auto rounded-full bg-primary/15 animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+function renderArabicOpeningFrame(content: React.ReactNode, isMobile: boolean) {
+  const frameInsetOuter = isMobile ? 8 : 10;
+  const frameInsetMid = isMobile ? 14 : 18;
+  const panelInset = isMobile ? 24 : 30;
+  const contentPadding = isMobile ? 12 : 14;
+
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 bg-[#f5efdf]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.38)_0%,rgba(255,255,255,0.08)_100%)]" />
+
+      <div
+        className="absolute border rounded-[8px] border-[#cdbd9a]/70"
+        style={{
+          top: frameInsetOuter,
+          left: frameInsetOuter,
+          right: frameInsetOuter,
+          bottom: frameInsetOuter,
+        }}
+      />
+      <div
+        className="absolute border rounded-[7px] border-[#dfd2b4]/85"
+        style={{
+          top: frameInsetMid,
+          left: frameInsetMid,
+          right: frameInsetMid,
+          bottom: frameInsetMid,
+        }}
+      />
+
+      <div
+        className="absolute border rounded-[7px] border-[#c8b48a]/65 overflow-hidden bg-[#fcfaf3]"
+        style={{
+          top: panelInset,
+          left: panelInset,
+          right: panelInset,
+          bottom: panelInset,
+        }}
+      >
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.5)_0%,rgba(255,255,255,0.14)_100%)]" />
+        <div className="absolute inset-x-4 top-3 h-px bg-[#c7b48a]/70" />
+        <div className="absolute inset-x-4 bottom-3 h-px bg-[#c7b48a]/70" />
+
+        <div
+          className="absolute overflow-hidden"
+          style={{
+            top: contentPadding,
+            left: contentPadding,
+            right: contentPadding,
+            bottom: contentPadding,
+          }}
+        >
+          {content}
+        </div>
       </div>
     </div>
   );
@@ -188,7 +262,9 @@ export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
     const isFrontCover = props.coverKind === 'front';
     const isBackCover = props.coverKind === 'back';
     const isCoverPage = isFrontCover || isBackCover;
+    const isArabicOpeningPage = !isCoverPage && props.viewType === 'kuran' && (props.number === 1 || props.number === 2);
     const hasPageContent = Boolean(pageLayout && pageLayout.items.length > 0);
+    const isVerseLoading = !isCoverPage && !pageLayout;
     const safeAreaStyle: React.CSSProperties = pageLayout
       ? {
           top: pageLayout.safeArea.top,
@@ -203,6 +279,9 @@ export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
           bottom: 40,
         };
     const interItemGap = pageLayout?.renderGapPx ?? 10;
+    const openingInterItemGap = isArabicOpeningPage
+      ? Math.max(10, Math.min(interItemGap, props.isMobile ? 16 : 22))
+      : interItemGap;
 
     return (
       <div 
@@ -222,6 +301,24 @@ export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
         <div className="flex-1 relative z-10 h-full">
           {isCoverPage ? (
             renderCoverPage(isFrontCover ? 'front' : 'back')
+          ) : isArabicOpeningPage && hasPageContent ? (
+            renderArabicOpeningFrame(
+              <div className="w-full h-full overflow-hidden flex flex-col justify-center">
+                {pageLayout!.items.map((item, index) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      marginBottom: index < pageLayout!.items.length - 1 ? openingInterItemGap : 0,
+                    }}
+                  >
+                    {renderPageItem(item, pageLayout!)}
+                  </div>
+                ))}
+              </div>,
+              Boolean(props.isMobile),
+            )
+          ) : isVerseLoading ? (
+            renderVerseLoadingState()
           ) : hasPageContent ? (
             <div className="absolute overflow-hidden flex flex-col" style={safeAreaStyle}>
               {pageLayout!.items.map((item, index) => (

@@ -216,16 +216,18 @@ export function useFlipBook({
   }, [pages.length, currentPage]);
 
   const handlePageJump = useCallback((index: number) => {
+    const nextIndex = Math.max(0, Math.min(pages.length - 1, index));
+
     if (isSinglePageMode) {
-      setCurrentPage(index);
-      const el = document.getElementById(`quran-page-${index}`);
+      setCurrentPage(nextIndex);
+      const el = document.getElementById(`quran-page-${nextIndex}`);
       if (el && scrollContainerRef.current) {
         scrollContainerRef.current.scrollTo({ top: el.offsetTop, behavior: 'smooth' });
       }
     } else {
-      bookRef.current?.pageFlip()?.turnToPage(index);
+      bookRef.current?.pageFlip()?.turnToPage(nextIndex);
     }
-  }, [isSinglePageMode]);
+  }, [isSinglePageMode, pages.length]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -270,10 +272,17 @@ export function useFlipBook({
   const onPage = useCallback((e: any) => {
     const newPage = e.data;
     setCurrentPage(newPage);
-    if (onPageChange) {
-      onPageChange(indexToQuranPage(newPage));
+    if (!onPageChange) {
+      return;
     }
-  }, [onPageChange, indexToQuranPage]);
+
+    const pageMeta = pages[newPage];
+    if (!pageMeta || pageMeta.coverKind) {
+      return;
+    }
+
+    onPageChange(pageMeta.quranPageNumber);
+  }, [onPageChange, pages]);
 
   const handleAudioToggle = () => {
     if (currentSurahOnPage) {
@@ -363,6 +372,7 @@ export function useFlipBook({
     duration,
     seek,
     surahs,
+    viewType,
     flippingMode,
     pageLayoutsByNumber: pageLayout.pagesByNumber,
     safeArea: pageLayout.safeArea,

@@ -4,7 +4,7 @@ import { Search, ChevronLeft, ChevronRight, BookOpen, FileText, LayoutGrid, Zoom
 import HTMLPageFlip from 'react-pageflip';
 import { cn } from '../../ui/cn';
 import { LOGICAL_PAGE_HEIGHT, LOGICAL_PAGE_WIDTH } from './hooks/useFlipBook';
-import { FlippingMode } from '../../../store/slices/uiSlice';
+import { FlippingMode, ViewType } from '../../../store/slices/uiSlice';
 import type { MushafPageLayout } from './hooks/mushafPagination';
 
 // Sub-components
@@ -47,6 +47,7 @@ interface DesktopFlipBookProps {
   isFullscreen: boolean;
   t: any;
   surahs: any[];
+  viewType: ViewType;
   flippingMode: FlippingMode;
 }
 
@@ -59,7 +60,7 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
     handleAudioToggle, isPlaying, currentSurahOnPage, pageLayoutsByNumber,
     currentTime, duration, seek,
     handleZoomIn, handleZoomOut, toggleFullscreen, isFullscreen, t, surahs,
-    flippingMode
+    viewType, flippingMode
   } = props;
 
   const [isAudioPanelVisible, setIsAudioPanelVisible] = React.useState(false);
@@ -274,6 +275,7 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
                           isLeft={p.isLeft} 
                           isMobile={false}
                           isSinglePage={true}
+                          viewType={viewType}
                           coverKind={p.coverKind}
                           pageLayout={pageLayoutsByNumber.get(p.quranPageNumber)}
                         >
@@ -348,6 +350,7 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
                             isMobile={false}
                             isSinglePage={false}
                             flippingMode={flippingMode}
+                            viewType={viewType}
                             coverKind={p.coverKind}
                             pageLayout={pageLayoutsByNumber.get(p.quranPageNumber)}
                           >

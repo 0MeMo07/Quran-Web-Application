@@ -582,7 +582,8 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
                       isLeft={p.isLeft} 
                       isMobile={true}
                       isSinglePage={true}
-                      pageLayout={pageLayoutsByNumber.get(p.number)}
+                      coverKind={p.coverKind}
+                      pageLayout={pageLayoutsByNumber.get(p.quranPageNumber)}
                     >
                       {null}
                     </FlipBookPage>
@@ -636,7 +637,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
             >
               {pages.map((p) => (
                 <div 
-                  key={p.number} 
+                  key={p.key ?? p.number} 
                   className="page-wrapper" 
                   data-density={flippingMode === 'flat' ? 'hard' : 'soft'} 
                   style={{ 
@@ -659,7 +660,8 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
                     isMobile={false}
                     isSinglePage={false}
                     flippingMode={flippingMode}
-                    pageLayout={pageLayoutsByNumber.get(p.number)}
+                    coverKind={p.coverKind}
+                    pageLayout={pageLayoutsByNumber.get(p.quranPageNumber)}
                   >
                     {null}
                   </FlipBookPage>

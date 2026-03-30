@@ -40,6 +40,7 @@ interface TextMeasureContext {
 interface PaginationMetrics {
   showArabic: boolean;
   showTranslation: boolean;
+  isArabicFlowMode: boolean;
   arabicFontFamily: string;
   translationFontFamily: string;
   headerFontFamily: string;
@@ -173,6 +174,29 @@ function roundToSingleDecimal(value: number): number {
 
 function normalizeText(text: string): string {
   return text.replace(/\s+/g, ' ').trim();
+}
+
+function toArabicIndicNumber(value: number): string {
+  const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  return String(value)
+    .split('')
+    .map((char) => {
+      if (char === '-') {
+        return char;
+      }
+      return digits[Number(char)] ?? char;
+    })
+    .join('');
+}
+
+function buildArabicFlowText(verses: Verse[]): string {
+  return verses
+    .map((verse) => {
+      const verseText = normalizeText(verse.verse);
+      const marker = `﴿${toArabicIndicNumber(verse.verse_number)}﴾`;
+      return `${verseText} ${marker}`;
+    })
+    .join(' ');
 }
 
 function splitToGraphemes(text: string): string[] {
@@ -326,6 +350,8 @@ function isTranslationEnabled(viewType: ViewType): boolean {
 }
 
 function createPaginationMetrics(viewType: ViewType, fontSize: number, lineHeight: number): PaginationMetrics {
+  const showArabic = isArabicEnabled(viewType);
+  const showTranslation = isTranslationEnabled(viewType);
   const translationFontSize = clamp(fontSize, 12, 28);
   const translationLineHeightPx = roundToSingleDecimal(translationFontSize * clamp(lineHeight, 1.15, 2.25));
 
@@ -344,8 +370,9 @@ function createPaginationMetrics(viewType: ViewType, fontSize: number, lineHeigh
   const basmalaLineHeightPx = roundToSingleDecimal(basmalaFontSize * 1.45);
 
   return {
-    showArabic: isArabicEnabled(viewType),
-    showTranslation: isTranslationEnabled(viewType),
+    showArabic,
+    showTranslation,
+    isArabicFlowMode: showArabic && !showTranslation,
     arabicFontFamily: 'Scheherazade New, Noto Naskh Arabic, serif',
     translationFontFamily: 'Plus Jakarta Sans, Inter, sans-serif',
     headerFontFamily: 'Cormorant Garamond, serif',
@@ -564,6 +591,34 @@ function createVerseBlock(
   };
 }
 
+function createArabicFlowVerseBlock(
+  versesInSurah: Verse[],
+  safeArea: MushafSafeArea,
+  metrics: PaginationMetrics,
+  measure: TextMeasureContext,
+): MushafVerseItem {
+  const firstVerse = versesInSurah[0];
+  const arabicFont = `600 ${metrics.arabicFontSize}px ${metrics.arabicFontFamily}`;
+  const wrapWidth = Math.max(80, safeArea.width - 8);
+
+  const joinedArabicText = buildArabicFlowText(versesInSurah);
+  const arabicLines = wrapTextToLines(joinedArabicText, wrapWidth, arabicFont, measure);
+
+  return {
+    id: `surah-flow-${firstVerse.surah_id}-${firstVerse.id}`,
+    kind: 'verse',
+    surahId: firstVerse.surah_id,
+    verseId: firstVerse.id,
+    verseNumber: firstVerse.verse_number,
+    anchorPage: Math.max(1, firstVerse.page),
+    arabicLines,
+    translationLines: [],
+    continuationFromPrevious: false,
+    continuationToNext: false,
+    heightPx: calculateVerseHeight(arabicLines, [], metrics),
+  };
+}
+
 export function prepareVerseBlocks(
   verses: Verse[],
   surahs: Surah[],
@@ -578,6 +633,37 @@ export function prepareVerseBlocks(
   const sortedVerses = sortVersesForPagination(verses);
   const surahById = new Map<number, Surah>(surahs.map((surah) => [surah.id, surah]));
   const blocks: MushafPageItem[] = [];
+
+  if (metrics.isArabicFlowMode) {
+    let activeSurahId: number | null = null;
+    let activeSurahVerses: Verse[] = [];
+
+    const flushSurahGroup = () => {
+      if (activeSurahVerses.length === 0) {
+        return;
+      }
+
+      blocks.push(createSurahHeaderBlock(activeSurahVerses[0], surahById, safeArea, metrics, measure));
+      blocks.push(createArabicFlowVerseBlock(activeSurahVerses, safeArea, metrics, measure));
+      activeSurahVerses = [];
+    };
+
+    for (const verse of sortedVerses) {
+      if (activeSurahId === null) {
+        activeSurahId = verse.surah_id;
+      }
+
+      if (verse.surah_id !== activeSurahId) {
+        flushSurahGroup();
+        activeSurahId = verse.surah_id;
+      }
+
+      activeSurahVerses.push(verse);
+    }
+
+    flushSurahGroup();
+    return blocks;
+  }
 
   let previousSurahId: number | null = null;
 

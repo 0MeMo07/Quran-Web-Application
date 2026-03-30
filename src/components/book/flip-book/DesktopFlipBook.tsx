@@ -274,7 +274,8 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
                           isLeft={p.isLeft} 
                           isMobile={false}
                           isSinglePage={true}
-                          pageLayout={pageLayoutsByNumber.get(p.number)}
+                          coverKind={p.coverKind}
+                          pageLayout={pageLayoutsByNumber.get(p.quranPageNumber)}
                         >
                           {null}
                         </FlipBookPage>
@@ -347,7 +348,8 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
                             isMobile={false}
                             isSinglePage={false}
                             flippingMode={flippingMode}
-                            pageLayout={pageLayoutsByNumber.get(p.number)}
+                            coverKind={p.coverKind}
+                            pageLayout={pageLayoutsByNumber.get(p.quranPageNumber)}
                           >
                             {null}
                           </FlipBookPage>

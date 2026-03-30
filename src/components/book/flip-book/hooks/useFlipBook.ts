@@ -19,6 +19,16 @@ interface UseFlipBookProps {
   lineHeight: number;
 }
 
+type CoverKind = 'front' | 'back' | null;
+
+interface FlipBookPageMeta {
+  key: string;
+  number: number;
+  quranPageNumber: number;
+  coverKind: CoverKind;
+  isLeft: boolean;
+}
+
 import { selectFlippingMode } from '../../../../store/slices/uiSlice';
 
 export function useFlipBook({
@@ -47,7 +57,7 @@ export function useFlipBook({
   const [selectedVerse, setSelectedVerse] = useState('');
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isScrubberVisible, setIsScrubberVisible] = useState(true);
-  const [currentPage, setCurrentPage] = useState(() => Math.max(0, (propPage ?? 1) - 1));
+  const [currentPage, setCurrentPage] = useState(() => Math.max(0, propPage ?? 1));
 
   const bookRef = useRef<any>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -71,25 +81,6 @@ export function useFlipBook({
   useEffect(() => {
     setZoomLevel(1);
   }, [isSinglePageOverride]);
-
-  useEffect(() => {
-    if (propPage === undefined) {
-      return;
-    }
-
-    const incomingPageIndex = Math.max(0, propPage - 1);
-    setCurrentPage((previousPage) => {
-      if (incomingPageIndex === previousPage) {
-        return previousPage;
-      }
-
-      if (!isSinglePageMode) {
-        bookRef.current?.pageFlip()?.turnToPage(incomingPageIndex);
-      }
-
-      return incomingPageIndex;
-    });
-  }, [propPage, isSinglePageMode]);
 
   // Handle scrolling to current page when switching to single page mode
   useEffect(() => {
@@ -132,7 +123,7 @@ export function useFlipBook({
     [allVerses, surahs, viewType, fontSize, lineHeight],
   );
 
-  const totalPageCount = useMemo(() => {
+  const quranPageCount = useMemo(() => {
     const maxSurahPage = surahs.reduce((maxPage, surah) => Math.max(maxPage, surah.page_number), 1);
     const maxVersePage = allVerses.reduce((maxPage, verse) => Math.max(maxPage, Math.max(1, verse.page)), 1);
     return Math.max(
@@ -144,18 +135,77 @@ export function useFlipBook({
     );
   }, [surahs, allVerses, pageLayout.maxPageNumber, propPage]);
 
+  const hasCovers = true;
+
+  const quranPageToIndex = useCallback(
+    (quranPage: number) => {
+      const clampedPage = Math.max(1, Math.min(quranPageCount, quranPage));
+      return hasCovers ? clampedPage : clampedPage - 1;
+    },
+    [hasCovers, quranPageCount],
+  );
+
+  const indexToQuranPage = useCallback(
+    (index: number) => {
+      const mapped = hasCovers ? index : index + 1;
+      return Math.max(1, Math.min(quranPageCount, mapped));
+    },
+    [hasCovers, quranPageCount],
+  );
+
+  const totalPageCount = quranPageCount + (hasCovers ? 2 : 0);
+
   const pages = useMemo(() => {
+    if (!hasCovers) {
+      return Array.from({ length: totalPageCount }, (_, index) => {
+        const pageNumber = index + 1;
+        return {
+          key: `quran-${pageNumber}`,
+          number: pageNumber,
+          quranPageNumber: pageNumber,
+          coverKind: null,
+          isLeft: pageNumber % 2 === 0,
+        } as FlipBookPageMeta;
+      });
+    }
+
     return Array.from({ length: totalPageCount }, (_, index) => {
-      const pageNumber = index + 1;
+      const physicalPageNumber = index + 1;
+      const isFrontCover = index === 0;
+      const isBackCover = index === totalPageCount - 1;
+      const quranPageNumber = indexToQuranPage(index);
+
       return {
-        number: pageNumber,
-        isLeft: pageNumber % 2 === 0,
-      };
+        key: isFrontCover ? 'cover-front' : isBackCover ? 'cover-back' : `quran-${quranPageNumber}`,
+        number: quranPageNumber,
+        quranPageNumber,
+        coverKind: isFrontCover ? 'front' : isBackCover ? 'back' : null,
+        isLeft: physicalPageNumber % 2 === 0,
+      } as FlipBookPageMeta;
     });
-  }, [totalPageCount]);
+  }, [hasCovers, totalPageCount, indexToQuranPage]);
+
+  useEffect(() => {
+    if (propPage === undefined) {
+      return;
+    }
+
+    const incomingPageIndex = quranPageToIndex(propPage);
+    setCurrentPage((previousPage) => {
+      if (incomingPageIndex === previousPage) {
+        return previousPage;
+      }
+
+      if (!isSinglePageMode) {
+        bookRef.current?.pageFlip()?.turnToPage(incomingPageIndex);
+      }
+
+      return incomingPageIndex;
+    });
+  }, [propPage, isSinglePageMode, quranPageToIndex]);
 
   const currentSurahOnPage = useMemo(() => {
-    const pageNum = pages[currentPage]?.number || 1;
+    const pageNum = pages[currentPage]?.quranPageNumber || 1;
     return [...surahs].sort((a, b) => b.page_number - a.page_number).find(s => s.page_number <= pageNum);
   }, [currentPage, pages, surahs]);
 
@@ -197,7 +247,7 @@ export function useFlipBook({
     
     if (selectedSurahMeta?.page_number) {
       const fallbackPage = selectedSurahMeta.page_number;
-      const pageIndex = Math.max(0, fallbackPage - 1);
+      const pageIndex = quranPageToIndex(fallbackPage);
       handlePageJump(pageIndex);
       navigate(`/surah/${selectedSurahId}/page/${fallbackPage}`, { replace: true });
     }
@@ -211,7 +261,7 @@ export function useFlipBook({
     const selectedSurahMeta = surahs.find((s) => s.id === selectedSurahId);
     if (selectedSurahMeta?.page_number && !selectedVerse.trim()) {
       const fallbackPage = selectedSurahMeta.page_number;
-      const pageIndex = Math.max(0, fallbackPage - 1);
+      const pageIndex = quranPageToIndex(fallbackPage);
       handlePageJump(pageIndex);
       navigate(`/surah/${selectedSurahId}/page/${fallbackPage}`, { replace: true });
     }
@@ -221,9 +271,9 @@ export function useFlipBook({
     const newPage = e.data;
     setCurrentPage(newPage);
     if (onPageChange) {
-      onPageChange(newPage + 1);
+      onPageChange(indexToQuranPage(newPage));
     }
-  }, [onPageChange]);
+  }, [onPageChange, indexToQuranPage]);
 
   const handleAudioToggle = () => {
     if (currentSurahOnPage) {

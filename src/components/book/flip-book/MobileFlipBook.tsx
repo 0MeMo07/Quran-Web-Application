@@ -1,16 +1,22 @@
 import React, { useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Drawer } from 'vaul';
 import {
   Search, ChevronLeft, ChevronRight, BookOpen,
   Headphones, Pause, Settings, Maximize2, Minimize2,
-  X, AlignJustify, SkipBack, SkipForward, FileText, Play
+  X, AlignJustify, SkipBack, SkipForward, FileText, Play,
+  UserRound, Check, ZoomIn, ZoomOut
 } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
 // @ts-ignore
 import HTMLPageFlip from 'react-pageflip';
 import { cn } from '../../ui/cn';
 import { FlipBookPage } from './components/FlipBookPage';
 import { LOGICAL_PAGE_HEIGHT, LOGICAL_PAGE_WIDTH } from './hooks/useFlipBook';
 import { FlippingMode, ViewType } from '../../../store/slices/uiSlice';
+import { selectSearchLanguage, setLanguage as setSearchLanguage } from '../../../store/slices/searchSlice';
+import { selectAuthors, selectSelectedAuthor, setSelectedAuthor } from '../../../store/slices/translationsSlice';
+import type { AppDispatch } from '../../../store/store';
 import type { MushafPageLayout } from './hooks/mushafPagination';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -25,6 +31,8 @@ interface MobileFlipBookProps {
   handleSurahSelectChange: (val: string) => void;
   selectedVerse: string;
   setSelectedVerse: (val: string) => void;
+  showAuthorNotes: boolean;
+  setShowAuthorNotes: (value: boolean | ((prev: boolean) => boolean)) => void;
   handleSearch: () => void;
   handlePageJump: (index: number) => void;
   currentPage: number;
@@ -32,11 +40,16 @@ interface MobileFlipBookProps {
   bookRef: React.RefObject<any>;
   onPage: (e: any) => void;
   viewportScale: number;
+  dragMarginX: number;
+  dragMarginY: number;
   scrollContainerRef: React.RefObject<HTMLDivElement>;
   isScrubberVisible: boolean;
   setIsScrubberVisible: (visible: boolean | ((prev: boolean) => boolean)) => void;
   isSinglePageOverride: boolean;
   setIsSinglePageOverride: (override: boolean | ((prev: boolean) => boolean)) => void;
+  zoomLevel: number;
+  handleZoomIn: () => void;
+  handleZoomOut: () => void;
   handleAudioToggle: () => void;
   isPlaying: boolean;
   currentAudioId: number | null;
@@ -84,6 +97,149 @@ const FloatingButton = React.memo(({
   );
 });
 
+const AuthorSheet = React.memo(({
+  open,
+  onClose,
+  language,
+  onLanguageChange,
+  filteredAuthors,
+  selectedAuthorId,
+  onAuthorSelect,
+  showAuthorNotes,
+  setShowAuthorNotes,
+  t,
+}: {
+  open: boolean;
+  onClose: () => void;
+  language: string;
+  onLanguageChange: (language: 'tr' | 'en') => void;
+  filteredAuthors: Array<{ id: number; name: string }>;
+  selectedAuthorId: number | null;
+  onAuthorSelect: (authorId: number | null) => void;
+  showAuthorNotes: boolean;
+  setShowAuthorNotes: (value: boolean | ((prev: boolean) => boolean)) => void;
+  t: any;
+}) => {
+  return (
+    <Drawer.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onClose();
+        }
+      }}
+      direction="bottom"
+      modal
+      shouldScaleBackground={false}
+    >
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 z-[1190] bg-black/35" />
+
+        <Drawer.Content
+          className={cn(
+            'fixed inset-x-0 bottom-0 z-[1200] overflow-hidden rounded-t-3xl',
+            'bg-[#0d0d0d]/95 backdrop-blur-2xl border-t border-white/[0.08]',
+            'shadow-[0_-20px_60px_rgba(0,0,0,0.55)]',
+          )}
+        >
+          <Drawer.Title className="sr-only">
+            {t.sidebar?.selectTranslator || 'Cevirmen Sec'}
+          </Drawer.Title>
+
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-8 h-1 rounded-full bg-white/15" />
+          </div>
+
+          <div className="px-5 pt-2 pb-[calc(env(safe-area-inset-bottom)+20px)] flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-black tracking-[0.18em] uppercase text-white/30">
+                  {t.sidebar?.selectTranslator || 'Cevirmen Sec'}
+                </p>
+                <p className="text-xs text-white/45 mt-1">
+                  {(language || '').toUpperCase()} • {filteredAuthors.length}
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-7 h-7 rounded-xl flex items-center justify-center text-white/40 hover:text-white/70 active:scale-90 transition-all"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onLanguageChange('tr')}
+                className={cn(
+                  'px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors',
+                  language === 'tr'
+                    ? 'bg-white/16 border-white/35 text-white'
+                    : 'bg-white/[0.05] border-white/[0.12] text-white/65 hover:text-white/85'
+                )}
+              >
+                TR
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onLanguageChange('en')}
+                className={cn(
+                  'px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors',
+                  language === 'en'
+                    ? 'bg-white/16 border-white/35 text-white'
+                    : 'bg-white/[0.05] border-white/[0.12] text-white/65 hover:text-white/85'
+                )}
+              >
+                EN
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowAuthorNotes((prev) => !prev)}
+                className={cn(
+                  'ml-auto px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors',
+                  showAuthorNotes
+                    ? 'bg-white/16 border-white/35 text-white'
+                    : 'bg-white/[0.05] border-white/[0.12] text-white/65 hover:text-white/85'
+                )}
+              >
+                {showAuthorNotes
+                  ? (t.verse?.hideFootnotes || 'Notlar: Acik')
+                  : (t.verse?.showFootnotes || 'Notlar: Kapali')}
+              </button>
+            </div>
+
+            <div className="max-h-[48dvh] overflow-y-auto rounded-2xl border border-white/[0.08] bg-white/[0.03] p-2">
+              {filteredAuthors.map((author) => {
+                const isSelected = selectedAuthorId === author.id;
+
+                return (
+                  <button
+                    key={author.id}
+                    type="button"
+                    onClick={() => onAuthorSelect(author.id)}
+                    className={cn(
+                      'w-full px-3 py-2 rounded-xl text-left text-sm flex items-center justify-between transition-colors',
+                      isSelected
+                        ? 'bg-white/15 text-white'
+                        : 'text-white/80 hover:bg-white/10'
+                    )}
+                  >
+                    <span className="truncate">{author.name}</span>
+                    {isSelected && <Check className="w-4 h-4 flex-shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
+  );
+});
+
 const NavSheet = React.memo(({
   open, onClose,
   selectedSurah, handleSurahSelectChange,
@@ -104,127 +260,140 @@ const NavSheet = React.memo(({
   t: any;
   surahs: any[];
 }) => {
-  return (
-    <AnimatePresence mode="wait">
-      {open && (
-        <>
-          <motion.div
-            key="nav-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-[1190] bg-black/40 backdrop-blur-sm"
-            onClick={onClose}
-          />
+  const selectedSurahMeta = React.useMemo(
+    () => surahs.find((surah) => surah.id === Number(selectedSurah)),
+    [surahs, selectedSurah],
+  );
 
-          <motion.div
-            key="nav-sheet"
-            initial={{ y: '-100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '-100%' }}
-            transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-            className={cn(
-              'absolute top-0 inset-x-0 z-[1200]',
-              'bg-[#0d0d0d]/95 backdrop-blur-2xl',
-              'border-b border-white/[0.07]',
-              'shadow-[0_20px_60px_rgba(0,0,0,0.6)]',
-              'rounded-b-3xl overflow-hidden',
-              'pt-[env(safe-area-inset-top)]',
-            )}
-          >
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-8 h-1 rounded-full bg-white/15" />
+  const availableVerses = React.useMemo(() => {
+    const totalVerseCount = Number(selectedSurahMeta?.verse_count ?? 0);
+    if (!selectedSurahMeta || totalVerseCount <= 0) {
+      return [] as number[];
+    }
+
+    return Array.from({ length: totalVerseCount }, (_, index) => index + 1);
+  }, [selectedSurahMeta]);
+
+  return (
+    <Drawer.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onClose();
+        }
+      }}
+      direction="top"
+      modal
+      shouldScaleBackground={false}
+    >
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 z-[1190] bg-black/40 backdrop-blur-sm" />
+
+        <Drawer.Content
+          className={cn(
+            'fixed top-0 inset-x-0 z-[1200]',
+            'bg-[#0d0d0d]/95 backdrop-blur-2xl',
+            'border-b border-white/[0.07]',
+            'shadow-[0_20px_60px_rgba(0,0,0,0.6)]',
+            'rounded-b-3xl overflow-hidden',
+            'pt-[env(safe-area-inset-top)]',
+          )}
+        >
+          <Drawer.Title className="sr-only">Navigasyon</Drawer.Title>
+
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-8 h-1 rounded-full bg-white/15" />
+          </div>
+
+          <div className="flex flex-col gap-4 px-5 pb-6 pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-black tracking-[0.18em] uppercase text-white/25 select-none">
+                Navigasyon
+              </span>
+              <button
+                onClick={onClose}
+                className="w-7 h-7 rounded-xl flex items-center justify-center text-white/40 hover:text-white/70 active:scale-90 transition-all"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
 
-            <div className="flex flex-col gap-4 px-5 pb-6 pt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-black tracking-[0.18em] uppercase text-white/25 select-none">
-                  Navigasyon
-                </span>
-                <button
-                  onClick={onClose}
-                  className="w-7 h-7 rounded-xl flex items-center justify-center text-white/40 hover:text-white/70 active:scale-90 transition-all"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <select
-                    value={selectedSurah}
-                    onChange={(e) => handleSurahSelectChange(e.target.value)}
-                    className={cn(
-                      'w-full h-11 rounded-2xl px-4 pr-10 text-sm font-medium text-white',
-                      'bg-white/[0.06] border border-white/[0.09]',
-                      'focus:outline-none focus:border-white/20',
-                      'transition-all appearance-none',
-                    )}
-                  >
-                    <option value="">{t?.surahSelect ?? 'Sure seç'}</option>
-                    {surahs.map((s) => (
-                      <option key={s.id} value={s.id}>{s.id}. {s.name}</option>
-                    ))}
-                  </select>
-                  <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/25 rotate-90 pointer-events-none" />
-                </div>
-
-                <input
-                  type="number"
-                  placeholder={t?.versePlaceholder ?? 'Ayet'}
-                  value={selectedVerse}
-                  onChange={(e) => setSelectedVerse(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && onSearch()}
-                  min={1}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <select
+                  value={selectedSurah}
+                  onChange={(e) => handleSurahSelectChange(e.target.value)}
                   className={cn(
-                    'w-20 h-11 rounded-2xl px-3 text-sm font-medium text-white text-center',
+                    'w-full h-11 rounded-2xl px-4 pr-10 text-sm font-medium text-white',
                     'bg-white/[0.06] border border-white/[0.09]',
                     'focus:outline-none focus:border-white/20',
-                    'transition-all [appearance:textfield]',
-                    '[&::-webkit-inner-spin-button]:appearance-none',
-                  )}
-                />
-
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={onSearch}
-                  className={cn(
-                    'w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0',
-                    'bg-white/10 border border-white/[0.09] text-white/70',
-                    'active:bg-white/15 transition-all',
+                    'transition-all appearance-none',
                   )}
                 >
-                  <Search className="w-4 h-4" />
-                </motion.button>
+                  <option value="">{t?.surahSelect ?? 'Sure sec'}</option>
+                  {surahs.map((s) => (
+                    <option key={s.id} value={s.id}>{s.id}. {s.name}</option>
+                  ))}
+                </select>
+                <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/25 rotate-90 pointer-events-none" />
               </div>
 
-              <div className="flex items-center justify-between rounded-2xl bg-white/[0.04] border border-white/[0.06] px-2 h-11">
-                <button
-                  onClick={() => handlePageJump(Math.max(0, currentPage - 1))}
-                  className="p-2 text-white/40 hover:text-white/70 active:scale-90 transition-all"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <div className="flex flex-col items-center">
-                  <span className="text-white/90 font-semibold text-sm leading-none tabular-nums">
-                    {pages[currentPage]?.number ?? '—'}
-                  </span>
-                  <span className="text-white/25 text-[10px] mt-0.5">
-                    {currentPage + 1} / {pages.length}
-                  </span>
-                </div>
-                <button
-                  onClick={() => handlePageJump(Math.min(pages.length - 1, currentPage + 1))}
-                  className="p-2 text-white/40 hover:text-white/70 active:scale-90 transition-all"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
+              <select
+                value={selectedVerse}
+                onChange={(e) => setSelectedVerse(e.target.value)}
+                disabled={!selectedSurahMeta || availableVerses.length === 0}
+                className={cn(
+                  'w-20 h-11 rounded-2xl px-3 text-sm font-medium text-white text-center',
+                  'bg-white/[0.06] border border-white/[0.09]',
+                  'focus:outline-none focus:border-white/20',
+                  'transition-all appearance-none',
+                )}
+              >
+                <option value="">{t?.versePlaceholder ?? 'Ayet'}</option>
+                {availableVerses.map((verseNumber) => (
+                  <option key={verseNumber} value={verseNumber}>{verseNumber}</option>
+                ))}
+              </select>
+
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={onSearch}
+                className={cn(
+                  'w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0',
+                  'bg-white/10 border border-white/[0.09] text-white/70',
+                  'active:bg-white/15 transition-all',
+                )}
+              >
+                <Search className="w-4 h-4" />
+              </motion.button>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+
+            <div className="flex items-center justify-between rounded-2xl bg-white/[0.04] border border-white/[0.06] px-2 h-11">
+              <button
+                onClick={() => handlePageJump(Math.max(0, currentPage - 1))}
+                className="p-2 text-white/40 hover:text-white/70 active:scale-90 transition-all"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <div className="flex flex-col items-center">
+                <span className="text-white/90 font-semibold text-sm leading-none tabular-nums">
+                  {pages[currentPage]?.number ?? '—'}
+                </span>
+                <span className="text-white/25 text-[10px] mt-0.5">
+                  {currentPage + 1} / {pages.length}
+                </span>
+              </div>
+              <button
+                onClick={() => handlePageJump(Math.min(pages.length - 1, currentPage + 1))}
+                className="p-2 text-white/40 hover:text-white/70 active:scale-90 transition-all"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   );
 });
 
@@ -252,107 +421,129 @@ const AudioPanel = React.memo(({
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
+  const handleSkip = (delta: number) => {
+    const next = Math.max(0, Math.min(duration || 0, currentTime + delta));
+    seek(next);
+  };
+
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-            key="audio-panel"
-            initial={{ y: '110%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '110%', opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-            style={{ bottom: bottomOffset }}
-            className={cn(
-              'absolute inset-x-0 z-[1150]',
-              'bg-transparent backdrop-blur-3xl',
-              'rounded-[2.5rem] mx-4 mb-3 overflow-hidden',
-            )}
-          >
-            <div className="flex justify-center pt-2.5 pb-0.5">
-              <div className="w-8 h-1 rounded-full bg-muted-foreground/20" />
+    <Drawer.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onClose();
+        }
+      }}
+      direction="bottom"
+      modal
+      shouldScaleBackground={false}
+    >
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 z-[1140] bg-black/30 backdrop-blur-sm" />
+
+        <Drawer.Content
+          style={{ bottom: bottomOffset }}
+          className={cn(
+            'fixed inset-x-0 z-[1150]',
+            'rounded-[2rem] mx-3 mb-3 overflow-hidden',
+            'border border-border/80 bg-card/95 backdrop-blur-xl shadow-2xl',
+          )}
+        >
+          <Drawer.Title className="sr-only">Sesli Okuma</Drawer.Title>
+
+          <div className="flex justify-center pt-2.5 pb-0.5">
+            <div className="w-8 h-1 rounded-full bg-muted-foreground/30" />
+          </div>
+
+          <div className="px-5 pb-[calc(env(safe-area-inset-bottom)+18px)] pt-2 flex flex-col gap-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground/50 font-black">
+                  Sesli Okuma
+                </p>
+                <p className="text-base font-semibold text-card-foreground leading-tight mt-1">
+                  {currentSurahOnPage?.name ?? 'Sure'}
+                  <span className="text-muted-foreground/40 font-medium ml-2 text-[11px]">
+                    · Sayfa {pages[currentPage]?.number}
+                  </span>
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-secondary border border-border hover:bg-secondary/80 text-muted-foreground transition-all active:scale-90"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
-            <div className="px-6 pb-6 pt-2 flex flex-col gap-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground/50 font-black">
-                    Sesli Okuma
-                  </p>
-                  <p className="text-sm font-bold text-card-foreground leading-tight mt-1">
-                    {currentSurahOnPage?.name ?? 'Sure'}
-                    <span className="text-muted-foreground/40 font-medium ml-2 text-[11px]">
-                      · Sayfa {pages[currentPage]?.number}
-                    </span>
-                  </p>
-                </div>
-                <button
-                  onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center rounded-xl bg-secondary hover:bg-secondary/80 text-muted-foreground transition-all active:scale-90"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+            <div className="flex flex-col gap-1">
+              <div className="relative h-6 flex items-center group">
+                <div className="absolute inset-x-0 h-1.5 bg-muted rounded-full" />
+                <div
+                  className="absolute left-0 h-1.5 bg-primary rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-primary shadow-lg pointer-events-none transition-all duration-300 border-2 border-card"
+                  style={{ left: `calc(${progress}% - 8px)` }}
+                />
+                <input
+                  type="range"
+                  min={0}
+                  max={duration || 100}
+                  value={currentTime}
+                  onChange={(e) => seek(Number(e.target.value))}
+                  className="absolute inset-0 w-full opacity-0 cursor-pointer z-10"
+                />
               </div>
-
-              <div className="flex flex-col gap-1">
-                <div className="relative h-6 flex items-center group">
-                  <div className="absolute inset-x-0 h-1.5 bg-muted rounded-full" />
-                  <div
-                    className="absolute left-0 h-1.5 bg-primary rounded-full transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  />
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-primary shadow-lg pointer-events-none transition-all duration-300 border-2 border-card"
-                    style={{ left: `calc(${progress}% - 8px)` }}
-                  />
-                  <input
-                    type="range"
-                    min={0}
-                    max={duration || 100}
-                    value={currentTime}
-                    onChange={(e) => seek(Number(e.target.value))}
-                    className="absolute inset-0 w-full opacity-0 cursor-pointer z-10"
-                  />
-                </div>
-                <div className="flex items-center justify-between px-0.5">
-                  <span className="text-[10px] text-muted-foreground/60 font-bold tracking-wider tabular-nums">
-                    {formatTime(currentTime)}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground/60 font-bold tracking-wider tabular-nums">
-                    {formatTime(duration)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-center gap-10">
-                <button className="p-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-all active:scale-90">
-                  <SkipBack className="w-6 h-6" />
-                </button>
-
-                <motion.button
-                  whileTap={{ scale: 0.88 }}
-                  onClick={handleAudioToggle}
-                  className={cn(
-                    'w-14 h-14 rounded-full flex items-center justify-center',
-                    'bg-primary text-primary-foreground shadow-[0_8px_32px_rgba(var(--color-primary),0.2)]',
-                    'active:opacity-80 transition-all',
-                  )}
-                >
-                  {isPlaying
-                    ? <Pause className="w-6 h-6 fill-current" />
-                    : <Play className="w-6 h-6 fill-current translate-x-0.5" />
-                  }
-                </motion.button>
-
-                <button className="p-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-all active:scale-90">
-                  <SkipForward className="w-6 h-6" />
-                </button>
+              <div className="flex items-center justify-between px-0.5">
+                <span className="text-[10px] text-muted-foreground/60 font-bold tracking-wider tabular-nums">
+                  {formatTime(currentTime)}
+                </span>
+                <span className="text-[10px] text-muted-foreground/60 font-bold tracking-wider tabular-nums">
+                  {formatTime(duration)}
+                </span>
               </div>
             </div>
-          </motion.div>
-      )}
-    </AnimatePresence>
+
+            <div className="flex items-center justify-center gap-10">
+              <button
+                onClick={() => handleSkip(-5)}
+                className="p-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-all active:scale-90"
+                title="5 saniye geri"
+              >
+                <SkipBack className="w-6 h-6" />
+              </button>
+
+              <motion.button
+                whileTap={{ scale: 0.88 }}
+                onClick={handleAudioToggle}
+                className={cn(
+                  'w-14 h-14 rounded-full flex items-center justify-center',
+                  'bg-primary text-primary-foreground shadow-[0_8px_32px_rgba(var(--color-primary),0.2)]',
+                  'active:opacity-80 transition-all',
+                )}
+              >
+                {isPlaying
+                  ? <Pause className="w-6 h-6 fill-current" />
+                  : <Play className="w-6 h-6 fill-current translate-x-0.5" />
+                }
+              </motion.button>
+
+              <button
+                onClick={() => handleSkip(5)}
+                className="p-2.5 text-muted-foreground/40 hover:text-muted-foreground/70 transition-all active:scale-90"
+                title="5 saniye ileri"
+              >
+                <SkipForward className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   );
 });
 
@@ -476,18 +667,26 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
     isNavOpen, setIsNavOpen, onShowSettings,
     selectedSurah, handleSurahSelectChange,
     selectedVerse, setSelectedVerse,
+    showAuthorNotes, setShowAuthorNotes,
     handleSearch, handlePageJump,
     currentPage, pages, bookRef, onPage,
-    viewportScale, scrollContainerRef,
+    viewportScale, dragMarginX, dragMarginY, scrollContainerRef,
     isScrubberVisible, setIsScrubberVisible,
     isSinglePageOverride, setIsSinglePageOverride,
+    zoomLevel, handleZoomIn, handleZoomOut,
     handleAudioToggle, isPlaying, currentAudioId, currentSurahOnPage, pageLayoutsByNumber,
     currentTime, duration, seek,
     toggleFullscreen, isFullscreen,
     t, surahs, viewType, flippingMode,
   } = props;
 
+  const dispatch = useDispatch<AppDispatch>();
+  const language = useSelector(selectSearchLanguage);
+  const authors = useSelector(selectAuthors);
+  const selectedAuthor = useSelector(selectSelectedAuthor);
+
   const [isAudioPanelOpen, setIsAudioPanelOpen] = useState(false);
+  const [isAuthorSheetOpen, setIsAuthorSheetOpen] = useState(false);
   const [sliderValue, setSliderValue] = React.useState<number | null>(null);
 
   const pageHeight =
@@ -495,8 +694,33 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
       ? (window.innerWidth * LOGICAL_PAGE_HEIGHT) / LOGICAL_PAGE_WIDTH
       : 560;
   const singlePageScale = pageHeight / LOGICAL_PAGE_HEIGHT;
+  const effectiveSinglePageScale = singlePageScale * zoomLevel;
+  const singlePageItemHeight = pageHeight * zoomLevel;
+  const singlePageViewportWidth = `${Math.max(1, zoomLevel) * 100}dvw`;
 
   const isAudioActive = isPlaying && currentAudioId === currentSurahOnPage?.id;
+
+  const filteredAuthors = React.useMemo(() => {
+    const normalizedLanguage = (language || '').toLowerCase();
+    const languageMatchedAuthors = authors.filter((author) =>
+      author.language?.toLowerCase().startsWith(normalizedLanguage),
+    );
+
+    return languageMatchedAuthors.length > 0 ? languageMatchedAuthors : authors;
+  }, [authors, language]);
+
+  const onAuthorLanguageChange = useCallback((nextLanguage: 'tr' | 'en') => {
+    dispatch(setSearchLanguage(nextLanguage));
+  }, [dispatch]);
+
+  const onAuthorSelect = useCallback((authorId: number | null) => {
+    const author = authorId === null
+      ? null
+      : authors.find((item) => item.id === authorId) ?? null;
+
+    dispatch(setSelectedAuthor(author));
+    setIsAuthorSheetOpen(false);
+  }, [authors, dispatch]);
 
   const onSearch = useCallback(() => {
     handleSearch();
@@ -504,7 +728,13 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
   }, [handleSearch, setIsNavOpen]);
 
   const onHeadphonePress = useCallback(() => {
+    setIsAuthorSheetOpen(false);
     setIsAudioPanelOpen((p) => !p);
+  }, []);
+
+  const onAuthorPress = useCallback(() => {
+    setIsAudioPanelOpen(false);
+    setIsAuthorSheetOpen((p) => !p);
   }, []);
 
   return (
@@ -551,6 +781,19 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
         bottomOffset={isScrubberVisible ? 'calc(108px + env(safe-area-inset-bottom))' : 'calc(56px + env(safe-area-inset-bottom))'}
       />
 
+      <AuthorSheet
+        open={isAuthorSheetOpen}
+        onClose={() => setIsAuthorSheetOpen(false)}
+        language={language}
+        onLanguageChange={onAuthorLanguageChange}
+        filteredAuthors={filteredAuthors}
+        selectedAuthorId={selectedAuthor?.id ?? null}
+        onAuthorSelect={onAuthorSelect}
+        showAuthorNotes={showAuthorNotes}
+        setShowAuthorNotes={setShowAuthorNotes}
+        t={t}
+      />
+
       {/* ── Pages Area ───────────────────────────────────────────────────── */}
       <div
         className={cn(
@@ -563,12 +806,12 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
             ref={scrollContainerRef}
             onScroll={(e) => {
               const el = e.currentTarget;
-              const idx = Math.round(el.scrollTop / pageHeight);
+              const idx = Math.round(el.scrollTop / singlePageItemHeight);
               if (idx !== currentPage && idx >= 0 && idx < pages.length) {
                 onPage({ data: idx });
               }
             }}
-            className="h-full w-full overflow-y-auto overflow-x-hidden flex flex-col overscroll-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden items-center"
+            className="h-full w-full overflow-y-auto overflow-x-auto flex flex-col overscroll-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden items-center"
           >
             {pages.map((p, index) => {
               // Virtualization: only render pages within a small range
@@ -580,7 +823,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
                   id={`quran-page-${index}`}
                   data-page-index={index}
                   className="relative flex-shrink-0 overflow-hidden"
-                  style={{ width: '100dvw', height: pageHeight }}
+                  style={{ width: singlePageViewportWidth, height: singlePageItemHeight }}
                 >
                   {isVisible ? (
                     <div
@@ -588,7 +831,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
                       style={{
                         width: LOGICAL_PAGE_WIDTH,
                         height: LOGICAL_PAGE_HEIGHT,
-                        transform: `translateX(-50%) scale(${singlePageScale})`,
+                        transform: `translateX(-50%) scale(${effectiveSinglePageScale})`,
                       }}
                     >
                       <FlipBookPage 
@@ -611,7 +854,7 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
                       style={{
                         width: LOGICAL_PAGE_WIDTH,
                         height: LOGICAL_PAGE_HEIGHT,
-                        transform: `translateX(-50%) scale(${singlePageScale})`,
+                        transform: `translateX(-50%) scale(${effectiveSinglePageScale})`,
                       }}
                     />
                   )}
@@ -621,13 +864,30 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
           </div>
         ) : (
           <motion.div
+            drag={zoomLevel > 1}
+            dragConstraints={{
+              left: -dragMarginX,
+              right: dragMarginX,
+              top: -dragMarginY,
+              bottom: dragMarginY,
+            }}
+            dragElastic={0.05}
+            dragMomentum={true}
+            dragTransition={{ power: 0.1, timeConstant: 200 }}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ 
               opacity: 1, 
-              scale: viewportScale,
-              x: (currentPage === 0 ? -LOGICAL_PAGE_WIDTH / 2 : (currentPage === pages.length - 1 ? LOGICAL_PAGE_WIDTH / 2 : 0)) * viewportScale
+              scale: viewportScale * zoomLevel,
+              x: zoomLevel <= 1.01
+                ? (currentPage === 0 ? -LOGICAL_PAGE_WIDTH / 2 : (currentPage === pages.length - 1 ? LOGICAL_PAGE_WIDTH / 2 : 0))
+                : undefined,
+              y: zoomLevel <= 1.01 ? 0 : undefined,
             }}
-            className="relative flex items-center justify-center origin-center will-change-transform"
+            transition={{ type: 'spring', damping: 35, stiffness: 80 }}
+            className={cn(
+              'relative flex items-center justify-center origin-center will-change-transform',
+              zoomLevel > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-default',
+            )}
             style={{ backfaceVisibility: 'hidden', touchAction: 'none' }}
           >
             <div className="absolute left-1/2 top-0 bottom-0 w-[4px] z-0 -translate-x-1/2 pointer-events-none bg-gradient-to-r from-black/20 via-black/5 to-black/20 opacity-60" />
@@ -651,13 +911,16 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
               startZIndex={1}
               autoSize={false}
               clickEventForward={true}
-              useMouseEvents={true}
-              swipeDistance={30}
+              useMouseEvents={zoomLevel <= 1.01}
+              swipeDistance={zoomLevel <= 1.01 ? 30 : 0}
               showPageCorners={false}
               disableFlipByClick={true}
               onFlip={onPage}
               className="quran-flipbook"
-              style={{ backgroundColor: 'transparent' }}
+              style={{
+                backgroundColor: 'transparent',
+                pointerEvents: zoomLevel > 1.01 ? 'none' : 'auto',
+              }}
             >
               {pages.map((p, idx) => {
                 const isVisible = Math.abs(idx - currentPage) <= 8;
@@ -673,9 +936,10 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
                       borderRadius: p.isLeft ? '6px 0 0 6px' : '0 6px 6px 0',
                       overflow: 'hidden',
                       pointerEvents: 'auto',
-                      cursor: 'pointer'
+                      cursor: zoomLevel <= 1.01 ? 'pointer' : 'default',
                     }}
                     onClick={() => {
+                      if (zoomLevel > 1.01) return;
                       if (p.isLeft) bookRef.current?.pageFlip()?.flipPrev();
                       else bookRef.current?.pageFlip()?.flipNext();
                     }}
@@ -775,6 +1039,34 @@ export function MobileFlipBook(props: MobileFlipBookProps) {
                 : <Headphones className="w-[17px] h-[17px]" />
               }
             </BarBtn>
+
+            <BarBtn
+              title={t.sidebar?.selectTranslator || 'Cevirmen Sec'}
+              active={isAuthorSheetOpen}
+              onClick={onAuthorPress}
+            >
+              <UserRound className="w-[17px] h-[17px]" />
+            </BarBtn>
+
+            {!isSinglePageOverride && (
+              <>
+                <BarBtn
+                  title="Uzaklastir"
+                  onClick={handleZoomOut}
+                  active={zoomLevel > 1}
+                >
+                  <ZoomOut className="w-[17px] h-[17px]" />
+                </BarBtn>
+
+                <BarBtn
+                  title="Yakinlastir"
+                  onClick={handleZoomIn}
+                  active={zoomLevel > 1}
+                >
+                  <ZoomIn className="w-[17px] h-[17px]" />
+                </BarBtn>
+              </>
+            )}
 
             <BarBtn
               title={isFullscreen ? 'Küçült' : 'Tam ekran'}

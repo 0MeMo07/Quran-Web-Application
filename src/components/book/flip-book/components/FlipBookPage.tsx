@@ -1,7 +1,10 @@
-import React, { forwardRef, memo } from 'react';
+import React, { forwardRef, memo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { X } from 'lucide-react';
 import { cn } from '../../../ui/cn';
-import type { MushafPageItem, MushafPageLayout } from '../hooks/mushafPagination';
+import type { MushafPageItem, MushafPageLayout, MushafVerseItem } from '../hooks/mushafPagination';
 import type { ViewType } from '../../../../store/slices/uiSlice';
+import { selectSearchLanguage } from '../../../../store/slices/searchSlice';
 
 interface PageProps {
   children?: React.ReactNode;
@@ -16,7 +19,12 @@ interface PageProps {
   pageLayout?: MushafPageLayout;
 }
 
-function renderPageItem(item: MushafPageItem, pageLayout: MushafPageLayout) {
+function renderPageItem(
+  item: MushafPageItem,
+  pageLayout: MushafPageLayout,
+  language: string,
+  onOpenFootnotePopup: (item: MushafVerseItem) => void,
+) {
   const typography = pageLayout.typography;
 
   if (item.kind === 'surah-header') {
@@ -84,10 +92,18 @@ function renderPageItem(item: MushafPageItem, pageLayout: MushafPageLayout) {
 
   const hasArabic = item.arabicLines.length > 0;
   const hasTranslation = item.translationLines.length > 0;
+  const hasFootnotes = item.footnotes.length > 0;
+  const showFootnotesLabel = language === 'tr' ? 'Dipnotları göster' : 'Show footnotes';
+
+  const preventPageTurn = (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
 
   return (
     <div
       style={{
+        position: 'relative',
         paddingTop: typography.versePaddingYPx,
         paddingBottom: typography.versePaddingYPx,
       }}
@@ -123,6 +139,22 @@ function renderPageItem(item: MushafPageItem, pageLayout: MushafPageLayout) {
         >
           {item.translationLines.join('\n')}
         </p>
+      )}
+
+      {hasTranslation && hasFootnotes && (
+        <button
+          type="button"
+          onPointerDown={preventPageTurn}
+          onClick={(event) => {
+            preventPageTurn(event);
+            onOpenFootnotePopup(item);
+          }}
+          className="absolute left-0 top-full -mt-1 inline-flex items-center gap-1.5 px-1 py-0.5 rounded text-[10px] font-semibold text-emerald-700/80 hover:text-emerald-700 bg-[#fffdfa]/90"
+          aria-label={showFootnotesLabel}
+        >
+          <span>{showFootnotesLabel}</span>
+          <span className="text-emerald-700/50">({item.footnotes.length})</span>
+        </button>
       )}
     </div>
   );
@@ -245,6 +277,9 @@ function renderArabicOpeningFrame(content: React.ReactNode, isMobile: boolean) {
 
 export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
   (props, ref) => {
+    const language = useSelector(selectSearchLanguage);
+    const [popupItem, setPopupItem] = useState<MushafVerseItem | null>(null);
+
     // Determine the border radius based on the layout mode
     let borderRadius = '0';
     if (!props.isMobile) {
@@ -282,6 +317,15 @@ export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
     const openingInterItemGap = isArabicOpeningPage
       ? Math.max(10, Math.min(interItemGap, props.isMobile ? 16 : 22))
       : interItemGap;
+    const closeLabel = language === 'tr' ? 'Kapat' : 'Close';
+    const footnotesTitleLabel = language === 'tr' ? 'Dipnotlar' : 'Footnotes';
+
+    const handleOpenFootnotePopup = (item: MushafVerseItem) => {
+      if (item.footnotes.length === 0) {
+        return;
+      }
+      setPopupItem(item);
+    };
 
     return (
       <div 
@@ -311,7 +355,7 @@ export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
                       marginBottom: index < pageLayout!.items.length - 1 ? openingInterItemGap : 0,
                     }}
                   >
-                    {renderPageItem(item, pageLayout!)}
+                    {renderPageItem(item, pageLayout!, language, handleOpenFootnotePopup)}
                   </div>
                 ))}
               </div>,
@@ -328,7 +372,7 @@ export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
                     marginBottom: index < pageLayout!.items.length - 1 ? interItemGap : 0,
                   }}
                 >
-                  {renderPageItem(item, pageLayout!)}
+                  {renderPageItem(item, pageLayout!, language, handleOpenFootnotePopup)}
                 </div>
               ))}
             </div>
@@ -336,6 +380,62 @@ export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-[100px] font-serif text-black/5 select-none pointer-events-none">
                 {props.number}
+              </div>
+            </div>
+          )}
+
+          {popupItem && (
+            <div
+              className="absolute inset-0 z-30"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="absolute inset-0 bg-black/35"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setPopupItem(null);
+                }}
+                aria-label={closeLabel}
+              />
+
+              <div
+                className="absolute left-1/2 top-1/2 w-[88%] max-h-[72%] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-emerald-700/25 bg-[#fffdfa] shadow-2xl overflow-hidden"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="h-10 px-3 flex items-center justify-between border-b border-emerald-700/15">
+                  <span className="text-[11px] font-semibold text-emerald-800/80">
+                    {footnotesTitleLabel} [{popupItem.verseNumber}]
+                  </span>
+                  <button
+                    type="button"
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setPopupItem(null);
+                    }}
+                    className="w-6 h-6 rounded-md flex items-center justify-center text-emerald-800/60 hover:text-emerald-900 hover:bg-emerald-700/10"
+                    aria-label={closeLabel}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-3 max-h-[calc(72vh-44px)] overflow-y-auto space-y-2">
+                  {popupItem.footnotes.map((footnote) => (
+                    <p
+                      key={footnote.id}
+                      className="m-0 text-[11px] text-emerald-900/75 italic"
+                      style={{ lineHeight: '1.45' }}
+                    >
+                      <span className="font-semibold text-emerald-700/90">[{footnote.number}]</span>{' '}
+                      {footnote.text}
+                    </p>
+                  ))}
+                </div>
               </div>
             </div>
           )}

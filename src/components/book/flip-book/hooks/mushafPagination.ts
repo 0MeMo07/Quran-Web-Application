@@ -1,4 +1,4 @@
-import type { Surah, Verse } from '../../../../api/types';
+import type { Footnote, Surah, Verse } from '../../../../api/types';
 import type { ViewType } from '../../../../store/slices/uiSlice';
 
 const SAFE_AREA_GUARD_PX = 1;
@@ -89,6 +89,7 @@ export interface MushafVerseItem extends PreparedBlockBase {
   verseNumber: number;
   arabicLines: string[];
   translationLines: string[];
+  footnotes: Footnote[];
   continuationFromPrevious: boolean;
   continuationToNext: boolean;
 }
@@ -158,6 +159,7 @@ export interface BuildPageMapInput {
   viewType: ViewType;
   fontSize: number;
   lineHeight: number;
+  showAuthorNotes?: boolean;
   safeInsets?: Partial<MushafSafeAreaInsets>;
 }
 
@@ -560,6 +562,7 @@ function createVerseBlock(
   safeArea: MushafSafeArea,
   metrics: PaginationMetrics,
   measure: TextMeasureContext,
+  showAuthorNotes: boolean,
 ): MushafVerseItem {
   const arabicFont = `600 ${metrics.arabicFontSize}px ${metrics.arabicFontFamily}`;
   const translationFont = `500 ${metrics.translationFontSize}px ${metrics.translationFontFamily}`;
@@ -571,6 +574,7 @@ function createVerseBlock(
     : '';
 
   const translationSource = normalizeText(verse.translation?.text || '');
+  const footnotes = showAuthorNotes ? (verse.translation?.footnotes ?? []) : [];
   const translationText = metrics.showTranslation
     ? normalizeText(`${translationSource}${translationSource ? ' ' : ''}[${verse.verse_number}]`)
     : '';
@@ -589,6 +593,7 @@ function createVerseBlock(
     anchorPage: Math.max(1, verse.page),
     arabicLines,
     translationLines,
+    footnotes,
     continuationFromPrevious: false,
     continuationToNext: false,
     heightPx: calculateVerseHeight(arabicLines, translationLines, metrics),
@@ -617,6 +622,7 @@ function createArabicFlowVerseBlock(
     anchorPage: Math.max(1, firstVerse.page),
     arabicLines,
     translationLines: [],
+    footnotes: [],
     continuationFromPrevious: false,
     continuationToNext: false,
     heightPx: calculateVerseHeight(arabicLines, [], metrics),
@@ -629,6 +635,7 @@ export function prepareVerseBlocks(
   safeArea: MushafSafeArea,
   metrics: PaginationMetrics,
   measure: TextMeasureContext,
+  showAuthorNotes: boolean,
 ): MushafPageItem[] {
   if (verses.length === 0) {
     return [];
@@ -704,7 +711,7 @@ export function prepareVerseBlocks(
       previousSurahId = verse.surah_id;
     }
 
-    blocks.push(createVerseBlock(verse, safeArea, metrics, measure));
+    blocks.push(createVerseBlock(verse, safeArea, metrics, measure, showAuthorNotes));
   }
 
   return blocks;
@@ -979,6 +986,7 @@ export function buildPageMap({
   viewType,
   fontSize,
   lineHeight,
+  showAuthorNotes = false,
   safeInsets,
 }: BuildPageMapInput): MushafPaginationResult {
   const resolvedInsets = createSafeInsets(safeInsets);
@@ -998,7 +1006,7 @@ export function buildPageMap({
   const metrics = createPaginationMetrics(viewType, fontSize, lineHeight);
   const textMeasure = createTextMeasureContext();
 
-  const blocks = prepareVerseBlocks(verses, surahs, safeArea, metrics, textMeasure);
+  const blocks = prepareVerseBlocks(verses, surahs, safeArea, metrics, textMeasure, showAuthorNotes);
   const workingPages = paginateBlocksIntoPages(blocks, safeArea.height, metrics);
 
   const pagesByNumber = new Map<number, MushafPageLayout>();

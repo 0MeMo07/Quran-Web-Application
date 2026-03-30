@@ -3,6 +3,8 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { selectAllVerses, selectSurahs } from '../../../../store/slices/quranSlice';
 import { selectSearchLanguage } from '../../../../store/slices/searchSlice';
+import { fetchVerseById } from '../../../../api/quranApi';
+import { selectSelectedAuthor } from '../../../../store/slices/translationsSlice';
 import { useAudioPlayer } from '../../../../hooks/useAudioPlayer';
 import { buildPageMap } from './mushafPagination';
 import type { ViewType } from '../../../../store/slices/uiSlice';
@@ -42,6 +44,7 @@ export function useFlipBook({
   const surahs = useSelector(selectSurahs);
   const allVerses = useSelector(selectAllVerses);
   const language = useSelector(selectSearchLanguage);
+  const selectedAuthor = useSelector(selectSelectedAuthor);
   const flippingMode = useSelector(selectFlippingMode);
   const { isPlaying, currentAudioId, playAudio, currentTime, duration, seek } = useAudioPlayer();
   
@@ -55,6 +58,13 @@ export function useFlipBook({
   const [isSinglePageOverride, setIsSinglePageOverride] = useState(window.innerWidth < 1024);
   const [selectedSurah, setSelectedSurah] = useState('');
   const [selectedVerse, setSelectedVerse] = useState('');
+  const [showAuthorNotes, setShowAuthorNotes] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return localStorage.getItem('showAuthorNotes') === 'true';
+  });
+  const [pendingVerseJump, setPendingVerseJump] = useState<{ surahId: number; verseNumber: number } | null>(null);
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isScrubberVisible, setIsScrubberVisible] = useState(true);
   const [currentPage, setCurrentPage] = useState(() => Math.max(0, propPage ?? 1));
@@ -113,6 +123,7 @@ export function useFlipBook({
         viewType,
         fontSize,
         lineHeight,
+        showAuthorNotes,
         safeInsets: {
           top: 20,
           right: 22,
@@ -120,8 +131,12 @@ export function useFlipBook({
           left: 22,
         },
       }),
-    [allVerses, surahs, viewType, fontSize, lineHeight],
+    [allVerses, surahs, viewType, fontSize, lineHeight, showAuthorNotes],
   );
+
+  useEffect(() => {
+    localStorage.setItem('showAuthorNotes', String(showAuthorNotes));
+  }, [showAuthorNotes]);
 
   const quranPageCount = useMemo(() => {
     const maxSurahPage = surahs.reduce((maxPage, surah) => Math.max(maxPage, surah.page_number), 1);
@@ -229,6 +244,67 @@ export function useFlipBook({
     }
   }, [isSinglePageMode, pages.length]);
 
+  const navigateToVerseInBookMode = useCallback((surahId: number, verseNumber: number, fallbackPage: number) => {
+    const targetVerse = allVerses.find(
+      (v) => v.surah_id === surahId && v.verse_number === verseNumber,
+    );
+
+    if (targetVerse) {
+      const pageIndex = quranPageToIndex(targetVerse.page);
+      handlePageJump(pageIndex);
+      navigate(`/surah/${surahId}/page/${targetVerse.page}`, { replace: true });
+      setPendingVerseJump(null);
+      return;
+    }
+
+    // Verse may not be loaded yet in incremental book fetches; fall back to surah page first.
+    setPendingVerseJump({ surahId, verseNumber });
+    const fallbackIndex = quranPageToIndex(fallbackPage);
+    handlePageJump(fallbackIndex);
+    navigate(`/surah/${surahId}/page/${fallbackPage}`, { replace: true });
+  }, [allVerses, quranPageToIndex, handlePageJump, navigate]);
+
+  const resolveVersePage = useCallback(
+    async (surahId: number, verseNumber: number): Promise<number | null> => {
+      const cachedVersePage = allVerses.find(
+        (verse) => verse.surah_id === surahId && verse.verse_number === verseNumber,
+      )?.page;
+
+      if (cachedVersePage) {
+        return cachedVersePage;
+      }
+
+      try {
+        const verse = await fetchVerseById(surahId, verseNumber, selectedAuthor?.id);
+        return verse?.page ?? null;
+      } catch {
+        return null;
+      }
+    },
+    [allVerses, selectedAuthor?.id],
+  );
+
+  useEffect(() => {
+    if (!pendingVerseJump) {
+      return;
+    }
+
+    const targetVerse = allVerses.find(
+      (v) =>
+        v.surah_id === pendingVerseJump.surahId &&
+        v.verse_number === pendingVerseJump.verseNumber,
+    );
+
+    if (!targetVerse) {
+      return;
+    }
+
+    const pageIndex = quranPageToIndex(targetVerse.page);
+    handlePageJump(pageIndex);
+    navigate(`/surah/${pendingVerseJump.surahId}/page/${targetVerse.page}`, { replace: true });
+    setPendingVerseJump(null);
+  }, [allVerses, handlePageJump, navigate, pendingVerseJump, quranPageToIndex]);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
@@ -242,21 +318,48 @@ export function useFlipBook({
   const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.1, 2));
   const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!selectedSurah) return;
+
     const selectedSurahId = Number(selectedSurah);
     const selectedSurahMeta = surahs.find((s) => s.id === selectedSurahId);
-    
-    if (selectedSurahMeta?.page_number) {
-      const fallbackPage = selectedSurahMeta.page_number;
-      const pageIndex = quranPageToIndex(fallbackPage);
-      handlePageJump(pageIndex);
-      navigate(`/surah/${selectedSurahId}/page/${fallbackPage}`, { replace: true });
+    const fallbackPage = selectedSurahMeta?.page_number;
+
+    if (!fallbackPage) {
+      return;
     }
+
+    const requestedVerse = selectedVerse.trim();
+    const verseNumber = Number(requestedVerse);
+    const hasValidVerseInput =
+      requestedVerse.length > 0 &&
+      Number.isInteger(verseNumber) &&
+      verseNumber >= 1 &&
+      (!selectedSurahMeta?.verse_count || verseNumber <= selectedSurahMeta.verse_count);
+
+    if (hasValidVerseInput) {
+      const exactPage = await resolveVersePage(selectedSurahId, verseNumber);
+      if (exactPage) {
+        const pageIndex = quranPageToIndex(exactPage);
+        setPendingVerseJump(null);
+        handlePageJump(pageIndex);
+        navigate(`/surah/${selectedSurahId}/page/${exactPage}`, { replace: true });
+        return;
+      }
+
+      navigateToVerseInBookMode(selectedSurahId, verseNumber, fallbackPage);
+      return;
+    }
+
+    setPendingVerseJump(null);
+    const pageIndex = quranPageToIndex(fallbackPage);
+    handlePageJump(pageIndex);
+    navigate(`/surah/${selectedSurahId}/page/${fallbackPage}`, { replace: true });
   };
 
   const handleSurahSelectChange = (value: string) => {
     setSelectedSurah(value);
+    setPendingVerseJump(null);
     if (!value) return;
 
     const selectedSurahId = Number(value);
@@ -343,6 +446,8 @@ export function useFlipBook({
     setSelectedSurah,
     selectedVerse,
     setSelectedVerse,
+    showAuthorNotes,
+    setShowAuthorNotes,
     isNavOpen,
     setIsNavOpen,
     isScrubberVisible,

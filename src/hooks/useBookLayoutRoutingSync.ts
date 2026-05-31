@@ -133,8 +133,24 @@ export function useBookLayoutRoutingSync({
     const pageNum = Number(urlPageNumber);
     if (!Number.isNaN(pageNum) && pageNum >= minPage && pageNum <= totalPages) {
       setInputPage((prevPage) => (prevPage === urlPageNumber ? prevPage : urlPageNumber));
+    } else if (surahs.length > 0) {
+      // Redirect invalid page to the first page of the current surah or fallback to minPage
+      let targetPage = minPage;
+      if (surahId) {
+        const firstVerseOfSurah = verses.find((v) => v.surah_id === Number(surahId));
+        if (firstVerseOfSurah) {
+          targetPage = firstVerseOfSurah.page;
+        } else {
+          // If verses aren't loaded yet, try to find the page from the surahs array
+          const surah = surahs.find(s => s.id === Number(surahId));
+          if (surah && surah.page_number) {
+            targetPage = surah.page_number;
+          }
+        }
+      }
+      navigate(`/surah/${surahId || 1}/page/${targetPage}`, { replace: true });
     }
-  }, [urlPageNumber, minPage, totalPages, setInputPage, surahId]); // Added surahId here just for completeness, but the main fix is keeping it stable.
+  }, [urlPageNumber, minPage, totalPages, setInputPage, surahId, verses, surahs, navigate]); // Added surahId here just for completeness, but the main fix is keeping it stable.
 
   useEffect(() => {
     if (surahId && verseId) {

@@ -45,17 +45,17 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   const currentSurahId = useSelector(selectBookCurrentSurahId);
   const t = useTranslations();
   const surahs = useSelector(selectSurahs);
-  const [stateCurrentPage, setCurrentPage] = useState(1);
+  const { surahId, verseId, pageNumber: urlPageNumber } = useParams();
+  const [stateCurrentPage, setCurrentPage] = useState(0);
   const [showFootnotes, setShowFootnotes] = useState<{ [key: number]: boolean }>({});
-  const [inputPage, setInputPage] = useState('1');
+  const [inputPage, setInputPage] = useState(urlPageNumber || '0');
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [fontSize, setFontSize] = useState(16);
   const [lineHeight, setLineHeight] = useState(1.5);
   const [showSettings, setShowSettings] = useState(false);
-  const { surahId, verseId, pageNumber: urlPageNumber } = useParams();
   
   const urlPageNum = urlPageNumber ? Number(urlPageNumber) : NaN;
-  const currentPage = !Number.isNaN(urlPageNum) && urlPageNum >= 1 ? urlPageNum : stateCurrentPage;
+  const currentPage = !Number.isNaN(urlPageNum) && urlPageNum >= 0 ? urlPageNum : stateCurrentPage;
   const navigate = useNavigate();
   const loadingSurahIds = useSelector(selectLoadingBookSurahIds);
   const findSurahByPage = (page: number) => {
@@ -70,8 +70,8 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   const bookLayoutType = useSelector(selectBookLayoutType);
   const flippingMode = useSelector(selectFlippingMode);
 
-  const minPage = verses.length > 0 ? Math.min(...verses.map((verse) => verse.page)) : 1;
-  const loadedMaxPage = verses.length > 0 ? Math.max(...verses.map((verse) => verse.page)) : 1;
+  const minPage = verses.length > 0 ? Math.min(...verses.map((verse) => verse.page)) : 0;
+  const loadedMaxPage = verses.length > 0 ? Math.max(...verses.map((verse) => verse.page)) : 0;
   const totalPages = Math.max(TOTAL_QURAN_PAGES, loadedMaxPage);
   
   const currentPageVerses = useMemo(

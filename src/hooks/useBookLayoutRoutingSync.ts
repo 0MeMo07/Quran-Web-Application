@@ -76,6 +76,8 @@ export function useBookLayoutRoutingSync({
   );
 
   useEffect(() => {
+    let ticking = false;
+
     const updateCurrentSurah = () => {
       const verseElements = document.querySelectorAll('[data-surah-id]');
       const headerHeight = 200;
@@ -93,13 +95,22 @@ export function useBookLayoutRoutingSync({
       if (detectedSurahId !== null && detectedSurahId !== currentSurahId) {
         setCurrentSurahIdInStore(detectedSurahId);
       }
+
+      ticking = false;
     };
 
-    window.addEventListener('scroll', updateCurrentSurah);
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateCurrentSurah);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
     updateCurrentSurah();
 
     return () => {
-      window.removeEventListener('scroll', updateCurrentSurah);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, [currentPage, currentSurahId, setCurrentSurahIdInStore]);
 

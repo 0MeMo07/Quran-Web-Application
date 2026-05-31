@@ -28,6 +28,10 @@ export function FlipBookContent({
 }: FlipBookContentProps) {
   const flipBook = useFlipBook({ propPage, onPageChange, viewType, fontSize, lineHeight });
 
+  const handleShowSettings = React.useCallback(() => {
+    onShowSettings?.();
+  }, [onShowSettings]);
+
   if (flipBook.pages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-20 text-muted-foreground gap-4">
@@ -37,16 +41,9 @@ export function FlipBookContent({
     );
   }
 
-  // Combine hook state with memoized props to prevent unnecessary re-renders
-  const commonProps = React.useMemo(() => ({
-    ...flipBook,
-    onShowSettings: onShowSettings || (() => {}),
-    t,
-  }), [flipBook, onShowSettings, t]);
-
   return flipBook.isMobile ? (
-    <MobileFlipBook {...commonProps} />
+    <MobileFlipBook {...flipBook} onShowSettings={handleShowSettings} t={t} />
   ) : (
-    <DesktopFlipBook {...commonProps} />
+    <DesktopFlipBook {...flipBook} onShowSettings={handleShowSettings} t={t} />
   );
 }

@@ -13,6 +13,8 @@ import { CardNoteSection } from './notes/CardNoteSection';
 import { NotePopup } from './notes/NotePopup';
 import { DeleteNotePopup } from './notes/DeleteNotePopup';
 import { motion } from 'framer-motion';
+import { VerseFootnotes } from './VerseFootnotes';
+
 
 interface VerseCardProps {
   verse: Verse;
@@ -22,7 +24,6 @@ export function VerseCard({ verse }: VerseCardProps) {
   const t = useTranslations();
   const language = useSelector(selectSearchLanguage);
   const readingType = useSelector(selectReadingType);
-  const [showTranslations, setShowTranslations] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const currentSurah = useSelector(selectCurrentSurah);
   const surahs = useSelector(selectSurahs);
@@ -178,33 +179,7 @@ export function VerseCard({ verse }: VerseCardProps) {
               </p>
 
               {/* Dipnotlar */}
-              {verse.translation.footnotes && verse.translation.footnotes.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  <button
-                    onClick={() => setShowTranslations(!showTranslations)}
-                    className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
-                  >
-                    <span>{showTranslations ? t.verse.hideFootnotes : t.verse.showFootnotes}</span>
-                    {showTranslations ? (
-                      <ChevronUp className="w-4 h-4" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4" />
-                    )}
-                  </button>
-                  {showTranslations && (
-                    <div className="pl-4 border-l-2 border-border/50 space-y-2">
-                      {verse.translation.footnotes.map((footnote) => (
-                        <p key={footnote.id} className="text-sm text-muted-foreground">
-                          <span className="font-medium text-primary">
-                            [{footnote.number}]
-                          </span>{' '}
-                          {footnote.text}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+              <VerseFootnotes footnotes={verse.translation.footnotes || []} t={t} />
 
               {/* Notlar Bölümü - Sadece not varsa göster */}
               {existingNote && (

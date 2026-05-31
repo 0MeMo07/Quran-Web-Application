@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux';
-import { selectSearchLanguage } from '../store/slices/searchSlice';
+import { selectLanguage } from '../store/slices/uiSlice';
 
 const translations = {
   en: {
@@ -349,7 +349,7 @@ const translations = {
 export type TranslationKey = keyof typeof translations.en.app;
 
 export function useTranslations() {
-  const language = useSelector(selectSearchLanguage) as 'en' | 'tr';
+  const language = useSelector(selectLanguage) as 'en' | 'tr';
   return translations[language].app;
 }
 

@@ -188,7 +188,8 @@ export function useFlipBook({
       const physicalPageNumber = index + 1;
       const isFrontCover = index === 0;
       const isBackCover = index === totalPageCount - 1;
-      const quranPageNumber = indexToQuranPage(index);
+      const isCoverPage = isFrontCover || isBackCover;
+      const quranPageNumber = isCoverPage ? -1 : indexToQuranPage(index);
 
       return {
         key: isFrontCover ? 'cover-front' : isBackCover ? 'cover-back' : `quran-${quranPageNumber}`,
@@ -206,17 +207,17 @@ export function useFlipBook({
     }
 
     const incomingPageIndex = quranPageToIndex(propPage);
-    setCurrentPage((previousPage) => {
-      if (incomingPageIndex === previousPage) {
-        return previousPage;
-      }
+    setCurrentPage(incomingPageIndex);
 
-      if (!isSinglePageMode) {
-        bookRef.current?.pageFlip()?.turnToPage(incomingPageIndex);
+    if (!isSinglePageMode) {
+      bookRef.current?.pageFlip()?.turnToPage(incomingPageIndex);
+    } else {
+      // programmatic scroll to the new page to prevent blank pages layout bug
+      const el = document.getElementById(`quran-page-${incomingPageIndex}`);
+      if (el && scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = el.offsetTop;
       }
-
-      return incomingPageIndex;
-    });
+    }
   }, [propPage, isSinglePageMode, quranPageToIndex]);
 
   const currentSurahOnPage = useMemo(() => {
@@ -305,7 +306,7 @@ export function useFlipBook({
     setPendingVerseJump(null);
   }, [allVerses, handlePageJump, navigate, pendingVerseJump, quranPageToIndex]);
 
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
       setIsFullscreen(true);
@@ -313,12 +314,12 @@ export function useFlipBook({
       document.exitFullscreen();
       setIsFullscreen(false);
     }
-  };
+  }, []);
 
-  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.1, 2));
-  const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
+  const handleZoomIn = useCallback(() => setZoomLevel(prev => Math.min(prev + 0.1, 2)), []);
+  const handleZoomOut = useCallback(() => setZoomLevel(prev => Math.max(prev - 0.1, 0.5)), []);
 
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (!selectedSurah) return;
 
     const selectedSurahId = Number(selectedSurah);
@@ -355,9 +356,9 @@ export function useFlipBook({
     const pageIndex = quranPageToIndex(fallbackPage);
     handlePageJump(pageIndex);
     navigate(`/surah/${selectedSurahId}/page/${fallbackPage}`, { replace: true });
-  };
+  }, [selectedSurah, surahs, selectedVerse, resolveVersePage, quranPageToIndex, handlePageJump, navigate, navigateToVerseInBookMode]);
 
-  const handleSurahSelectChange = (value: string) => {
+  const handleSurahSelectChange = useCallback((value: string) => {
     setSelectedSurah(value);
     setPendingVerseJump(null);
     if (!value) return;
@@ -370,7 +371,7 @@ export function useFlipBook({
       handlePageJump(pageIndex);
       navigate(`/surah/${selectedSurahId}/page/${fallbackPage}`, { replace: true });
     }
-  };
+  }, [selectedVerse, surahs, quranPageToIndex, handlePageJump, navigate]);
 
   const onPage = useCallback((e: any) => {
     const newPage = e.data;
@@ -387,12 +388,12 @@ export function useFlipBook({
     onPageChange(pageMeta.quranPageNumber);
   }, [onPageChange, pages]);
 
-  const handleAudioToggle = () => {
+  const handleAudioToggle = useCallback(() => {
     if (currentSurahOnPage) {
       const audioUrl = language === "tr" ? currentSurahOnPage.audio.mp3 : currentSurahOnPage.audio.mp3_en;
       playAudio(audioUrl, currentSurahOnPage.id);
     }
-  };
+  }, [currentSurahOnPage, language, playAudio]);
 
   useEffect(() => {
     let resizeTimer: any;

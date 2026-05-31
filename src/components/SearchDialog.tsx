@@ -1,23 +1,7 @@
-import { useState, useEffect } from 'react';
 import { Search, X, Loader2, Book, Shuffle, Volume2, Pause } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  searchVerses,
-  fetchRandomVerse,
-  clearResults,
-  selectSearchResults,
-  selectSearchLoading,
-  selectSearchLanguage,
-  selectRandomVerse,
-} from '../store/slices/searchSlice';
-import { setCurrentSurah, setBookCurrentSurahId, setHighlightedVerse } from '../store/slices/quranSlice';
-import { useAudioPlayer } from '../hooks/useAudioPlayer';
-import { useTranslations } from '../translations';
-import { useNavigate } from 'react-router-dom';
-import { setReadingType } from '../store/slices/uiSlice';
-import { selectSelectedAuthor } from '../store/slices/translationsSlice';
 import { HighlightedText } from '../helpers/HighlightedText';
+import { useQuranSearch } from '../hooks/useQuranSearch';
 
 interface SearchDialogProps {
   isOpen: boolean;
@@ -25,91 +9,23 @@ interface SearchDialogProps {
 }
 
 export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
-  const dispatch = useDispatch();
-  const t = useTranslations();
-  const [searchTerm, setSearchTerm] = useState('');
-  const searchResults = useSelector(selectSearchResults);
-  const isLoading = useSelector(selectSearchLoading);
-  const language = useSelector(selectSearchLanguage);
-  const randomVerse = useSelector(selectRandomVerse);
-  const { isPlaying, currentAudioId, playAudio } = useAudioPlayer();
-  const navigate = useNavigate();
-  const selectedAuthor = useSelector(selectSelectedAuthor);
+  const {
+    searchTerm,
+    setSearchTerm,
+    searchResults,
+    isLoading,
+    randomVerse,
+    activeResultId,
+    setActiveResultId,
+    isPlaying,
+    currentAudioId,
+    handleVerseClick,
+    handleRandomVerse,
+    handleAudioPlay,
+    t,
+    language,
+  } = useQuranSearch(isOpen, onClose);
 
-  useEffect(() => {
-    if (!isOpen) {
-      setSearchTerm('');
-      dispatch(clearResults());
-      document.body.style.overflow = 'unset';
-    } else {
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, dispatch]);
-
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      if (searchTerm.trim().length >= 2) {
-        dispatch(searchVerses({ searchTerm, language }) as any);
-      }
-    }, 300);
-
-    return () => clearTimeout(debounceTimer);
-  }, [searchTerm, language, dispatch]);
-
-  const [activeResultId, setActiveResultId] = useState<number | null>(null);
-
-  const handleVerseClick = (result: any, mode: 'book' | 'detail' = 'book') => {
-    const surahId = result.surah.id;
-    const verseNumber = result.verse.verse_number;
-    const pageNumber = result.verse.page;
-
-    if (mode === 'book') {
-      dispatch(setReadingType('book'));
-      dispatch(setBookCurrentSurahId(surahId));
-      dispatch(setHighlightedVerse({ surahId, verseNumber }));
-      
-      onClose();
-      navigate(`/surah/${surahId}/page/${pageNumber}`, { 
-        state: { targetVerseId: verseNumber } 
-      });
-      
-      // Clear highlight after 5 seconds
-      setTimeout(() => {
-        dispatch(setHighlightedVerse(null));
-      }, 5000);
-    } else {
-      dispatch(setReadingType('card'));
-      dispatch(setCurrentSurah(surahId));
-      const url = selectedAuthor 
-        ? `/surah/${surahId}/verse/${verseNumber}/${selectedAuthor.id}`
-        : `/surah/${surahId}/verse/${verseNumber}`;
-      
-      onClose();
-      navigate(url);
-
-      setTimeout(() => {
-        const verseElement = document.querySelector(`[data-verse-id="${verseNumber}"]`);
-        if (verseElement) {
-          verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          verseElement.classList.add('bg-accent/10');
-          setTimeout(() => {
-            verseElement.classList.remove('bg-accent/10');
-          }, 2000);
-        }
-      }, 500);
-    }
-  };
-
-  const handleRandomVerse = () => {
-    dispatch(fetchRandomVerse(language) as any);
-  };
-
-  const handleAudioPlay = (audioUrl: string, id: number) => {
-    playAudio(audioUrl, id);
-  };
 
   return (
     <AnimatePresence>

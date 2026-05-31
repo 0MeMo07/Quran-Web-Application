@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 
 export type ReadingType = 'card' | 'book' | 'detail';
@@ -159,8 +159,21 @@ export const selectBookLayoutType = (state: RootState) => state.ui.bookLayoutTyp
 export const selectFlippingMode = (state: RootState) => state.ui.flippingMode;
 export const selectNotes = (state: RootState) => state.ui.notes;
 
-export const selectNoteByVerseAndSurah = (state: RootState, surahId: number, verseId: number) => 
-  state.ui.notes.find(note => note.surahId === surahId && note.verseId === verseId);
+export const selectNotesMap = createSelector(
+  [selectNotes],
+  (notes) => {
+    const map: Record<string, Note> = {};
+    notes.forEach((note) => {
+      map[`${note.surahId}-${note.verseId}`] = note;
+    });
+    return map;
+  }
+);
+
+export const selectNoteByVerseAndSurah = (state: RootState, surahId: number, verseId: number) => {
+  const notesMap = selectNotesMap(state);
+  return notesMap[`${surahId}-${verseId}`] || null;
+};
 
 export const selectTheme = (state: RootState) => state.ui.isDarkMode ? 'dark' : 'light';
 

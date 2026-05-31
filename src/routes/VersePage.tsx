@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, ChevronRight, BookOpen, Loader2,
-  MessageSquare, Share2, Home, ChevronDown, ChevronUp, Trash2
+  MessageSquare, Share2, Home, Trash2
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchVerseById, fetchVerseParts, fetchAuthors } from '../api/quranApi';
@@ -16,105 +16,12 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ShareMenu } from '../components/ShareMenu';
 import { NotePopup } from '../components/notes/NotePopup';
 import { DeleteNotePopup } from '../components/notes/DeleteNotePopup';
+import { WordRow } from '../components/verse/WordRow';
+import { TranslationBlock } from '../components/verse/TranslationBlock';
 
 
-// ─── Word Row (table) ─────────────────────────────────────────────────────────
 
-function WordRow({ part, index, language }: { part: VersePart; index: number; language: string }) {
-  const meaning = language === 'en'
-    ? (part.translation_en || part.translation_tr)
-    : (part.translation_tr || part.translation_en);
-  const transcription = language === 'en'
-    ? (part.transcription_en || part.transcription_tr)
-    : (part.transcription_tr || part.transcription_en);
-  return (
-    <tr className="hover:bg-primary/5 transition-colors group border-b border-border last:border-0">
-      {/* Index */}
-      <td className="py-3 px-3 text-center align-middle w-8">
-        <span className="text-xs text-muted-foreground tabular-nums font-mono">{index}</span>
-      </td>
-      {/* Arabic word + transcription */}
-      <td className="py-3 px-3 text-right align-middle" dir="rtl">
-        <p className="text-xl font-arabic text-foreground group-hover:text-primary transition-colors leading-relaxed">{part.arabic}</p>
-        {transcription && (
-          <p className="text-xs text-muted-foreground italic mt-0.5" dir="ltr">{transcription}</p>
-        )}
-      </td>
-      {/* Meaning */}
-      <td className="py-3 px-3 align-middle">
-        <span className="text-sm text-foreground leading-snug">{meaning}</span>
-      </td>
-      {/* Root */}
-      <td className="py-3 px-3 text-center align-middle">
-        {part.root ? (
-          <Link
-            to={`/root/${encodeURIComponent(part.root.latin)}`}
-            className="inline-flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20"
-            title={part.root.latin}
-          >
-            <span className="font-arabic text-base leading-tight" dir="rtl">{part.root.arabic}</span>
-            <span className="text-xs font-mono text-primary/80 leading-none">{part.root.latin}</span>
-          </Link>
-        ) : (
-          <span className="text-muted-foreground/30 text-sm">—</span>
-        )}
-      </td>
-    </tr>
-  );
-}
-// ─── Translation Block ───────────────────────────────────────────────────────
-function TranslationBlock({
-  verse,
-  isPrimary = false,
-}: {
-  verse: Verse;
-  isPrimary?: boolean;
-}) {
-  const [showFootnotes, setShowFootnotes] = useState(false);
-  const t = useTranslations();
-  return (
-    <div className={`px-5 py-4 ${isPrimary ? 'bg-primary/5' : ''}`}>
-      <p className="text-xs font-semibold text-primary mb-2 uppercase tracking-wider flex items-center gap-1.5">
-        {verse.translation?.author?.name}
-        {verse.translation?.author?.language && (
-          <span className="text-muted-foreground normal-case font-normal">
-            ({verse.translation.author.language.toUpperCase()})
-          </span>
-        )}
-        {isPrimary && (
-          <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary normal-case font-medium tracking-normal">
-            {t.versePage.translations}
-          </span>
-        )}
-      </p>
-      <p className="text-foreground leading-relaxed text-sm">
-        {verse.translation?.text}
-      </p>
-      {verse.translation?.footnotes && verse.translation.footnotes.length > 0 && (
-        <div className="mt-3">
-          <button
-            onClick={() => setShowFootnotes((v) => !v)}
-            className="flex items-center gap-1.5 text-xs text-primary hover:opacity-80 transition-colors"
-          >
-            {showFootnotes ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            {showFootnotes ? t.verse.hideFootnotes : t.verse.showFootnotes}
-            <span className="text-muted-foreground">({verse.translation.footnotes.length})</span>
-          </button>
-          {showFootnotes && (
-            <div className="mt-2 pl-3 border-l-2 border-primary/30 space-y-1.5">
-              {verse.translation.footnotes.map((fn) => (
-                <p key={fn.id} className="text-xs text-muted-foreground">
-                  <span className="font-medium text-primary">[{fn.number}]</span>{' '}
-                  {fn.text}
-                </p>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+
 
 // ─── Main VersePage ──────────────────────────────────────────────────────────
 export function VersePage() {

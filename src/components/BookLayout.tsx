@@ -4,7 +4,6 @@ import {
   selectSurahs, 
   selectBookCurrentSurahId, 
   setBookCurrentSurahId, 
-  selectLoading, 
   selectLoadingBookSurahIds, 
   setHighlightedVerse, 
   selectPendingVerseJump, 
@@ -58,7 +57,6 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   const urlPageNum = urlPageNumber ? Number(urlPageNumber) : NaN;
   const currentPage = !Number.isNaN(urlPageNum) && urlPageNum >= 1 ? urlPageNum : stateCurrentPage;
   const navigate = useNavigate();
-  const isGlobalLoading = useSelector(selectLoading);
   const loadingSurahIds = useSelector(selectLoadingBookSurahIds);
   const findSurahByPage = (page: number) => {
     return [...surahs]
@@ -67,7 +65,7 @@ export const BookLayout: React.FC<BookLayoutProps> = ({ verses }) => {
   };
   const targetSurahIdForPage = findSurahByPage(currentPage);
   const isIncrementalLoading = targetSurahIdForPage ? loadingSurahIds.includes(targetSurahIdForPage) : false;
-  const isLoading = isGlobalLoading || isIncrementalLoading;
+  const isLoading = isIncrementalLoading;
   const viewType = useSelector(selectViewType);
   const bookLayoutType = useSelector(selectBookLayoutType);
   const flippingMode = useSelector(selectFlippingMode);

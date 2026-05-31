@@ -226,28 +226,38 @@ function parsePxFontSize(font: string): number {
   return Number(match[1]);
 }
 
+let sharedCanvas: HTMLCanvasElement | null = null;
+let sharedContext: CanvasRenderingContext2D | null = null;
+
 function createTextMeasureContext(): TextMeasureContext {
   if (typeof document === 'undefined') {
     return {
       measureTextWidth: (text, font) => {
         const fontSize = parsePxFontSize(font);
-        return splitToGraphemes(text).length * fontSize * 0.56;
+        const isArabic = /[\u0600-\u06FF]/.test(text);
+        const multiplier = isArabic ? 0.72 : 0.56;
+        return splitToGraphemes(text).length * fontSize * multiplier;
       },
     };
   }
 
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
+  if (!sharedCanvas) {
+    sharedCanvas = document.createElement('canvas');
+    sharedContext = sharedCanvas.getContext('2d');
+  }
 
-  if (!context) {
+  if (!sharedContext) {
     return {
       measureTextWidth: (text, font) => {
         const fontSize = parsePxFontSize(font);
-        return splitToGraphemes(text).length * fontSize * 0.56;
+        const isArabic = /[\u0600-\u06FF]/.test(text);
+        const multiplier = isArabic ? 0.72 : 0.56;
+        return splitToGraphemes(text).length * fontSize * multiplier;
       },
     };
   }
 
+  const context = sharedContext;
   return {
     measureTextWidth: (text, font) => {
       const cacheKey = `${font}__${text}`;
@@ -267,6 +277,12 @@ function createTextMeasureContext(): TextMeasureContext {
 function splitLongToken(token: string, maxWidth: number, font: string, measure: TextMeasureContext): string[] {
   if (!token) {
     return [];
+  }
+
+  // Prevent splitting Arabic words to avoid broken gliphs (Rasm issues)
+  const isArabic = /[\u0600-\u06FF]/.test(token);
+  if (isArabic) {
+    return [token];
   }
 
   if (measure.measureTextWidth(token, font) <= maxWidth) {
@@ -989,6 +1005,14 @@ export function buildPageMap({
   showAuthorNotes = false,
   safeInsets,
 }: BuildPageMapInput): MushafPaginationResult {
+  // Prevent memory leaks: Clear cache if it gets too large
+  if (widthCache.size > 5000) {
+    widthCache.clear();
+  }
+  if (wrappedLinesCache.size > 5000) {
+    wrappedLinesCache.clear();
+  }
+
   const resolvedInsets = createSafeInsets(safeInsets);
   const safeArea = createSafeArea(pageWidth, pageHeight, resolvedInsets);
 

@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChevronLeft, ChevronRight, BookOpen, FileText, ZoomIn, ZoomOut, Maximize2, Minimize2, Headphones, Settings, UserRound, Check } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import HTMLPageFlip from 'react-pageflip';
 import { useDispatch, useSelector } from 'react-redux';
-import { cn } from '../../ui/cn';
 import { LOGICAL_PAGE_HEIGHT, LOGICAL_PAGE_WIDTH } from './hooks/useFlipBook';
 import { FlippingMode, ViewType } from '../../../store/slices/uiSlice';
-import { selectSearchLanguage, setLanguage as setSearchLanguage } from '../../../store/slices/searchSlice';
+import { selectSearchLanguage } from '../../../store/slices/searchSlice';
+import { setLanguage as setSearchLanguage } from '../../../store/slices/uiSlice';
 import { selectAuthors, selectSelectedAuthor, setSelectedAuthor } from '../../../store/slices/translationsSlice';
 import type { AppDispatch } from '../../../store/store';
 import type { MushafPageLayout } from './hooks/mushafPagination';
@@ -15,6 +15,11 @@ import type { MushafPageLayout } from './hooks/mushafPagination';
 import { FlipBookPage } from './components/FlipBookPage';
 import { AudioPanel } from './components/AudioPanel';
 import { PageStack } from './components/PageStack';
+
+// Newly extracted components
+import { DesktopNav } from './components/DesktopNav';
+import { DesktopAuthorPanel } from './components/DesktopAuthorPanel';
+import { DesktopBottomBar } from './components/DesktopBottomBar';
 
 interface DesktopFlipBookProps {
   onShowSettings: () => void;
@@ -79,6 +84,21 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
   const [isAuthorPanelVisible, setIsAuthorPanelVisible] = React.useState(false);
   const [sliderValue, setSliderValue] = React.useState<number | null>(null);
 
+  const lastActivePageRef = React.useRef(currentPage);
+  const scrollTimeoutRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    lastActivePageRef.current = currentPage;
+  }, [currentPage]);
+
+  React.useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        window.clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const selectedSurahMeta = React.useMemo(
     () => surahs.find((surah) => surah.id === Number(selectedSurah)),
     [surahs, selectedSurah],
@@ -127,6 +147,14 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
     seek(newTime);
   };
 
+  const handleSkipRef = React.useRef(handleSkip);
+  const handleAudioToggleRef = React.useRef(handleAudioToggle);
+
+  React.useEffect(() => {
+    handleSkipRef.current = handleSkip;
+    handleAudioToggleRef.current = handleAudioToggle;
+  }, [handleSkip, handleAudioToggle]);
+
   // Centralized keyboard shortcuts
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -134,28 +162,27 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
           e.stopPropagation();
-          handleSkip(-5);
+          handleSkipRef.current(-5);
           return;
         }
         if (e.key === 'ArrowRight') {
           e.preventDefault();
           e.stopPropagation();
-          handleSkip(5);
+          handleSkipRef.current(5);
           return;
         }
         if (e.key === ' ') {
           e.preventDefault();
           e.stopPropagation();
-          handleAudioToggle();
+          handleAudioToggleRef.current();
           return;
         }
       }
-
     };
 
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [isAudioPanelVisible, currentTime, duration, isPlaying]);
+  }, [isAudioPanelVisible]);
 
   const toggleAudioPanelVisibility = () => {
     setIsAudioPanelVisible(!isAudioPanelVisible);
@@ -179,66 +206,22 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
       </motion.div>
 
       <AnimatePresence>
-        {!isNavOpen ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute top-6 left-6 z-[70]"
-          >
-            <button
-              onClick={() => setIsNavOpen(true)}
-              className="flex items-center justify-center w-10 h-10 rounded-xl bg-card border border-border text-card-foreground hover:bg-accent shadow-xl transition-all duration-300"
-              title="Arama ve Navigasyon"
-            >
-              <Search className="w-5 h-5" />
-            </button>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -20, opacity: 0 }}
-            className="absolute top-6 left-6 z-[70] bg-card border border-border rounded-2xl px-3 py-2 flex items-center shadow-xl"
-          >
-            <button onClick={() => setIsNavOpen(false)} className="p-1 -ml-2 mr-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <select
-              className="h-8 min-w-[160px] rounded-lg bg-card border border-border px-2.5 text-sm font-medium text-foreground focus:outline-none focus:border-primary/60 [&>option]:bg-[hsl(var(--background))] cursor-pointer appearance-none"
-              value={selectedSurah}
-              onChange={(e) => handleSurahSelectChange(e.target.value)}
-            >
-              <option value="">{t.surahSelect || 'Sure Seç'}</option>
-              {surahs.map(s => <option key={s.id} value={s.id}>{s.id}. {s.name}</option>)}
-            </select>
-            <div className="w-px h-4 bg-border mx-2" />
-            <select
-              className="h-8 w-20 rounded-lg bg-card border border-border px-2 text-sm font-medium text-foreground focus:outline-none focus:border-primary/60 [&>option]:bg-[hsl(var(--background))] cursor-pointer appearance-none"
-              value={selectedVerse}
-              onChange={(e) => setSelectedVerse(e.target.value)}
-              disabled={!selectedSurahMeta || availableVerses.length === 0}
-            >
-              <option value="">{t.verse?.verse || 'Ayet'}</option>
-              {availableVerses.map((verseNumber) => (
-                <option key={verseNumber} value={verseNumber}>{verseNumber}</option>
-              ))}
-            </select>
-            <button onClick={handleSearch} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground bg-card border border-border hover:bg-accent transition-colors ml-1" title={t.header?.search || 'Ara'}>
-              <Search className="w-4 h-4" />
-            </button>
-            <div className="w-px h-5 bg-border mx-3" />
-            <button onClick={() => bookRef.current?.pageFlip()?.flipPrev()} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <div className="px-1 py-1 flex items-center justify-center min-w-[2.5rem]">
-              <span className="text-foreground text-sm font-bold">{pages[currentPage]?.number || 0}</span>
-            </div>
-            <button onClick={() => bookRef.current?.pageFlip()?.flipNext()} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
+        <DesktopNav
+          isNavOpen={isNavOpen}
+          setIsNavOpen={setIsNavOpen}
+          selectedSurah={selectedSurah}
+          handleSurahSelectChange={handleSurahSelectChange}
+          selectedVerse={selectedVerse}
+          setSelectedVerse={setSelectedVerse}
+          availableVerses={availableVerses}
+          handleSearch={handleSearch}
+          bookRef={bookRef}
+          pages={pages}
+          currentPage={currentPage}
+          t={t}
+          surahs={surahs}
+          selectedSurahMeta={selectedSurahMeta}
+        />
       </AnimatePresence>
 
       <AnimatePresence>
@@ -293,10 +276,16 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
               ref={scrollContainerRef}
               onScroll={(e) => {
                 const el = e.currentTarget;
-                const idx = Math.round(el.scrollTop / LOGICAL_PAGE_HEIGHT);
-                if (idx !== currentPage && idx >= 0 && idx < pages.length) {
-                  onPage({ data: idx });
-                }
+                if (scrollTimeoutRef.current !== null) return;
+
+                scrollTimeoutRef.current = window.setTimeout(() => {
+                  scrollTimeoutRef.current = null;
+                  const idx = Math.round(el.scrollTop / LOGICAL_PAGE_HEIGHT);
+                  if (idx !== lastActivePageRef.current && idx >= 0 && idx < pages.length) {
+                    lastActivePageRef.current = idx;
+                    onPage({ data: idx });
+                  }
+                }, 60);
               }}
               style={{
                 width: LOGICAL_PAGE_WIDTH,
@@ -444,199 +433,39 @@ export const DesktopFlipBook = React.memo(function DesktopFlipBook(props: Deskto
       </motion.div>
 
       <AnimatePresence>
-        {isAuthorPanelVisible && (
-          <>
-            <motion.button
-              type="button"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsAuthorPanelVisible(false)}
-              className="absolute inset-0 z-[75] cursor-default"
-              aria-label="close-author-panel"
-            />
-
-            <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.98 }}
-              transition={{ type: 'spring', stiffness: 340, damping: 28 }}
-              className="absolute right-4 bottom-14 z-[80] w-[290px] rounded-2xl border border-border/80 bg-[hsl(var(--background))] shadow-2xl overflow-hidden"
-            >
-              <div className="px-4 py-3 border-b border-border/70">
-                <p className="text-xs font-semibold text-foreground">
-                  {t.sidebar?.selectTranslator || 'Çevirmen Seç'}
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  {(language || '').toUpperCase()} • {filteredAuthors.length}
-                </p>
-
-                <div className="mt-3 flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleAuthorLanguageChange('tr')}
-                    className={cn(
-                      'px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors',
-                      language === 'tr'
-                        ? 'bg-primary/15 border-primary/40 text-primary'
-                        : 'bg-muted/30 border-border/70 text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    TR
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleAuthorLanguageChange('en')}
-                    className={cn(
-                      'px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors',
-                      language === 'en'
-                        ? 'bg-primary/15 border-primary/40 text-primary'
-                        : 'bg-muted/30 border-border/70 text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    EN
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowAuthorNotes((prev) => !prev)}
-                    className={cn(
-                      'ml-auto px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors',
-                      showAuthorNotes
-                        ? 'bg-primary/15 border-primary/40 text-primary'
-                        : 'bg-muted/30 border-border/70 text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    {showAuthorNotes ? (t.verse?.hideFootnotes || 'Notlar: Açık') : (t.verse?.showFootnotes || 'Notlar: Kapalı')}
-                  </button>
-                </div>
-              </div>
-
-              <div className="max-h-[36vh] overflow-y-auto p-1.5">
-                {filteredAuthors.map((author) => {
-                  const isSelected = selectedAuthor?.id === author.id;
-
-                  return (
-                    <button
-                      key={author.id}
-                      type="button"
-                      onClick={() => handleAuthorSelect(author.id)}
-                      className={cn(
-                        'w-full px-3 py-2 rounded-xl text-left text-sm flex items-center justify-between transition-colors',
-                        isSelected
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-foreground hover:bg-muted/50'
-                      )}
-                    >
-                      <span className="truncate">{author.name}</span>
-                      {isSelected && <Check className="w-4 h-4 flex-shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.div>
-          </>
-        )}
+        <DesktopAuthorPanel
+          isAuthorPanelVisible={isAuthorPanelVisible}
+          setIsAuthorPanelVisible={setIsAuthorPanelVisible}
+          language={language}
+          filteredAuthors={filteredAuthors}
+          selectedAuthor={selectedAuthor}
+          showAuthorNotes={showAuthorNotes}
+          setShowAuthorNotes={setShowAuthorNotes}
+          handleAuthorLanguageChange={handleAuthorLanguageChange}
+          handleAuthorSelect={handleAuthorSelect}
+          t={t}
+        />
       </AnimatePresence>
 
-
-      {/* Bottom Bar */}
-      <div className="w-full h-12 bg-card border-t border-border flex items-center px-4 z-[70] shadow-xl shrink-0">
-        <div className="flex items-center text-xs font-semibold text-foreground min-w-[140px]">
-          Sayfa {pages[sliderValue === null ? currentPage : sliderValue]?.number || 0}
-          <span className="text-muted-foreground font-normal ml-1 hidden sm:inline">
-            (İndeks: {(sliderValue === null ? currentPage : sliderValue) + 1}/{pages.length})
-          </span>
-        </div>
-        <div className="flex-1 mx-4 relative h-1.5 bg-muted rounded-full overflow-hidden group/slider cursor-pointer flex items-center">
-          <input
-            type="range"
-            min="0"
-            max={Math.max(0, pages.length - 1)}
-            value={sliderValue === null ? currentPage : sliderValue}
-            onChange={(e) => setSliderValue(Number(e.target.value))}
-            onPointerUp={() => {
-              if (sliderValue !== null) {
-                handlePageJump(sliderValue);
-                setSliderValue(null);
-              }
-            }}
-            onMouseUp={() => {
-              if (sliderValue !== null) {
-                handlePageJump(sliderValue);
-                setSliderValue(null);
-              }
-            }}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-          />
-          <motion.div
-            className="absolute top-0 left-0 h-full bg-primary"
-            animate={{ width: `${((sliderValue === null ? currentPage : sliderValue) / Math.max(1, pages.length - 1)) * 100}%` }}
-            transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-          />
-        </div>
-        <div className="flex items-center gap-1.5 justify-end">
-          <button 
-            onClick={() => {
-              if (isSinglePageOverride) {
-                handlePageJump(Math.max(0, currentPage - 1));
-              } else {
-                bookRef.current?.pageFlip()?.flipPrev();
-              }
-            }} 
-            className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={() => {
-              if (isSinglePageOverride) {
-                handlePageJump(Math.min(pages.length - 1, currentPage + 1));
-              } else {
-                bookRef.current?.pageFlip()?.flipNext();
-              }
-            }} 
-            className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-          <div className="w-px h-4 bg-border mx-1" />
-          <button onClick={() => setIsSinglePageOverride(true)} className={`p-1.5 transition-colors ${isSinglePageOverride ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} title="Dikey Kaydırma">
-            <FileText className="w-4 h-4" />
-          </button>
-            <button onClick={() => setIsSinglePageOverride(false)} className={`p-1.5 transition-colors ${!isSinglePageOverride ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} title="Kitap Modu">
-              <BookOpen className="w-4 h-4" />
-            </button>
-            <button
-              className={cn(
-                'p-1.5 transition-colors',
-                isAuthorPanelVisible
-                  ? 'text-primary bg-primary/5 rounded-lg'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-              onClick={() => setIsAuthorPanelVisible((prev) => !prev)}
-              title={t.sidebar?.selectTranslator || 'Çevirmen Seç'}
-            >
-              <UserRound className="w-4 h-4" />
-            </button>
-            <button 
-              className={cn(
-                "p-1.5 transition-colors shadow-sm",
-                isAudioPanelVisible ? "text-primary bg-primary/5 rounded-lg" : "text-muted-foreground hover:text-foreground"
-              )} 
-              onClick={toggleAudioPanelVisibility} 
-              title="Sesli Okuma"
-            >
-              {isAudioPanelVisible ? <Headphones className="w-4 h-4" /> : <Headphones className="w-4 h-4" />}
-            </button>
-            <div className="w-px h-4 bg-border mx-1" />
-            <button onClick={handleZoomOut} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"><ZoomOut className="w-4 h-4" /></button>
-            <button onClick={handleZoomIn} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"><ZoomIn className="w-4 h-4" /></button>
-          <button onClick={toggleFullscreen} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors ml-1">
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
-        </div>
-      </div>
+      <DesktopBottomBar
+        pages={pages}
+        currentPage={currentPage}
+        sliderValue={sliderValue}
+        setSliderValue={setSliderValue}
+        handlePageJump={handlePageJump}
+        isSinglePageOverride={isSinglePageOverride}
+        setIsSinglePageOverride={setIsSinglePageOverride}
+        bookRef={bookRef}
+        isAuthorPanelVisible={isAuthorPanelVisible}
+        setIsAuthorPanelVisible={setIsAuthorPanelVisible}
+        isAudioPanelVisible={isAudioPanelVisible}
+        toggleAudioPanelVisibility={toggleAudioPanelVisibility}
+        handleZoomIn={handleZoomIn}
+        handleZoomOut={handleZoomOut}
+        toggleFullscreen={toggleFullscreen}
+        isFullscreen={isFullscreen}
+        t={t}
+      />
     </div>
   );
 });

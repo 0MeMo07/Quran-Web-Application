@@ -333,13 +333,11 @@ export const FlipBookPage = memo(forwardRef<HTMLDivElement, PageProps>(
         className={cn(
           "flex flex-col h-full relative select-none overflow-hidden transition-all",
           isCoverPage ? 'bg-[#173f35]' : 'bg-[#fdfbf7]',
-          props.isMobile && !props.isSinglePage ? "border-none shadow-none" : "shadow-sm"
+          props.isMobile && !props.isSinglePage ? "border-none shadow-none" : "shadow-sm",
+          (!props.isMobile || props.isSinglePage) && "border border-[#503714]/12"
         )}
         style={{
-          borderRadius,
-          border: props.isMobile && !props.isSinglePage
-            ? 'none' 
-            : '1px solid rgba(80,55,20,0.12)'
+          borderRadius
         }}
       >
         <div className="flex-1 relative z-10 h-full">

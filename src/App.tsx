@@ -19,6 +19,7 @@ import {
   setSurahs,
   setVerses,
   setAllVerses,
+  addBookVerses,
   addLoadedBookSurahId,
   addLoadingBookSurahId,
   removeLoadingBookSurahId,
@@ -132,14 +133,7 @@ function App() {
       try {
         const res = await triggerGetSurahVerses({ surahId: id, authorId: selectedAuthorId }).unwrap();
         
-        const sortVersesByApiPage = (versesList: Verse[]) =>
-          [...versesList].sort((a, b) => {
-            if (a.page !== b.page) return a.page - b.page;
-            if (a.surah_id !== b.surah_id) return a.surah_id - b.surah_id;
-            return a.verse_number - b.verse_number;
-          });
-
-        dispatch(setAllVerses(sortVersesByApiPage([...allVerses.filter(v => v.surah_id !== id), ...res])));
+        dispatch(addBookVerses(res));
         dispatch(addLoadedBookSurahId(id));
       } catch (e) {
         console.error('Failed to load book surah verses', e);
@@ -168,7 +162,6 @@ function App() {
     activeBookSurahId,
     selectedAuthorId,
     triggerGetSurahVerses,
-    allVerses,
   ]);
 
   useEffect(() => {

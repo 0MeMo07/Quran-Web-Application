@@ -61,6 +61,17 @@ const quranSlice = createSlice({
     setAllVerses: (state, action) => {
       state.allVerses = action.payload;
     },
+    addBookVerses: (state, action: { payload: Verse[] }) => {
+      const newVerses = action.payload;
+      if (newVerses.length === 0) return;
+      const surahId = newVerses[0].surah_id;
+      const filtered = state.allVerses.filter(v => v.surah_id !== surahId);
+      state.allVerses = [...filtered, ...newVerses].sort((a, b) => {
+        if (a.page !== b.page) return a.page - b.page;
+        if (a.surah_id !== b.surah_id) return a.surah_id - b.surah_id;
+        return a.verse_number - b.verse_number;
+      });
+    },
     setCurrentVerse: (state, action) => {
       state.currentVerse = action.payload;
     },
@@ -90,6 +101,7 @@ export const {
   setSurahs,
   setVerses,
   setAllVerses,
+  addBookVerses,
   setCurrentVerse,
   addLoadedBookSurahId,
   addLoadingBookSurahId,

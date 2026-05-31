@@ -1,5 +1,5 @@
 import { ChevronUp, ChevronDown, Settings } from 'lucide-react';
-import { IconButton } from '../ui';
+import { IconButton } from '../../ui';
 
 interface BookLayoutTopActionsProps {
   isHeaderVisible: boolean;

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Book, Search, Menu, NotebookText, X, ChevronDown, Settings2 } from "lucide-react";
+import { Search, Menu, NotebookText, X, ChevronDown, Settings2, Github } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
-import { setLanguage, selectSearchLanguage } from "../store/slices/searchSlice";
+import { selectSearchLanguage } from "../store/slices/searchSlice";
+import { setLanguage } from "../store/slices/uiSlice";
 import { useTranslations } from "../translations";
 import { setSelectedAuthor, selectAuthors } from "../store/slices/translationsSlice";
 import { Link } from "react-router-dom";
@@ -59,12 +60,7 @@ export function Header({ onMenuClick, onSearchOpen }: HeaderProps) {
               <Menu className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div className="bg-primary/10 p-2.5 rounded-xl border border-primary/20 shadow-sm transition-transform hover:scale-105 active:scale-95">
-                <Book className="h-5 w-5 text-primary" />
-              </div>
-              <h1 className="text-2xl font-serif font-bold tracking-tight text-foreground">
-                {t.title}
-              </h1>
+              <img src="/logo.png" alt="Logo" className="w-20 h-20 md:w-20 md:h-20 object-contain drop-shadow-sm transition-transform hover:scale-105 active:scale-95" />
             </div>
           </div>
 
@@ -140,6 +136,17 @@ export function Header({ onMenuClick, onSearchOpen }: HeaderProps) {
               )}
             </div>
 
+            <a
+              href="https://github.com/0Memo07/Quran-Web-Application"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group p-2.5 rounded-xl text-foreground hover:bg-secondary transition-all"
+              aria-label="Contribute on GitHub"
+              title="Contribute on GitHub"
+            >
+              <Github className="w-5 h-5 group-hover:text-primary transition-colors" />
+            </a>
+
             <Link
               to="/settings"
               className="group p-2.5 rounded-xl text-foreground hover:bg-secondary transition-all"
@@ -213,6 +220,17 @@ export function Header({ onMenuClick, onSearchOpen }: HeaderProps) {
                 <Settings2 className="w-5 h-5" />
                 <span className="font-medium">{t.header.settings}</span>
               </Link>
+
+              <a
+                href="https://github.com/0Memo07/Quran-Web-Application"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-foreground hover:bg-secondary transition-all"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Github className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                <span className="font-medium">Contribute on GitHub</span>
+              </a>
             </div>
           </div>
         )}

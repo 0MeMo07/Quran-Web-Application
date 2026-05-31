@@ -1,11 +1,11 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { type Verse } from '../../api/types';
-import { type ViewType } from '../../store/slices/uiSlice';
-import { NoteSection } from '../notes/BookNoteSection';
+import { type Verse } from '../../../api/types';
+import { type ViewType } from '../../../store/slices/uiSlice';
+import { NoteSection } from '../../notes/BookNoteSection';
 import { useSelector } from 'react-redux';
-import { selectHighlightedVerse } from '../../store/slices/quranSlice';
+import { selectHighlightedVerse } from '../../../store/slices/quranSlice';
 import { useEffect, useRef } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../../../lib/utils';
 
 interface BookLayoutVerseItemProps {
   verse: Verse;
@@ -14,7 +14,7 @@ interface BookLayoutVerseItemProps {
   lineHeight: number;
   showFootnotes: Record<number, boolean>;
   onToggleFootnote: (verseId: number) => void;
-  t: ReturnType<typeof import('../../translations').useTranslations>;
+  t: ReturnType<typeof import('../../../translations').useTranslations>;
 }
 
 export function BookLayoutVerseItem({
@@ -37,6 +37,7 @@ export function BookLayoutVerseItem({
       itemRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [isHighlighted]);
+
   const renderArabic = () => (
     (viewType === 'kuran' || viewType === 'kuran+meal' || viewType === 'meal+kuran') && (
       <div className={viewType === 'kuran' ? 'inline break-words' : 'mb-6 sm:mb-4'}>

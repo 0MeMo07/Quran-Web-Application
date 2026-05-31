@@ -33,7 +33,7 @@ export const NotesLayout = () => {
   }, {} as { [key: string]: Note[] });
 
   const filteredNotes = Object.entries(groupedNotes).reduce((acc, [surahName, notes]) => {
-    let filteredSurahNotes = notes.filter(note => 
+    const filteredSurahNotes = notes.filter(note => 
       note.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
       surahName.toLowerCase().includes(searchQuery.toLowerCase())
     );

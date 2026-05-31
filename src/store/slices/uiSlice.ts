@@ -1,9 +1,11 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 
 export type ReadingType = 'card' | 'book' | 'detail';
 export type ViewType = 'meal' | 'meal+kuran' | 'kuran+meal' | 'kuran';
 export type VisualTheme = 'default' | 'simple';
+export type BookLayoutType = 'standard' | 'pageflip';
+export type FlippingMode = '3d' | 'flat';
 
 export interface Note {
   id: string;
@@ -20,6 +22,8 @@ interface UIState {
   language: 'tr' | 'en';
   readingType: ReadingType;
   viewType: ViewType;
+  bookLayoutType: BookLayoutType;
+  flippingMode: FlippingMode;
   notes: Note[];
 }
 
@@ -28,6 +32,8 @@ const savedVisualTheme = localStorage.getItem('visualTheme');
 const savedLanguage = localStorage.getItem('language');
 const savedReadingType = localStorage.getItem('readingType');
 const savedViewType = localStorage.getItem('viewType');
+const savedBookLayoutType = localStorage.getItem('bookLayoutType');
+const savedFlippingMode = localStorage.getItem('flippingMode');
 const savedNotes = localStorage.getItem('quran-notes');
 const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
@@ -37,6 +43,8 @@ const initialState: UIState = {
   language: (savedLanguage as 'tr' | 'en') || 'en',
   readingType: (savedReadingType as ReadingType) || 'book',
   viewType: (savedViewType as ViewType) || 'meal',
+  bookLayoutType: (savedBookLayoutType as BookLayoutType) || 'standard',
+  flippingMode: (savedFlippingMode as FlippingMode) || '3d',
   notes: savedNotes ? JSON.parse(savedNotes) : [],
 };
 
@@ -95,6 +103,14 @@ const uiSlice = createSlice({
       state.viewType = action.payload;
       localStorage.setItem('viewType', action.payload);
     },
+    setBookLayoutType: (state, action: PayloadAction<BookLayoutType>) => {
+      state.bookLayoutType = action.payload;
+      localStorage.setItem('bookLayoutType', action.payload);
+    },
+    setFlippingMode: (state, action: PayloadAction<FlippingMode>) => {
+      state.flippingMode = action.payload;
+      localStorage.setItem('flippingMode', action.payload);
+    },
     addNote: (state, action: PayloadAction<Note>) => {
       const noteIndex = state.notes.findIndex(
         note => note.surahId === action.payload.surahId && note.verseId === action.payload.verseId
@@ -128,6 +144,8 @@ export const {
   toggleLanguage,
   setReadingType,
   setViewType,
+  setBookLayoutType,
+  setFlippingMode,
   addNote,
   deleteNote
 } = uiSlice.actions;
@@ -137,10 +155,25 @@ export const selectVisualTheme = (state: RootState) => state.ui.visualTheme;
 export const selectLanguage = (state: RootState) => state.ui.language;
 export const selectReadingType = (state: RootState) => state.ui.readingType;
 export const selectViewType = (state: RootState) => state.ui.viewType;
+export const selectBookLayoutType = (state: RootState) => state.ui.bookLayoutType;
+export const selectFlippingMode = (state: RootState) => state.ui.flippingMode;
 export const selectNotes = (state: RootState) => state.ui.notes;
 
-export const selectNoteByVerseAndSurah = (state: RootState, surahId: number, verseId: number) => 
-  state.ui.notes.find(note => note.surahId === surahId && note.verseId === verseId);
+export const selectNotesMap = createSelector(
+  [selectNotes],
+  (notes) => {
+    const map: Record<string, Note> = {};
+    notes.forEach((note) => {
+      map[`${note.surahId}-${note.verseId}`] = note;
+    });
+    return map;
+  }
+);
+
+export const selectNoteByVerseAndSurah = (state: RootState, surahId: number, verseId: number) => {
+  const notesMap = selectNotesMap(state);
+  return notesMap[`${surahId}-${verseId}`] || null;
+};
 
 export const selectTheme = (state: RootState) => state.ui.isDarkMode ? 'dark' : 'light';
 

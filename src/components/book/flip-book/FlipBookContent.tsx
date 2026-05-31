@@ -1,0 +1,49 @@
+import React from 'react';
+import { useFlipBook } from './hooks/useFlipBook';
+import { MobileFlipBook } from './MobileFlipBook';
+import { DesktopFlipBook } from './DesktopFlipBook';
+
+interface FlipBookContentProps {
+  propPage?: number;
+  onPageChange?: (page: number) => void;
+  onShowSettings?: () => void;
+  t: any;
+  viewType: import('../../../store/slices/uiSlice').ViewType;
+  fontSize: number;
+  lineHeight: number;
+}
+
+/**
+ * FlipBookContent component
+ * Orchestrates the FlipBook experience, switching between Mobile and Desktop views.
+ */
+export function FlipBookContent({
+  propPage,
+  onPageChange,
+  onShowSettings,
+  t,
+  viewType,
+  fontSize,
+  lineHeight,
+}: FlipBookContentProps) {
+  const flipBook = useFlipBook({ propPage, onPageChange, viewType, fontSize, lineHeight });
+
+  const handleShowSettings = React.useCallback(() => {
+    onShowSettings?.();
+  }, [onShowSettings]);
+
+  if (flipBook.pages.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-20 text-muted-foreground gap-4">
+        <div className="w-12 h-12 rounded-full border-2 border-dashed border-muted-foreground/20 animate-spin" />
+        <p className="text-sm font-medium tracking-widest uppercase opacity-50">{t.loading || 'Yükleniyor'}...</p>
+      </div>
+    );
+  }
+
+  return flipBook.isMobile ? (
+    <MobileFlipBook {...flipBook} onShowSettings={handleShowSettings} t={t} />
+  ) : (
+    <DesktopFlipBook {...flipBook} onShowSettings={handleShowSettings} t={t} />
+  );
+}

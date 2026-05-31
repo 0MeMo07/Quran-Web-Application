@@ -100,6 +100,7 @@ export function useBookLayoutPagination({
     handleNextPage,
     handlePreviousPage,
     handlePageChange,
+    handlePageJump: navigateToPage,
     handlePageBlur,
     handlePageKeyDown,
   };

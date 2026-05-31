@@ -10,9 +10,11 @@ dist
 .continue
 .agents
 tmp
-flip-book-analizi.txt
-.claude-flow
-.understand-anything
 .komBai
 .mcp.json
 CLAUDE.md
+CAPABILITIES.md
+config.yaml
+flip-book-analizi.txt
+.claude-flow/
+.understand-anything/

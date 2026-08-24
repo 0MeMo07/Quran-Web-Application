@@ -18,7 +18,6 @@ import {
   selectLoadingBookSurahIds,
   setSurahs,
   setVerses,
-  setAllVerses,
   addBookVerses,
   addLoadedBookSurahId,
   addLoadingBookSurahId,
@@ -41,7 +40,6 @@ import {
   useGetSurahVersesQuery, 
   useLazyGetSurahVersesQuery 
 } from './store/services/quranApi';
-import type { Verse } from './api/types';
 
 const VerseCard = lazy(() => import('./components/VerseCard').then(m => ({ default: m.VerseCard })));
 const BookLayout = lazy(() => import('./components/BookLayout').then(m => ({ default: m.BookLayout })));

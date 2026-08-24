@@ -31,6 +31,16 @@ async function fetchJson<T>(url: string): Promise<T> {
   return res.json();
 }
 
+const BISMILLAH_PREFIX_REGEX = /^بِسْمِ[\s\S]*?رَّحِي(?:مِ|مْ|م)\s*/u;
+
+export function cleanAyahText(text: string, surahId: number, ayahNumber: number): string {
+  if (surahId === 1 || ayahNumber !== 1) {
+    return text;
+  }
+  const cleaned = text.replace(BISMILLAH_PREFIX_REGEX, '').trim();
+  return cleaned || text;
+}
+
 export async function fetchAuthors(): Promise<Author[]> {
   return DEFAULT_AUTHORS;
 }
@@ -117,12 +127,14 @@ export async function fetchSurahVerses(surahId: number, authorId: number = 1): P
           audAyah?.audio ||
           `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${ar.number}.mp3`;
 
+        const cleanedArabic = cleanAyahText(ar.text, surahId, ar.numberInSurah);
+
         return {
           id: surahId * 1000 + ar.numberInSurah,
           surah_id: surahId,
           verse_number: ar.numberInSurah,
-          verse: ar.text,
-          verse_simplified: ar.text,
+          verse: cleanedArabic,
+          verse_simplified: cleanedArabic,
           page: ar.page,
           juz_number: ar.juz,
           transcription: '',
@@ -178,12 +190,14 @@ export async function fetchSurahVerses(surahId: number, authorId: number = 1): P
     }>(qcUrl);
 
     if (qcData && qcData.verses) {
-      const verses: Verse[] = qcData.verses.map((v) => ({
-        id: surahId * 1000 + v.verse_number,
-        surah_id: surahId,
-        verse_number: v.verse_number,
-        verse: v.text_uthmani,
-        verse_simplified: v.text_uthmani,
+      const verses: Verse[] = qcData.verses.map((v) => {
+        const cleanedArabic = cleanAyahText(v.text_uthmani, surahId, v.verse_number);
+        return {
+          id: surahId * 1000 + v.verse_number,
+          surah_id: surahId,
+          verse_number: v.verse_number,
+          verse: cleanedArabic,
+          verse_simplified: cleanedArabic,
         page: v.page_number,
         juz_number: v.juz_number,
         transcription: '',
@@ -213,7 +227,8 @@ export async function fetchSurahVerses(surahId: number, authorId: number = 1): P
           page_number: surahMeta!.page_number,
           audio: surahMeta!.audio,
         },
-      }));
+      };
+    });
 
       versesCache.set(cacheKey, verses);
       return verses;

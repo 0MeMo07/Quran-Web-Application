@@ -36,6 +36,11 @@ export function BookLayoutSurahSection({
         <h2 className="text-center font-serif text-3xl sm:text-5xl tracking-tight text-foreground">
           {surahs.find((s) => s.id === Number(surahId))?.name}
         </h2>
+        {Number(surahId) !== 1 && Number(surahId) !== 9 && (
+          <p className="mt-6 text-2xl sm:text-3xl font-arabic text-foreground/80 tracking-wide" dir="rtl">
+            بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+          </p>
+        )}
       </div>
 
       <div

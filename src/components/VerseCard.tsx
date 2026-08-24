@@ -113,6 +113,11 @@ export function VerseCard({ verse }: VerseCardProps) {
               <span className="w-1 h-1 rounded-full bg-foreground" />
               <span>{t.verse.page} {verse.page}</span>
             </div>
+            {verse.surah_id !== 1 && verse.surah_id !== 9 && (
+              <p className="mt-8 text-2xl sm:text-3xl font-arabic text-foreground/80 tracking-wide" dir="rtl">
+                بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+              </p>
+            )}
           </div>
         </motion.section>
       )}
